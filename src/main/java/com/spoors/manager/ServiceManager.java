@@ -20,6 +20,7 @@ import com.spoors.beans.FormSectionFieldSpec;
 import com.spoors.beans.FormSectionFieldSpecValidValue;
 import com.spoors.beans.FormSectionSpec;
 import com.spoors.beans.FormSpec;
+import com.spoors.beans.FormSpecContainer;
 import com.spoors.beans.ListFilteringCritiria;
 import com.spoors.beans.VisibilityDependencyCriteria;
 import com.spoors.dao.EffortDao;
@@ -37,7 +38,7 @@ public class ServiceManager
 		this.effortDao = effortDao;
 	}
 
-	public void getExportFormSpecData(String formSpecUniqueId)
+	public void getExportFormSpecData(String formSpecUniqueId, FormSpecContainer formSpecContainer, String logtext)
 	{
 		try {
 			

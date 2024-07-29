@@ -1,6 +1,8 @@
 package com.spoors.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spoors.beans.FormSpecContainer;
 import com.spoors.config.AppConfig;
 import com.spoors.manager.ServiceManager;
 import com.spoors.util.Api;
@@ -43,10 +46,13 @@ public class ApiController {
 	        JsonNode jsonNode = objectMapper.readTree(jsonString);
 	        JsonNode formsNode = jsonNode.get("forms");
 	        if (formsNode.isArray()) {
-	            for (JsonNode node : formsNode) {
+	            List<FormSpecContainer> formSpecContainerList = new ArrayList<>();
+	        	for (JsonNode node : formsNode) {
+	        		FormSpecContainer formSpecContainer = new FormSpecContainer();
 	            	String formSpecUniqueId = node.asText();
 	            	LOGGER.info(logtext+" --> Forms:- formSpecUniqueId : "+formSpecUniqueId+" starts.");
-	            	serviceManager.getExportFormSpecData(formSpecUniqueId);
+	            	serviceManager.getExportFormSpecData(formSpecUniqueId,formSpecContainer,logtext);
+	            	formSpecContainerList.add(formSpecContainer);
 	            }
 	        } else {
 	            System.out.println("\"forms\" is not an array");
