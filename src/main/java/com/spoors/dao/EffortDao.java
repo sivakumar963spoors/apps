@@ -12,6 +12,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.spoors.beans.CompanyFont;
+import com.spoors.beans.CustomEntityFilteringCritiria;
+import com.spoors.beans.CustomerAutoFilteringCritiria;
 import com.spoors.beans.CustomerFilteringCritiria;
 import com.spoors.beans.EmployeeFilteringCritiria;
 import com.spoors.beans.FieldValidationCritiria;
@@ -19,13 +21,17 @@ import com.spoors.beans.FormCleanUpRule;
 import com.spoors.beans.FormFieldGroupSpec;
 import com.spoors.beans.FormFieldSpec;
 import com.spoors.beans.FormFieldSpecValidValue;
+import com.spoors.beans.FormFieldSpecsExtra;
 import com.spoors.beans.FormFieldsColorDependencyCriterias;
+import com.spoors.beans.FormFilteringCritiria;
 import com.spoors.beans.FormPageSpec;
 import com.spoors.beans.FormSectionFieldSpec;
 import com.spoors.beans.FormSectionFieldSpecValidValue;
+import com.spoors.beans.FormSectionFieldSpecsExtra;
 import com.spoors.beans.FormSectionSpec;
 import com.spoors.beans.FormSpec;
 import com.spoors.beans.ListFilteringCritiria;
+import com.spoors.beans.RemainderFieldsMap;
 import com.spoors.beans.VisibilityDependencyCriteria;
 import com.spoors.setting.Sqls;
 import com.spoors.util.Api;
@@ -276,7 +282,72 @@ public class EffortDao {
 				new BeanPropertyRowMapper<CompanyFont>(CompanyFont.class));
 		return companyFont;
 	}
-	
+
+	public List<FormFieldSpecsExtra> getFormFieldSpecsExtraForIn(String ids) {
+		if (!Api.isEmptyString(ids)) {
+			List<FormFieldSpecsExtra> formFieldSpecsExtra = jdbcTemplate.query(
+					Sqls.SELECT_FORM_FIELD_SPECS_EXTRA_IN.replace(":ids", ids), new BeanPropertyRowMapper<FormFieldSpecsExtra>(FormFieldSpecsExtra.class));
+			return formFieldSpecsExtra;
+		}
+		return new ArrayList<FormFieldSpecsExtra>();
+	}
+
+	public List<FormSectionFieldSpecsExtra> getFormSectionFieldSpecsForIn(String ids)
+	{
+		if (!Api.isEmptyString(ids)) {
+			List<FormSectionFieldSpecsExtra> formSectionFieldSpecsExtra = jdbcTemplate.query(
+					Sqls.SELECT_FORM_SECTION_FIELD_SPECS_EXTRA_IN.replace(":ids", ids), new BeanPropertyRowMapper<FormSectionFieldSpecsExtra>(
+							FormSectionFieldSpecsExtra.class));
+			return formSectionFieldSpecsExtra;
+		}
+		return new ArrayList<FormSectionFieldSpecsExtra>();
+	}
+
+	public List<RemainderFieldsMap> getRemainderFieldsMapForFormSpecs(String formSpecIds) {
+		List<RemainderFieldsMap> remainderFieldsMap = new ArrayList<RemainderFieldsMap>();
+		if (!Api.isEmptyString(formSpecIds)) {
+			String sql = Sqls.SELECT_REMAINDER_FIELDS_MAP_FOR_FORMSPECS
+					.replace(":formSpecIds", formSpecIds);
+			remainderFieldsMap = jdbcTemplate.query(sql,
+					new BeanPropertyRowMapper<RemainderFieldsMap>(
+							RemainderFieldsMap.class));
+		}
+		return remainderFieldsMap;
+	}
+
+	public List<CustomerAutoFilteringCritiria> getCustomerAutoFilteringCritiriasForFormSpecs(String formSpecIds) {
+		List<CustomerAutoFilteringCritiria> customerAutoFilteringCritirias = new ArrayList<CustomerAutoFilteringCritiria>();
+		if (!Api.isEmptyString(formSpecIds)) {
+			String sql = Sqls.SELECT_CUSTOMER_AUTO_FILTERING_FOR_FORMSPECS
+					.replace(":formSpecIds", formSpecIds);
+			customerAutoFilteringCritirias = jdbcTemplate.query(sql,
+					new BeanPropertyRowMapper<CustomerAutoFilteringCritiria>(
+							CustomerAutoFilteringCritiria.class));
+		}
+		return customerAutoFilteringCritirias;
+	}
+
+	public List<FormFilteringCritiria> getFormFilteringCritiriasForFormSpecs(String formSpecIds) {
+		List<FormFilteringCritiria> formFilteringCritiria = new ArrayList<FormFilteringCritiria>();
+		if (!Api.isEmptyString(formSpecIds)) {
+			String sql = Sqls.SELECT_FORM_FILTERING_CRITIRIA_FOR_FORMSPECS
+					.replace(":formSpecIds", formSpecIds);
+			formFilteringCritiria = jdbcTemplate.query(sql,
+					new BeanPropertyRowMapper<FormFilteringCritiria>(
+							FormFilteringCritiria.class));
+		}
+		return formFilteringCritiria;
+	}
+
+	public List<CustomEntityFilteringCritiria> getListOfCustomEntityFilteringCritiriaForFormSpecs(String formSpecIds) {
+		List<CustomEntityFilteringCritiria> customEntityFilteringCritiria = new ArrayList<CustomEntityFilteringCritiria>();
+		if(!Api.isEmptyString(formSpecIds)) {
+			String sql = Sqls.SELECT_CUSTOM_ENTITY_FILTERING_CRITIRIA_FOR_FORMSPECS.replace(":formSpecIds", formSpecIds);
+			customEntityFilteringCritiria = jdbcTemplate.query(sql,
+					new BeanPropertyRowMapper<CustomEntityFilteringCritiria>(CustomEntityFilteringCritiria.class));
+		}
+		return customEntityFilteringCritiria;
+	}
 
 	
 	

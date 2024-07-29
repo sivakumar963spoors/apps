@@ -33,4 +33,17 @@ public class Sqls {
 	public static final String SELECT_EMPLOYEE_FILTER_CRITERIA = "SELECT *  FROM `EmployeeFilteringCritiria` WHERE `formSpecId` IN (:formSpecIds)";
 	
 	public static final String SELECT_FIELD_VALIDATION_CRITIRIA = "SELECT `id`, `formSpecId`, `fieldSpecId`, `referenceFieldExpressionId`, `value`, `condition`, `validationType`, `validationMessage`, `isSectionField` , `conjunction`, `referenceFieldExpressionId2`, `value2` FROM `FieldValidationCritiria` WHERE `formSpecId` IN (:formSpecIds)";
+
+	public static final String SELECT_FORM_FIELD_SPECS_EXTRA_IN = "SELECT `formFieldSpecExtraId`, `fieldSpecId`, `showHelpText`, `formSpecId`,numberToWordCurrencyType, `enablePickerAndDropdown`,`enableCommaSeperator`,`currencyFormat`,`staticField`,`staticFieldMediaId`,`staticFieldThumbnailMediaId`,`sendActionAssignmentsOfEmpIdsOfGroupRestrictions`,`enableUserInputsForTextFieldFormula`,restrictLocationPickCondition,`onDemandLocationRequest`,maxNumberOfFilesAllowed,`enableFrontCameraInMobile`,`onDemandLocationDefaultPhnNo`,`formFieldEntityId`, `staticFieldValue`, `findDistanceByGoogleApi`, `metricUnitsOfDistance`,`enableAgeRestriction`,`minAge`,`maxAge`,`ageRestrictionErrorMessage`,`enableMediaFormatRestriction`,`allowRequiredFormat`,`enableMappedTerritoriesRestriction`, showOnlyMappedItemsWhileSelection,`radioButtonOrientation`,`showRemainderBefore`,`includeEndDate` FROM `FormFieldSpecsExtra` WHERE `formSpecId` IN (:ids)";
+	
+	public static final String SELECT_FORM_SECTION_FIELD_SPECS_EXTRA_IN = "SELECT `formSectionFieldSpecsExtraId`, `sectionFieldSpecId`, `showHelpText`, `formSpecId`, numberToWordCurrencyType, `enablePickerAndDropdown`,`enableCommaSeperator`,`currencyFormat`,`sendActionAssignmentsOfEmpIdsOfGroupRestrictions`,`enableUserInputsForTextFieldFormula`,restrictLocationPickCondition,visible,visibleForCreation,searchableField,maxNumberOfFilesAllowed,enableFrontCameraInMobile, findDistanceByGoogleApi, metricUnitsOfDistance,`enableAgeRestriction`,`minAge`,`maxAge`,`ageRestrictionErrorMessage`,`enableMediaFormatRestriction`,`allowRequiredFormat`,`enableMappedTerritoriesRestriction`, showOnlyMappedItemsWhileSelection,`radioButtonOrientation`,`includeEndDate`,showRemainderBefore FROM `FormSectionFieldSpecsExtra` WHERE `formSpecId` IN (:ids)";
+	
+	public static final String SELECT_REMAINDER_FIELDS_MAP_FOR_FORMSPECS = "SELECT `id`, `formSpecId`, `fieldSpecId`, `referenceFieldSpecId`, `referenceFieldExpressionId` FROM `RemainderFieldsMap` WHERE `formSpecId` IN (:formSpecIds)";
+	
+	public static final String SELECT_CUSTOMER_AUTO_FILTERING_FOR_FORMSPECS = "SELECT `id`, `formSpecId`, `fieldSpecId`, `customerFieldSpecUniqueId`, `referenceFieldExpressionId`, `value`, `type`, `staticField`, `condition`, `isEditable`, `errorMsg`, `onlineSearch`, `conjunction` FROM `CustomerAutoFilteringCritiria` WHERE `formSpecId` IN (:formSpecIds)";
+	
+	public static final String SELECT_FORM_FILTERING_CRITIRIA_FOR_FORMSPECS = "SELECT `id`,`formSpecId`, `fieldSpecId`, `formFieldSpecUniqueId`,`referenceFieldExpressionId`, `value`, `type`, `condition`, `fieldType`, `formFieldType` FROM  `FormFilteringCritiria` WHERE   formSpecId IN (:formSpecIds)";
+	
+	public static final String SELECT_CUSTOM_ENTITY_FILTERING_CRITIRIA_FOR_FORMSPECS = "SELECT `customEntityFilteringCritiriaId`,`formSpecId`,`fieldSpecId`,`formFieldSpecUniqueId`,`referenceFieldExpressionId`,`value`,`type`,`condition`,`editable`,`fieldType`,`formFieldType`,`customEntitySpecId` FROM `CustomEntityFilteringCritiria` WHERE `formSpecId` IN (:formSpecIds)";
+	
 }

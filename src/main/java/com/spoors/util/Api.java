@@ -7,8 +7,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
+import org.apache.commons.beanutils.BeanUtils;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -20,8 +23,20 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.spoors.config.AppConfig;
 import com.spoors.context.AppContext;
+import com.spoors.manager.ServiceManager;
+
+import ch.qos.logback.classic.Logger;
 
 public class Api {
+	
+	private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(Api.class);
+	
+	public static enum CsvOptions{FILTER_NULL_OR_EMPTY,NONE};
+	public static enum DateConversionType{STADARD_TO_XSD,XSD_TO_STADARD,
+											DATETIME_TO_UTC_DATETIME_WITH_TZO,
+											UTC_DATETIME_TO_DATETIME_WITH_TZO,
+											UTC_DATETIME_TO_DATETIME_DISPLAY_FORMAT,
+											UTC_DATETIME_TO_IST};
 	
 	public static AppConfig getAppConfig() {
         ApplicationContext context = AppContext.getApplicationContext();
@@ -153,6 +168,35 @@ public class Api {
 			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			format.setTimeZone(TimeZone.getTimeZone("GMT"));
 			return format.parse(value);
+		}
+	}
+	
+	public static String toCSV(List<?> list, String fieldName,CsvOptions csvOption){
+		try{
+			if (list != null) {
+				StringBuilder csv = new StringBuilder("");
+				for (Object obj : list) {
+					String value=BeanUtils.getProperty(obj, fieldName);
+						
+					if(CsvOptions.FILTER_NULL_OR_EMPTY==csvOption && Api.isEmptyString(value)){
+						continue;
+					}
+					
+					if (csv.length() > 0) {
+						csv .append(",");
+					}
+					
+						csv .append(value == null ? "" : value);
+					}
+				return csv.toString();
+			}
+			 else {
+				return null;
+			}
+		}catch(Exception ex){
+			LOGGER.debug("in toCSV", ex);
+			LOGGER.info("in toCSV", ex);
+			return null;
 		}
 	}
 
