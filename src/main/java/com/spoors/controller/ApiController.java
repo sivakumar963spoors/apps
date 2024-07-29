@@ -1,0 +1,64 @@
+package com.spoors.controller;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spoors.config.AppConfig;
+import com.spoors.manager.ServiceManager;
+import com.spoors.util.Api;
+
+import ch.qos.logback.classic.Logger;
+
+
+@RestController
+@RequestMapping("/api")
+public class ApiController {
+
+    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(ApiController.class);
+    
+    public AppConfig appConfig;
+    public ServiceManager serviceManager;
+	
+	public ApiController(AppConfig appConfig,ServiceManager serviceManager) {
+		this.appConfig = appConfig;
+		this.serviceManager = serviceManager;
+	}
+
+	@PostMapping("/export")
+    public ResponseEntity<String> getApplicationForExport(@RequestBody String jsonString) {
+       String logtext = "applicationSpecsExport";
+		Map<String,Object> response = new HashMap<>();
+		try {
+			ObjectMapper objectMapper = new ObjectMapper();
+	        JsonNode jsonNode = objectMapper.readTree(jsonString);
+	        JsonNode formsNode = jsonNode.get("forms");
+	        if (formsNode.isArray()) {
+	            for (JsonNode node : formsNode) {
+	            	String formSpecUniqueId = node.asText();
+	            	LOGGER.info(logtext+" --> Forms:- formSpecUniqueId : "+formSpecUniqueId+" starts.");
+	            	serviceManager.getExportFormSpecData(formSpecUniqueId);
+	            }
+	        } else {
+	            System.out.println("\"forms\" is not an array");
+	            LOGGER.info("forms is not an array");
+	        }
+		}catch(Exception e) {
+			 LOGGER.info("Got Exception in getApplicationForExport : "+e);
+			 LOGGER.error("Got Exception in getApplicationForExport : "+e);
+			 e.printStackTrace();
+		}
+		String responseString = Api.getJsonFromGivenObject(response);
+        return new ResponseEntity<>(responseString, HttpStatus.OK);
+    }
+	
+}
