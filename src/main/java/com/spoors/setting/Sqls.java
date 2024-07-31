@@ -45,5 +45,35 @@ public class Sqls {
 	public static final String SELECT_FORM_FILTERING_CRITIRIA_FOR_FORMSPECS = "SELECT `id`,`formSpecId`, `fieldSpecId`, `formFieldSpecUniqueId`,`referenceFieldExpressionId`, `value`, `type`, `condition`, `fieldType`, `formFieldType` FROM  `FormFilteringCritiria` WHERE   formSpecId IN (:formSpecIds)";
 	
 	public static final String SELECT_CUSTOM_ENTITY_FILTERING_CRITIRIA_FOR_FORMSPECS = "SELECT `customEntityFilteringCritiriaId`,`formSpecId`,`fieldSpecId`,`formFieldSpecUniqueId`,`referenceFieldExpressionId`,`value`,`type`,`condition`,`editable`,`fieldType`,`formFieldType`,`customEntitySpecId` FROM `CustomEntityFilteringCritiria` WHERE `formSpecId` IN (:formSpecIds)";
+
+	public static final String SELECT_STOCK_FORM_CONFIGURATIONS_FOR_FORMSPEC_IDS = "SELECT `id`, `formSpecUniqueId`, `stockFieldSpecUniqueId`, `sourceStockFieldSpecId`, `isStockFieldInSection`, `condition`, `targetFieldUniqueId`, `companyId` FROM `StockFormConfiguration` WHERE `formSpecUniqueId` IN (SELECT `uniqueId` FROM `FormSpecs` WHERE `formSpecId` IN (:formSpecIds))";
+	
+	public static final String SELECT_OFFLINE_LIST_UPDATE_FORM_CONFIGURATIONS_FOR_FORMSPEC_IDS = "SELECT `id`, `formSpecUniqueId`, `listFieldSpecUniqueId`, `sourceListFieldSpecId`, `isListFieldInSection`, `condition`, `targetFieldUniqueId`, `companyId`,stockUpdateType FROM `OfflineListUpdateConfiguration` WHERE `formSpecUniqueId` IN (SELECT `uniqueId` FROM `FormSpecs` WHERE `formSpecId` IN (:formSpecIds))";
+	
+	public static final String SELECT_OFFLINE_CUSTOM_ENTITY_UPDATE_FORM_CONFIGURATIONS_FOR_FORMSPEC_IDS = "SELECT `offlineCustomEntityUpdateConfigurationId`,`formSpecUniqueId`,`customEntityFieldSpecUniqueId`,`sourceCustomEntityFieldSpecId`,`customEntityFieldInSection`,`condition`,`targetFieldUniqueId`,`companyId`,`createdTime`,`modifiedTime`,`stockUpdateType` FROM `OfflineCustomEntityUpdateConfiguration` WHERE `formSpecUniqueId` IN (SELECT `uniqueId` FROM `FormSpecs` WHERE `formSpecId` IN (:formSpecIds))";
+	
+	public static final String SELECT_FORM_FIELD_SPEC_FILTERS_FORMSPECIDS = "SELECT `id`, `formSpecId`, `formFieldSpecId`, `type`, `valueId` FROM `FormFieldSpecFilters` WHERE  `formSpecId` IN (:formSpecIds)";
+	
+	public static final String SELECT_FORM_SECTION_FIELD_SPEC_FILTERS_FORMSPECIDS = "SELECT `id`, `formSpecId`, `formSectionFieldSpecId`, `type`, `valueId` FROM `FormSectionFieldSpecFilters` WHERE  `formSpecId` IN (:formSpecIds)";
+	
+	public static final String SELECT_PAYMENT_MAPPINGS_BY_FORMSPEC = "SELECT `id`,`companyId`, `formSpecUniqueId`, `formFieldSpecUniqueId`, `paymentChannelId`, `createdBy`, `modifiedBy`, `createdTime`, `modifiedTime`, `deleted` FROM `PaymentMappings` WHERE `formSpecUniqueId` in (:formSpecUniqueIds)";
+	
+	public static final String SELECT_FORMSPEC_DATA_SOURCE = "SELECT `formSpecDataSourceId`, `dataSourceName`, `formSpecId`, `formSpecUniqueId`, `methodType`, `url`, `responseContentType`, `responseData`, `createdTime`, `modifiedTime`, `createdBy`, `deleted`, `companyId`, `sectionSpecId` FROM `FormSpecDataSource` WHERE `formSpecUniqueId` IN (:uniqueId)";
+	
+	public static final String SELECT_DATA_SOURCE_REQUEST_HEADERS = "SELECT dataSourceRequestHeaderId, formSpecDataSourceId, headerName, headerText, isStatic, fieldType, fieldSpecUniqueId, isListItem, entitySpecId, entityFieldSpecId FROM DataSourceRequestHeaders WHERE formSpecDataSourceId IN (:formSpecDataSourceIds)";
+	
+	public static final String SELECT_DATA_SOURCE_REQUEST_PARAMS = "SELECT dataSourceRequestParamId, formSpecDataSourceId, paramName, paramText, isStatic, fieldType, fieldSpecUniqueId, isListItem, entitySpecId, entityFieldSpecId FROM DataSourceRequestParams WHERE formSpecDataSourceId IN (:formSpecDataSourceIds)";
+	
+	public static final String SELECT_DATA_SOURCE_RESPONSE_MAPPING = "SELECT dataSourceResponseMappingId, formSpecDataSourceId, fieldSpecUniqueId, fieldType, responseFieldKey, valuePath FROM DataSourceResponseMapping WHERE formSpecDataSourceId IN (:formSpecDataSourceIds)";
+	
+	public static final String SELECT_FORM_SPEC_PERMISSIONS = "SELECT * FROM `FormSpecPermissons` WHERE `formSpecUniqueId` = ? :AND";
+	
+	public static final String SELECT_FORMSPEC_CONFIG_SAVE_ON_OTP_VERIFY = "SELECT `formSpecUniqueId`, `phoneNumFieldUniqueIdToVerifyOTP`, `customMessageForOTP`, `fieldsToVisibleInTinyLink` FROM `FormSpecConfigOtpVerifyAndSaveForm` WHERE  `formSpecUniqueId` in (:formSpecUniqueIds)";
+	
+	public static final String SELECT_JOB_FORMFIELD_MAPPING="SELECT jffm.* FROM jobFormFieldsMapping jffm INNER JOIN  FormSpecs fs ON (jffm.formSpecUniqueId=fs.uniqueId) WHERE fs.formSpecId IN(:formSpecIds) AND  jffm.modifiedTime>=?";
+	
+	public static final String SELECT_WORKSPEC_FORMSPEC_FOLLOW_UP_FOR_SYNC="SELECT wsfsf.`workSpecFormSpecFollowUpId`, wsfsf.`workFormFollowUp`, wsfsf.`formSpecUniqueId`, wsfsf.`workFormSpecUniqueId`, wsfsf.`dateFieldSpecUniqueId`, wsfsf.`createdBy`, wsfsf.`companyId`, wsfsf.`createdTime`, wsfsf.`modifiedTime` FROM `workSpecFormSpecFollowUp` wsfsf INNER JOIN  FormSpecs fs ON (wsfsf.formSpecUniqueId=fs.uniqueId) WHERE fs.formSpecId IN(:formSpecIds) GROUP BY wsfsf.`workSpecFormSpecFollowUpId` ";
+	
+	public static final String SELECT_WORK_FORM_FIELD_MAPS_BY_WORKSPEC_FORMSPEC_FOLLOW_UP_IDS = "SELECT `workFormFieldMapId`, `workSpecFormSpecFollowUpId`, `fieldSpecUniqueId`, `workFieldSpecUniqueId`, `pickAnother` FROM `workFormFieldMap` WHERE `workSpecFormSpecFollowUpId` IN (:workSpecFormSpecFollowUpIds)";
 	
 }

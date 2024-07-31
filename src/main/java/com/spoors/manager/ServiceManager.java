@@ -11,7 +11,11 @@ import com.spoors.beans.CompanyFont;
 import com.spoors.beans.CustomEntityFilteringCritiria;
 import com.spoors.beans.CustomerAutoFilteringCritiria;
 import com.spoors.beans.CustomerFilteringCritiria;
+import com.spoors.beans.DataSourceRequestHeader;
+import com.spoors.beans.DataSourceRequestParam;
+import com.spoors.beans.DataSourceResponseMapping;
 import com.spoors.beans.EmployeeFilteringCritiria;
+import com.spoors.beans.FieldSpecFilter;
 import com.spoors.beans.FieldValidationCritiria;
 import com.spoors.beans.FormCleanUpRule;
 import com.spoors.beans.FormFieldGroupSpec;
@@ -26,10 +30,20 @@ import com.spoors.beans.FormSectionFieldSpecValidValue;
 import com.spoors.beans.FormSectionFieldSpecsExtra;
 import com.spoors.beans.FormSectionSpec;
 import com.spoors.beans.FormSpec;
+import com.spoors.beans.FormSpecConfigSaveOnOtpVerify;
 import com.spoors.beans.FormSpecContainer;
+import com.spoors.beans.FormSpecDataSource;
+import com.spoors.beans.FormSpecPermission;
+import com.spoors.beans.JobFormMapBean;
 import com.spoors.beans.ListFilteringCritiria;
+import com.spoors.beans.OfflineCustomEntityUpdateConfiguration;
+import com.spoors.beans.OfflineListUpdateConfiguration;
+import com.spoors.beans.PaymentMapping;
 import com.spoors.beans.RemainderFieldsMap;
+import com.spoors.beans.StockFormConfiguration;
 import com.spoors.beans.VisibilityDependencyCriteria;
+import com.spoors.beans.WorkFormFieldMap;
+import com.spoors.beans.WorkSpecFormSpecFollowUp;
 import com.spoors.dao.EffortDao;
 import com.spoors.util.Api;
 import com.spoors.util.Api.CsvOptions;
@@ -55,6 +69,11 @@ public class ServiceManager
 			List<FormSpec> formSpecs = new ArrayList<>();
 			if(formSpec!=null) {
 				formSpecs.add(formSpec);
+				List<String> uniqueIdsList = new ArrayList<>();
+				uniqueIdsList.add(formSpecUniqueId);
+				
+				String uniqueIdsCsv = Api.processStringValuesList(uniqueIdsList);
+				
 				List<FormPageSpec> pageSpecs = getFormPageSpecs(formSpec.getFormSpecId());
 				
 				List<FormFieldSpec> fieldSpecs = getFormFieldSpecs(formSpec.getFormSpecId());
@@ -95,6 +114,28 @@ public class ServiceManager
 				
 				List<CustomEntityFilteringCritiria> customEntityFilteringCritirias = getListOfCustomEntityFilteringCritiriaForFormSpecs(formSpec.getFormSpecId()+"");
 				
+				List<StockFormConfiguration> stockFormConfigurations = getStockFieldConfigurationsForSync(formSpec.getFormSpecId()+"");
+				
+				List<OfflineListUpdateConfiguration> offlineListUpdateConfiguration = getOfflineListUpdateConfigurationsForSync(formSpec.getFormSpecId()+"");
+				
+				List<OfflineCustomEntityUpdateConfiguration> offlineCustomEntityUpdateConfiguration = getOfflineCustomEntityUpdateConfigurationForSync(formSpec.getFormSpecId()+"");
+				
+				List<FieldSpecFilter> formFieldSpecFilters = getFieldSpecFiltersFormFormSpecIds(formSpec.getFormSpecId()+"", FieldSpecFilter.FIELD_IS_FORMFIELD);
+				
+				List<FieldSpecFilter> formSectionFieldSpecFilters = getFieldSpecFiltersFormFormSpecIds(formSpec.getFormSpecId()+"", FieldSpecFilter.FIELD_IS_SECTIONFIELD);
+				
+				List<PaymentMapping> paymentMappings = getPaymentMappingByFormSpec(uniqueIdsCsv);
+				
+				List<FormSpecDataSource> formSpecDataSource =  getFormSpecDataSourceUsingUniqueId(uniqueIdsCsv);
+				if(formSpecDataSource != null && !formSpecDataSource.isEmpty()){
+					for (FormSpecDataSource formSpecDataSource2 : formSpecDataSource) {
+						formSpecDataSource2.setDataSourceRequestHeaders(null);
+						formSpecDataSource2.setDataSourceRequestParams(null);
+						formSpecDataSource2.setDataSourceResponseMappings(null);
+					}
+				}
+				
+				
 				formSpecContainer.setFormSpecs(formSpecs);
 				formSpecContainer.setPageSpecs(pageSpecs);
 				formSpecContainer.setFields(fieldSpecs);
@@ -116,6 +157,43 @@ public class ServiceManager
 				formSpecContainer.setFieldValidationCritirias(fieldValidationCritirias);
 				formSpecContainer.setFormFilteringCriterias(formFilteringCritirias);
 				formSpecContainer.setCustomEntityFilteringCritirias(customEntityFilteringCritirias);
+				formSpecContainer.setStockFormConfigurations(stockFormConfigurations);
+				formSpecContainer.setOfflineListUpdateConfigurations(offlineListUpdateConfiguration);
+				formSpecContainer.setOfflineCustomEntityUpdateConfigurations(offlineCustomEntityUpdateConfiguration);
+				formSpecContainer.setFormFieldSpecFilters(formFieldSpecFilters);
+				formSpecContainer.setFormSectionFieldSpecFilters(formSectionFieldSpecFilters);
+				formSpecContainer.setPaymentMappings(paymentMappings);
+				formSpecContainer.setFormSpecDataSource(formSpecDataSource);
+				
+				String formSpecDataSourceIds = "-1";
+				if(formSpecDataSource != null && !formSpecDataSource.isEmpty()){
+					formSpecDataSourceIds = Api.toCSV(formSpecDataSource, "formSpecDataSourceId", CsvOptions.NONE);
+					List<DataSourceRequestHeader> dataSourceRequestHeaders = getDataSourceRequestHeaders(formSpecDataSourceIds);
+					formSpecContainer.setDataSourceRequestHeaders(dataSourceRequestHeaders);
+					
+					List<DataSourceRequestParam> dataSourceRequestParams = getDataSourceRequestParam(formSpecDataSourceIds); 
+					formSpecContainer.setDataSourceRequestParams(dataSourceRequestParams);
+					
+					List<DataSourceResponseMapping> dataSourceResponseMappings = getDataSourceResponseMapping(formSpecDataSourceIds);
+					formSpecContainer.setDataSourceResponseMappings(dataSourceResponseMappings);
+					
+				}
+				
+				List<FormSpecPermission> formSpecPermissions = geFormSpecPermissions(formSpec.getUniqueId(),true);
+				formSpecContainer.setFormSpecPermissions(formSpecPermissions);
+				
+				List<FormSpecConfigSaveOnOtpVerify> saveFormOnOtpVerifyList = getFormSpecConfigSaveOnOtpVerifyList(uniqueIdsCsv);
+				formSpecContainer.setSaveFormOnOtpVerify(saveFormOnOtpVerifyList);
+				
+				List<JobFormMapBean> jobFormMapBeans = getJobFormMapBeans(formSpec.getFormSpecId()+"",null);
+				formSpecContainer.setJobFormMapBeans(jobFormMapBeans);
+				
+				List<WorkSpecFormSpecFollowUp> workSpecFormSpecFollowUpList = getWorkSpecFormSpecFollowUpForSync(formSpec.getFormSpecId()+"","1970-01-01 00:00:00");
+				List<WorkFormFieldMap> workFormFieldMaps = getWorkFormFieldMappingByWorkSpecFormSpecFollowUpIds(Api.toCSV(workSpecFormSpecFollowUpList, "workSpecFormSpecFollowUpId", CsvOptions.NONE));
+				
+				formSpecContainer.setWorkSpecFormSpecFollowUp(workSpecFormSpecFollowUpList);
+				formSpecContainer.setWorkFormFieldMap(workFormFieldMaps);
+				
 				
 			}
 			
@@ -124,6 +202,65 @@ public class ServiceManager
 			LOGGER.error("Got Exception while getExportFormSpecData() : "+e);
 			e.printStackTrace();
 		}
+	}
+
+	private List<WorkFormFieldMap> getWorkFormFieldMappingByWorkSpecFormSpecFollowUpIds(String workSpecFormSpecFollowUpIds) {
+		// TODO Auto-generated method stub
+		return effortDao.getWorkFormFieldMappingByWorkSpecFormSpecFollowUpIds(workSpecFormSpecFollowUpIds);
+	}
+
+	private List<WorkSpecFormSpecFollowUp> getWorkSpecFormSpecFollowUpForSync(String formSpecIds,
+			String syncDate) {
+		return effortDao.getWorkSpecFormSpecFollowUpForSync(formSpecIds,syncDate);
+	}
+
+	private List<JobFormMapBean> getJobFormMapBeans(String formSpecIds, String syncDate) {
+		return effortDao.getJobFormMapBeans(formSpecIds,syncDate);
+	}
+
+	private List<FormSpecConfigSaveOnOtpVerify> getFormSpecConfigSaveOnOtpVerifyList(String uniqueIdsCsv) {
+		return effortDao.getFormSpecConfigSaveOnOtpVerifyList(uniqueIdsCsv);
+	}
+
+	private List<FormSpecPermission> geFormSpecPermissions(String uniqueId, boolean check) {
+		return effortDao.getFormSpecPermissions(uniqueId,check);
+	}
+
+	private List<DataSourceResponseMapping> getDataSourceResponseMapping(String formSpecDataSourceIds) {
+		return effortDao.getDataSourceResponseMapping(formSpecDataSourceIds);
+	}
+
+	private List<DataSourceRequestParam> getDataSourceRequestParam(String formSpecDataSourceIds) {
+		return effortDao.getDataSourceRequestParam(formSpecDataSourceIds);
+	}
+
+	private List<DataSourceRequestHeader> getDataSourceRequestHeaders(String formSpecDataSourceIds) {
+		return effortDao.getDataSourceRequestHeaders(formSpecDataSourceIds);
+	}
+
+	private List<FormSpecDataSource> getFormSpecDataSourceUsingUniqueId(String uniqueIdsCsv) {
+		return effortDao.getFormSpecDataSourceUsingUniqueId(uniqueIdsCsv);
+	}
+
+	private List<PaymentMapping> getPaymentMappingByFormSpec(String uniqueIds) {
+		return effortDao.getPaymentMappingByFormSpec(uniqueIds);
+	}
+
+	private List<FieldSpecFilter> getFieldSpecFiltersFormFormSpecIds(String formSpecIds, int formfieldType) 
+	{
+		return effortDao.getFieldSpecFiltersFormFormSpecIds(formSpecIds,formfieldType);
+	}
+
+	private List<OfflineCustomEntityUpdateConfiguration> getOfflineCustomEntityUpdateConfigurationForSync(String formSpecIds) {
+		return effortDao.getOfflineCustomEntityUpdateConfigurationForSync(formSpecIds);
+	}
+
+	private List<OfflineListUpdateConfiguration> getOfflineListUpdateConfigurationsForSync(String formSpecIds) {
+		return effortDao.getOfflineListUpdateConfigurationsForSync(formSpecIds);
+	}
+
+	private List<StockFormConfiguration> getStockFieldConfigurationsForSync(String formSpecIds) {
+		return effortDao.getStockFieldConfigurationsForSync(formSpecIds);
 	}
 
 	private List<CustomEntityFilteringCritiria> getListOfCustomEntityFilteringCritiriaForFormSpecs(String formSpecIds) {

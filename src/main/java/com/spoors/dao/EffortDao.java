@@ -15,7 +15,11 @@ import com.spoors.beans.CompanyFont;
 import com.spoors.beans.CustomEntityFilteringCritiria;
 import com.spoors.beans.CustomerAutoFilteringCritiria;
 import com.spoors.beans.CustomerFilteringCritiria;
+import com.spoors.beans.DataSourceRequestHeader;
+import com.spoors.beans.DataSourceRequestParam;
+import com.spoors.beans.DataSourceResponseMapping;
 import com.spoors.beans.EmployeeFilteringCritiria;
+import com.spoors.beans.FieldSpecFilter;
 import com.spoors.beans.FieldValidationCritiria;
 import com.spoors.beans.FormCleanUpRule;
 import com.spoors.beans.FormFieldGroupSpec;
@@ -30,9 +34,19 @@ import com.spoors.beans.FormSectionFieldSpecValidValue;
 import com.spoors.beans.FormSectionFieldSpecsExtra;
 import com.spoors.beans.FormSectionSpec;
 import com.spoors.beans.FormSpec;
+import com.spoors.beans.FormSpecConfigSaveOnOtpVerify;
+import com.spoors.beans.FormSpecDataSource;
+import com.spoors.beans.FormSpecPermission;
+import com.spoors.beans.JobFormMapBean;
 import com.spoors.beans.ListFilteringCritiria;
+import com.spoors.beans.OfflineCustomEntityUpdateConfiguration;
+import com.spoors.beans.OfflineListUpdateConfiguration;
+import com.spoors.beans.PaymentMapping;
 import com.spoors.beans.RemainderFieldsMap;
+import com.spoors.beans.StockFormConfiguration;
 import com.spoors.beans.VisibilityDependencyCriteria;
+import com.spoors.beans.WorkFormFieldMap;
+import com.spoors.beans.WorkSpecFormSpecFollowUp;
 import com.spoors.setting.Sqls;
 import com.spoors.util.Api;
 
@@ -347,6 +361,165 @@ public class EffortDao {
 					new BeanPropertyRowMapper<CustomEntityFilteringCritiria>(CustomEntityFilteringCritiria.class));
 		}
 		return customEntityFilteringCritiria;
+	}
+
+	public List<StockFormConfiguration> getStockFieldConfigurationsForSync(String formSpecIds) {
+		List<StockFormConfiguration> stockFormConfigurations = new ArrayList<StockFormConfiguration>();
+		
+		if(!Api.isEmptyString(formSpecIds))
+		{
+			String sql = Sqls.SELECT_STOCK_FORM_CONFIGURATIONS_FOR_FORMSPEC_IDS.replace(":formSpecIds", formSpecIds);
+			return jdbcTemplate.query(sql, new BeanPropertyRowMapper<StockFormConfiguration>(StockFormConfiguration.class));
+		}
+		return stockFormConfigurations;
+	}
+
+	public List<OfflineListUpdateConfiguration> getOfflineListUpdateConfigurationsForSync(String formSpecIds) {
+		List<OfflineListUpdateConfiguration> offlineListUpdateConfiguration = new ArrayList<OfflineListUpdateConfiguration>();
+		
+		if(!Api.isEmptyString(formSpecIds))
+		{
+			String sql = Sqls.SELECT_OFFLINE_LIST_UPDATE_FORM_CONFIGURATIONS_FOR_FORMSPEC_IDS.replace(":formSpecIds", formSpecIds);
+			return jdbcTemplate.query(sql, 	new BeanPropertyRowMapper<OfflineListUpdateConfiguration>(OfflineListUpdateConfiguration.class));
+		}
+		return offlineListUpdateConfiguration;
+	}
+
+	public List<OfflineCustomEntityUpdateConfiguration> getOfflineCustomEntityUpdateConfigurationForSync(
+			String formSpecIds) {
+		List<OfflineCustomEntityUpdateConfiguration> offlineCustomEntityUpdateConfiguration = new ArrayList<OfflineCustomEntityUpdateConfiguration>();
+		
+		if(!Api.isEmptyString(formSpecIds)) {
+			String sql=Sqls.SELECT_OFFLINE_CUSTOM_ENTITY_UPDATE_FORM_CONFIGURATIONS_FOR_FORMSPEC_IDS.replace(":formSpecIds", formSpecIds);
+			return jdbcTemplate.query(sql, new BeanPropertyRowMapper<OfflineCustomEntityUpdateConfiguration>(OfflineCustomEntityUpdateConfiguration.class));
+		}
+		return offlineCustomEntityUpdateConfiguration;
+	}
+
+	public List<FieldSpecFilter> getFieldSpecFiltersFormFormSpecIds(String formSpecIds, int formfieldType) {
+		String sql = "";
+		if (formfieldType == FieldSpecFilter.FIELD_IS_FORMFIELD) {
+			sql = Sqls.SELECT_FORM_FIELD_SPEC_FILTERS_FORMSPECIDS.replace(":formSpecIds", formSpecIds);
+		} else {
+			sql = Sqls.SELECT_FORM_SECTION_FIELD_SPEC_FILTERS_FORMSPECIDS.replace(":formSpecIds", formSpecIds);
+		}
+		List<FieldSpecFilter> fieldSpecFilters = jdbcTemplate
+				.query(sql,	new BeanPropertyRowMapper<FieldSpecFilter>(FieldSpecFilter.class));
+		return fieldSpecFilters;
+	}
+
+	public List<PaymentMapping> getPaymentMappingByFormSpec(String uniqueIds) {
+		List<PaymentMapping> paymentMappings=new ArrayList<PaymentMapping>();
+		String sql = Sqls.SELECT_PAYMENT_MAPPINGS_BY_FORMSPEC.replace(":formSpecUniqueIds", uniqueIds);
+		
+		paymentMappings=jdbcTemplate.query(sql, new BeanPropertyRowMapper<PaymentMapping>(PaymentMapping.class));
+
+		return paymentMappings;
+	}
+
+	public List<FormSpecDataSource> getFormSpecDataSourceUsingUniqueId(String formSpecUniqueIdCsv) {
+		List<FormSpecDataSource> formSpecDatSource = new ArrayList<FormSpecDataSource>();
+		if(!Api.isEmptyString(formSpecUniqueIdCsv)){
+		String sql = Sqls.SELECT_FORMSPEC_DATA_SOURCE.replace(":uniqueId",formSpecUniqueIdCsv);
+		formSpecDatSource = jdbcTemplate.query(sql, new BeanPropertyRowMapper<FormSpecDataSource>(FormSpecDataSource.class)); 
+		}
+		return formSpecDatSource;
+	}
+
+	public List<DataSourceRequestHeader> getDataSourceRequestHeaders(String formSpecDataSourceIds) {
+		String sql = Sqls.SELECT_DATA_SOURCE_REQUEST_HEADERS.replace(":formSpecDataSourceIds", formSpecDataSourceIds);
+		List<DataSourceRequestHeader> dataSourceRequestHeader = jdbcTemplate.query(sql, 
+				new BeanPropertyRowMapper<DataSourceRequestHeader>(DataSourceRequestHeader.class));
+		return dataSourceRequestHeader ;
+	}
+
+	public List<DataSourceRequestParam> getDataSourceRequestParam(
+			String formSpecDataSourceIds) {
+		String sql = Sqls.SELECT_DATA_SOURCE_REQUEST_PARAMS.replace(":formSpecDataSourceIds", formSpecDataSourceIds);
+		List<DataSourceRequestParam> dataSourceRequestParams = jdbcTemplate.query(sql, new BeanPropertyRowMapper<DataSourceRequestParam>(DataSourceRequestParam.class));
+		return dataSourceRequestParams ;
+	}
+
+	public List<DataSourceResponseMapping> getDataSourceResponseMapping(
+			String formSpecDataSourceIds) {
+		String sql = Sqls.SELECT_DATA_SOURCE_RESPONSE_MAPPING.replace(":formSpecDataSourceIds", formSpecDataSourceIds);
+		List<DataSourceResponseMapping> dataSourceResponseMapping = jdbcTemplate.query(sql, 
+				new BeanPropertyRowMapper<DataSourceResponseMapping>(DataSourceResponseMapping.class));
+		return dataSourceResponseMapping ;
+	}
+
+	public List<FormSpecPermission> getFormSpecPermissions(String uniqueId, boolean check) {
+		List<FormSpecPermission> formSpecPermission = new ArrayList<FormSpecPermission>();
+		String sql = "";
+		if(check)
+		{
+			sql = Sqls.SELECT_FORM_SPEC_PERMISSIONS.replace(":AND", "AND enable = 1");
+		}else
+		{
+			sql = Sqls.SELECT_FORM_SPEC_PERMISSIONS.replace(":AND", "");
+		}
+		try {
+			formSpecPermission = jdbcTemplate.query(sql, new Object[] {uniqueId}, new int[] {Types.VARCHAR},
+					new BeanPropertyRowMapper<FormSpecPermission>(FormSpecPermission.class));
+		} catch (Exception e) {
+			LOGGER.info("getFormSpecPermissions formSpecUniqueId :" + uniqueId +" Exception : "+e);
+			LOGGER.error("getFormSpecPermissions formSpecUniqueId :" + uniqueId +" Exception : "+e);
+			e.printStackTrace();
+		}
+		return formSpecPermission;
+	}
+	
+	public List<FormSpecConfigSaveOnOtpVerify> getFormSpecConfigSaveOnOtpVerifyList(String uniqueIdsCsv) {
+		String sql = Sqls.SELECT_FORMSPEC_CONFIG_SAVE_ON_OTP_VERIFY.replace(":formSpecUniqueIds", uniqueIdsCsv);
+		List<FormSpecConfigSaveOnOtpVerify> formSpecConfigSaveOnOtpVerifyList = new ArrayList<>();
+		if (!Api.isEmptyString(uniqueIdsCsv)) {
+			formSpecConfigSaveOnOtpVerifyList = jdbcTemplate.query(sql, 
+				new BeanPropertyRowMapper<FormSpecConfigSaveOnOtpVerify>(FormSpecConfigSaveOnOtpVerify.class));
+		} 
+		return formSpecConfigSaveOnOtpVerifyList;
+	}
+
+	public List<JobFormMapBean> getJobFormMapBeans(String formSpecIds, String syncDate) {
+		if (Api.isEmptyString(syncDate)) {
+			syncDate = "1970-01-01T00:00:00Z";
+		}
+		syncDate = Api.getDateTimeFromXsd(syncDate);
+
+		if (!Api.isEmptyString(formSpecIds)) {
+			String sql = Sqls.SELECT_JOB_FORMFIELD_MAPPING.replace(
+					":formSpecIds", formSpecIds);
+			return jdbcTemplate.query(sql, new Object[] { syncDate },new int[] {Types.VARCHAR},
+					new BeanPropertyRowMapper<JobFormMapBean>(
+							JobFormMapBean.class));
+		}
+		return new ArrayList<JobFormMapBean>();
+	}
+
+	public List<WorkSpecFormSpecFollowUp> getWorkSpecFormSpecFollowUpForSync(String formSpecIds, String syncDate) {
+		if (Api.isEmptyString(syncDate)) {
+			syncDate = "1970-01-01T00:00:00Z";
+		}
+		syncDate = Api.getDateTimeFromXsd(syncDate);
+
+		if (!Api.isEmptyString(formSpecIds)) {
+			String sql = Sqls.SELECT_WORKSPEC_FORMSPEC_FOLLOW_UP_FOR_SYNC.replace(
+					":formSpecIds", formSpecIds);
+			return jdbcTemplate.query(sql, new BeanPropertyRowMapper<WorkSpecFormSpecFollowUp>(
+							WorkSpecFormSpecFollowUp.class));
+		}
+		return new ArrayList<WorkSpecFormSpecFollowUp>();
+	}
+
+	public List<WorkFormFieldMap> getWorkFormFieldMappingByWorkSpecFormSpecFollowUpIds(
+			String workSpecFormSpecFollowUpIds) {
+		if(!Api.isEmptyString(workSpecFormSpecFollowUpIds))
+		{
+			String sql = Sqls.SELECT_WORK_FORM_FIELD_MAPS_BY_WORKSPEC_FORMSPEC_FOLLOW_UP_IDS.replace(
+					":workSpecFormSpecFollowUpIds", workSpecFormSpecFollowUpIds);;
+			return jdbcTemplate.query(sql, new BeanPropertyRowMapper<WorkFormFieldMap>(
+							WorkFormFieldMap.class));
+		}
+		return new ArrayList<WorkFormFieldMap>();
 	}
 
 	
