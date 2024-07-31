@@ -5,12 +5,16 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
@@ -198,6 +202,165 @@ public class Api {
 			LOGGER.info("in toCSV", ex);
 			return null;
 		}
+	}
+	
+	public static String processStringValuesList(List<String> givenvalues) {
+		if (givenvalues != null) {
+			List<String> tempList = new ArrayList<String>();
+			for (String string : givenvalues) {
+				if(!Api.isEmptyString(string))
+				{
+					tempList.add(new StringBuilder("'").append(string.replaceAll("'", "")).append("'").toString());
+				}
+			}
+
+			return Api.toCSV(tempList);
+		}
+		return null;
+	}
+	
+	public static String toCSV(List<?> list) {
+		if (list != null) {
+			StringBuilder csv = new StringBuilder("");
+			for (Object obj : list) {
+				if(obj != null)
+				{
+					if (csv.length() > 0) {
+						csv.append(", ");
+					}
+	
+					csv.append(obj.toString());
+				}
+			}
+
+			return csv.toString();
+		} else {
+			return null;
+		}
+	}
+	
+	public static String getDateTimeFromXsd(String datetimeXsd) {
+		String syncDateFormat = Api.getConvertDateTimesToGivenType(datetimeXsd,DateConversionType.STADARD_TO_XSD,"");
+		Calendar calendar = DatatypeConverter.parseDateTime(syncDateFormat);
+		String datetime = Api.getDateTimeInUTC(calendar);
+		datetime = datetime.substring(0, 19);
+		return datetime;
+	}
+	
+	public  static String getConvertDateTimesToGivenType(String value,DateConversionType dateConversionType,String tzo){
+		try {
+			
+			if(value!=null && !Api.isEmptyString(value.toString())){
+			
+				if(dateConversionType==DateConversionType.STADARD_TO_XSD){
+					value=toUtcXsd(value.toString());
+			    	
+			    }else if(dateConversionType==DateConversionType.XSD_TO_STADARD){
+			    	value=getDateTimeFromXsd(value.toString());
+			    }else if(dateConversionType==DateConversionType.DATETIME_TO_UTC_DATETIME_WITH_TZO){
+			    	Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+			    	calendar.setTimeInMillis(getDateTimeInUTC(value.toString()).getTime());
+			    	value=getDateTimeInTzToUtc(calendar, tzo) ;
+			    }else if(dateConversionType==DateConversionType.UTC_DATETIME_TO_DATETIME_WITH_TZO){
+			    	value =getDateTimeInTz24(value.toString(), tzo);
+			    }
+			    else if(dateConversionType==DateConversionType.UTC_DATETIME_TO_DATETIME_DISPLAY_FORMAT){
+			    	Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+			    	calendar.setTimeInMillis(getDateTimeInUTC(value.toString()).getTime());
+			    	value =getDateTimeInTz(calendar, tzo, 1);
+			    }
+			    else if(dateConversionType==DateConversionType.UTC_DATETIME_TO_IST){
+			    	Calendar calendar = Calendar.getInstance();
+			    	calendar.setTimeInMillis(getDateTimeInUTC(value.toString()).getTime());
+			    	value =getDateTimeInTzIst(calendar, tzo);
+			    }
+	    	  }
+			  
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		  return value;
+		}
+	
+	public static String toUtcXsd(String date) throws ParseException {
+		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+		try {
+			calendar.setTimeInMillis(getDateTimeInUTC(date).getTime());
+		} catch (ParseException e) {
+			try {
+				calendar = DatatypeConverter.parseDateTime(date);
+			} catch (IllegalArgumentException ee) {
+				throw e;
+			}
+		}
+		return DatatypeConverter.printDateTime(calendar);
+	}
+	
+	public static String getDateTimeInTzToUtc(Calendar calendar, String offset) {
+		calendar.add(Calendar.MINUTE, Integer.parseInt(offset));
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		format.setTimeZone(TimeZone.getTimeZone("GMT"));
+		return format.format(calendar.getTime());
+	}
+	
+	public static String getDateTimeInTz24(String dateTime, String offset) {
+		String dateTime1 = removeTrailingZeroFromDateTime(dateTime);
+		Date date =getDateFromString(dateTime1);
+		Calendar calendar= getCalendar(date);
+		return getDateTimeWithGivenTime(calendar, offset);
+	}
+	
+public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
+		
+		if(datetimeXsd == null || datetimeXsd.trim().length() == 0){
+			return datetimeXsd;
+		}
+		if(datetimeXsd.trim().length() <= 19){
+			return datetimeXsd;
+		}
+		if(!datetimeXsd.trim().endsWith(".0"))
+			return datetimeXsd;
+		String datetime = datetimeXsd.substring(0, 19);
+		return datetime;
+	}
+
+	public static Date getDateFromString(String dateTime) {
+		Date date;
+		try {
+			date = DateUtils.parseDate(dateTime,
+					new String[] { "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd hh:mm:ss a", "yyyy-MM-dd HH:mm:ss.s",
+							"yyyy-MM-dd", "dd-MM-yyyy", "yyyy-MM-dd hh:mm a", "yyyy-MM-dd hh:mm", "MM/dd/yyyy",
+							"dd/MM/yyyy h:mm:ss a", "MM/dd/yyyy HH:mm:ss", "MM/dd/yyyy", "yyyy/MM/dd HH:mm:ss.SSS",
+							"EEE MMM dd HH:mm:ss zzz yyyy" });
+			return date;
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static String getDateTimeWithGivenTime(Calendar calendar, String offset) {
+		calendar.add(Calendar.MINUTE, -Integer.parseInt(offset));
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		return format.format(calendar.getTime());
+	}
+
+	public static String getDateTimeInTzIst(Calendar calendar, String offset) {
+		calendar.add(Calendar.MINUTE, -Integer.parseInt(offset));
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm a");
+		format.setTimeZone(TimeZone.getTimeZone("IST"));
+		return format.format(calendar.getTime());
+	}
+	
+	public static String getDateTimeInUTC(Calendar calendar) {
+		Date date = calendar.getTime();
+		return getDateTimeInUTC(date);
+	}
+	
+	public static String getDateTimeInUTC(Date date) {
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		format.setTimeZone(TimeZone.getTimeZone("GMT"));
+		return format.format(date);
 	}
 
 }
