@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoors.beans.FormSpecContainer;
 import com.spoors.config.AppConfig;
 import com.spoors.manager.ServiceManager;
+import com.spoors.manager.SqliteManager;
 import com.spoors.util.Api;
 
 import ch.qos.logback.classic.Logger;
@@ -31,6 +33,9 @@ public class ApiController {
     
     public AppConfig appConfig;
     public ServiceManager serviceManager;
+    
+    @Autowired
+    public SqliteManager sqliteManager;
 	
 	public ApiController(AppConfig appConfig,ServiceManager serviceManager) {
 		this.appConfig = appConfig;
@@ -54,6 +59,9 @@ public class ApiController {
 	            	serviceManager.getExportFormSpecData(formSpecUniqueId,formSpecContainer,logtext);
 	            	formSpecContainerList.add(formSpecContainer);
 	            }
+	        	
+	        	sqliteManager.saveFormSpecDataToSqlite(formSpecContainerList);
+	        	
 	        } else {
 	            System.out.println("\"forms\" is not an array");
 	            LOGGER.info("forms is not an array");
