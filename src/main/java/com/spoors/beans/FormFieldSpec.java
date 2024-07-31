@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
@@ -13,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonProperty.Access;
  * 
  */
 
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormFieldSpec extends FormFieldSpecMaster {
 	public final static int COMPUTED_FIELD_TYPE_COMPUTED = 1;

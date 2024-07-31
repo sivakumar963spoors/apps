@@ -17,6 +17,9 @@ import org.springframework.context.ApplicationContext;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonFactory.Feature;
 import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -197,6 +200,27 @@ public class Api {
 			LOGGER.debug("in toCSV", ex);
 			LOGGER.info("in toCSV", ex);
 			return null;
+		}
+	}
+	@SuppressWarnings("rawtypes")
+	public static Object fromJson(String json, TypeReference type)
+			throws JsonParseException, JsonMappingException, IOException 
+	{
+		String disableInternFieldNames = "true";
+		
+		if("true".equalsIgnoreCase(disableInternFieldNames))
+		{
+			JsonFactory f = new JsonFactory();
+	        f.disable(Feature.INTERN_FIELD_NAMES);
+	        ObjectMapper mapper = new ObjectMapper(f);
+	        mapper. configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+			return mapper.readValue(json, type);
+		}
+		else
+		{
+			ObjectMapper mapper = new ObjectMapper();
+			mapper. configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+			return mapper.readValue(json, type);
 		}
 	}
 

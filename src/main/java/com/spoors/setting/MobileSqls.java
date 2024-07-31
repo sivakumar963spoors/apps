@@ -20,6 +20,23 @@ public class MobileSqls {
 	public static final String FORM_FIELDS_COLOR_DEPENDENCY_CRITERIAS = "CREATE TABLE form_fields_Color_dependency_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORM_CLEAN_UP_RULES = "CREATE TABLE form_clean_up_rules (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORMS_SPECS_CUSTOMER_AUTO_FILTERING_CRITERIAS = "CREATE TABLE forms_specs_customer_auto_filtering_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String REMAINDER_FIELDS_MAP = "CREATE TABLE remainder_fields_map (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	
+	public static final String FORMS_SPECS_CUSTOMER_FILTERING_CRITERIAS = "CREATE TABLE forms_specs_customer_filtering_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_EMPLOYEE_FILTERING_CRITERIAS = "CREATE TABLE forms_specs_employee_filtering_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_FORM_FILTERING_CRITIRIAS = "CREATE TABLE forms_specs_form_filtering_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_FIELD_VALIDATION_CRITIRIAS = "CREATE TABLE forms_specs_field_validation_critirias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_STOCK_FORM_CONFIGURATIONS = "CREATE TABLE forms_specs_stock_form_configurations (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_OFFLINE_LIST_UPDATE_CONFIGURATIONS = "CREATE TABLE forms_specs_offline_list_update_configurations (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_OFFLINE_CUSTOMENTITY_UPDATE_CONFIGURATIONS ="CREATE TABLE forms_specs_offline_customEntity_update_configurations (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+
+	public static final String FORMS_SPECS_WORKSPEC_FORMSPEC_FOLLOW_UP = "CREATE TABLE forms_specs_workspec_formspec_follow_up (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_WORK_FORM_FIELD_MAP = "CREATE TABLE forms_specs_work_form_field_map (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORM_FIELD_GROUP_SPECS = "CREATE TABLE form_field_group_specs (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	
+	public static final String FORM_FIELD_SPECS_EXTRA = "CREATE TABLE form_field_specs_extra (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORM_SECTION_FIELD_SPECS_EXTRA = "CREATE TABLE form_section_field_specs_extra (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_CUSTOM_ENTITY_FILTERING_CRITIRIAS ="CREATE TABLE forms_specs_custom_entity_filtering_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 
 
 }

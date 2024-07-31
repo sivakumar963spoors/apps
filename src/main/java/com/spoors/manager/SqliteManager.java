@@ -1,6 +1,13 @@
 package com.spoors.manager;
 
 import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -9,6 +16,10 @@ import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spoors.beans.CustomEntityFilteringCritiria;
 import com.spoors.beans.CustomerAutoFilteringCritiria;
 import com.spoors.beans.CustomerFilteringCritiria;
 import com.spoors.beans.DataSourceRequestHeader;
@@ -20,11 +31,13 @@ import com.spoors.beans.FormCleanUpRule;
 import com.spoors.beans.FormFieldGroupSpec;
 import com.spoors.beans.FormFieldSpec;
 import com.spoors.beans.FormFieldSpecValidValue;
+import com.spoors.beans.FormFieldSpecsExtra;
 import com.spoors.beans.FormFieldsColorDependencyCriterias;
 import com.spoors.beans.FormFilteringCritiria;
 import com.spoors.beans.FormPageSpec;
 import com.spoors.beans.FormSectionFieldSpec;
 import com.spoors.beans.FormSectionFieldSpecValidValue;
+import com.spoors.beans.FormSectionFieldSpecsExtra;
 import com.spoors.beans.FormSectionSpec;
 import com.spoors.beans.FormSpec;
 import com.spoors.beans.FormSpecConfigSaveOnOtpVerify;
@@ -457,6 +470,39 @@ public class SqliteManager {
 					formFieldGroupSpecAutoIncrementId++;
 				}
 			}
+			
+			currentTime = System.currentTimeMillis();
+ 			List<FormFieldSpecsExtra> formFieldSpecExtraList =  formSpecContainer.getFieldsExtra();
+ 			if(formFieldSpecExtraList != null){
+ 				jsonTable = db.getTable("form_field_specs_extra");
+ 				int fieldSpecsExtraAutoIncrementId = 1;
+ 				for (FormFieldSpecsExtra formFieldSpecExtra : formFieldSpecExtraList ) {
+ 					jsonTable.insert(Api.toJson(formFieldSpecExtra),0,fieldSpecsExtraAutoIncrementId);
+ 					fieldSpecsExtraAutoIncrementId++;
+ 				}
+ 			}
+ 			
+ 			currentTime = System.currentTimeMillis();
+ 			List<FormSectionFieldSpecsExtra> formSectionFieldSpecExtraList =  formSpecContainer.getSectionFieldsExtra();
+ 			if(formSectionFieldSpecExtraList != null){
+ 				jsonTable = db.getTable("form_section_field_specs_extra");
+ 				int sectionFieldSpecExtraAutoIncrementId = 1;
+ 				for (FormSectionFieldSpecsExtra formSectionFieldSpecExtra : formSectionFieldSpecExtraList ) {
+ 					jsonTable.insert(Api.toJson(formSectionFieldSpecExtra),0,sectionFieldSpecExtraAutoIncrementId);
+ 					sectionFieldSpecExtraAutoIncrementId++;
+ 				}
+ 			}
+ 			
+ 			currentTime = System.currentTimeMillis();
+ 			List<CustomEntityFilteringCritiria> customEntityFilteringCritiriaList = formSpecContainer.getCustomEntityFilteringCritirias();
+ 			if(customEntityFilteringCritiriaList!=null) {
+ 				jsonTable = db.getTable("forms_specs_custom_entity_filtering_criterias");
+ 				int formSpecCustomEntityFilteringCriteriaAutoIncrementId = 1;
+ 				for(CustomEntityFilteringCritiria customEntityFilteringCritiria : customEntityFilteringCritiriaList) {
+ 					jsonTable.insert(Api.toJson(customEntityFilteringCritiria),0,formSpecCustomEntityFilteringCriteriaAutoIncrementId);
+ 					formSpecCustomEntityFilteringCriteriaAutoIncrementId++;
+ 				}
+ 			}
 
 			db.commit();
 			db.close();
@@ -473,6 +519,7 @@ public class SqliteManager {
 	private void createSqliteTables(SqlJetDb db) {
 		try {
 		db.createTable(MobileSqls.FORMS_SPECS_LIST_FILTERING_CRITERIAS);
+		db.createTable(MobileSqls.REMAINDER_FIELDS_MAP);
 		
 		db.createTable(MobileSqls.FORMS_SPECS_CUSTOMER_AUTO_FILTERING_CRITERIAS);
 		db.createTable(MobileSqls.FORMS_SPECS_FORM_SPECS_VISIBILITY_MAP);
@@ -491,9 +538,191 @@ public class SqliteManager {
 		db.createTable(MobileSqls.FORMS_SPECS_VISIBILITY_DEPENDENCY_CRITERIAS);
 		db.createTable(MobileSqls.FORM_FIELDS_COLOR_DEPENDENCY_CRITERIAS);
 		db.createTable(MobileSqls.FORM_CLEAN_UP_RULES);
+		
+		db.createTable(MobileSqls.FORMS_SPECS_CUSTOMER_FILTERING_CRITERIAS);
+		db.createTable(MobileSqls.FORMS_SPECS_EMPLOYEE_FILTERING_CRITERIAS);
+		db.createTable(MobileSqls.FORMS_SPECS_FORM_FILTERING_CRITIRIAS);
+		db.createTable(MobileSqls.FORMS_SPECS_FIELD_VALIDATION_CRITIRIAS);
+		db.createTable(MobileSqls.FORMS_SPECS_STOCK_FORM_CONFIGURATIONS);
+		db.createTable(MobileSqls.FORMS_SPECS_OFFLINE_LIST_UPDATE_CONFIGURATIONS);
+		db.createTable(MobileSqls.FORMS_SPECS_OFFLINE_CUSTOMENTITY_UPDATE_CONFIGURATIONS);
+		
+		db.createTable(MobileSqls.FORMS_SPECS_WORKSPEC_FORMSPEC_FOLLOW_UP);
+		db.createTable(MobileSqls.FORMS_SPECS_WORK_FORM_FIELD_MAP);
+		db.createTable(MobileSqls.FORM_FIELD_GROUP_SPECS);
+		db.createTable(MobileSqls.FORM_FIELD_SPECS_EXTRA);
+		db.createTable(MobileSqls.FORM_SECTION_FIELD_SPECS_EXTRA);
+		db.createTable(MobileSqls.FORMS_SPECS_CUSTOM_ENTITY_FILTERING_CRITIRIAS);
+		
+		
 	}catch(Exception e) {
 		
 	}
 	}
+
+	public void importFormSpec(String formSpecUniqueId,String companyId) {
+		FormSpecContainer formSpecContainer = new FormSpecContainer();
+		try {
+			String url = "jdbc:sqlite:/home/spoors/Desktop/SqliteExport/"+formSpecUniqueId+".sqlite";
+			 Class.forName("org.sqlite.JDBC");
+			 Connection conn = DriverManager.getConnection(url);
+             Statement stmt = conn.createStatement();
+             
+             
+             List<ListFilteringCritiria> listFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_list_filtering_criterias",ListFilteringCritiria.class, stmt);
+             formSpecContainer.setListFilteringCriterias(listFilteringCritiriaList);
+             
+             List<RemainderFieldsMap> remainderFieldsMap = fetchDataFromSqliteAndMapToBean("SELECT * FROM remainder_fields_map",RemainderFieldsMap.class, stmt);
+             formSpecContainer.setRemainderFieldsMap(remainderFieldsMap);
+ 			
+
+             List<FormSpecPermission> formSpecPermissionList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_spec_permissions",FormSpecPermission.class, stmt);
+             formSpecContainer.setFormSpecPermissions(formSpecPermissionList);
+             
+ 			
+
+             List<FormSpecConfigSaveOnOtpVerify> formSpecConfigSaveOnOtpVerifyList = fetchDataFromSqliteAndMapToBean("SELECT * FROM save_form_on_otp_verify",FormSpecConfigSaveOnOtpVerify.class, stmt);
+             formSpecContainer.setSaveFormOnOtpVerify(formSpecConfigSaveOnOtpVerifyList);
+             
+             
+             List<CustomerAutoFilteringCritiria> customerAutoFilteringCritiriasList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_customer_auto_filtering_criterias",CustomerAutoFilteringCritiria.class, stmt);
+             formSpecContainer.setCustomerAutoFilteringCritirias(customerAutoFilteringCritiriasList);
+
+ 			
+
+             List<CustomerFilteringCritiria> customerFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_customer_filtering_criterias",CustomerFilteringCritiria.class, stmt);
+             formSpecContainer.setCustomerFilteringCriterias(customerFilteringCritiriaList);
+             
+             
+             
+             List<EmployeeFilteringCritiria> employeeFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_employee_filtering_criterias",EmployeeFilteringCritiria.class, stmt);
+             formSpecContainer.setEmployeeFilteringCriterias(employeeFilteringCritiriaList);
+             
+ 			
+
+             List<FormFilteringCritiria> formFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_form_filtering_criterias",FormFilteringCritiria.class, stmt);
+             formSpecContainer.setFormFilteringCriterias(formFilteringCritiriaList);
+ 			
+
+             List<FieldValidationCritiria> fieldValidationCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_validation_critirias",FieldValidationCritiria.class, stmt);
+             formSpecContainer.setFieldValidationCritirias(fieldValidationCritiriaList);
+             
+             List<StockFormConfiguration> stockFormConfigurationList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_stock_form_configurations",StockFormConfiguration.class, stmt);
+             formSpecContainer.setStockFormConfigurations(stockFormConfigurationList);
+ 			
+
+             List<OfflineListUpdateConfiguration> offlineListUpdateConfigurationList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_offline_list_update_configurations",OfflineListUpdateConfiguration.class, stmt);
+             formSpecContainer.setOfflineListUpdateConfigurations(offlineListUpdateConfigurationList);
+ 			
+
+             List<OfflineCustomEntityUpdateConfiguration> offlineCustomEntityUpdateConfigurationsList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_offline_customEntity_update_configurations",OfflineCustomEntityUpdateConfiguration.class, stmt);
+             formSpecContainer.setOfflineCustomEntityUpdateConfigurations(offlineCustomEntityUpdateConfigurationsList);
+             
+             List<FormSpecDataSource> formSpecDataSourceList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_form_spec_data_source",FormSpecDataSource.class, stmt);
+             formSpecContainer.setFormSpecDataSource(formSpecDataSourceList);
+ 			
+
+             List<JobFormMapBean> jobFormMapBeanList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_job_form_field_spec_mapping",JobFormMapBean.class, stmt);
+             formSpecContainer.setJobFormMapBeans(jobFormMapBeanList);
+ 			
+
+             List<WorkSpecFormSpecFollowUp> workSpecFormSpecFollowUp = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_workspec_formspec_follow_up",WorkSpecFormSpecFollowUp.class, stmt);
+             formSpecContainer.setWorkSpecFormSpecFollowUp(workSpecFormSpecFollowUp);
+            
+             List<WorkFormFieldMap> workFormFieldMaps = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_work_form_field_map",WorkFormFieldMap.class, stmt);
+             formSpecContainer.setWorkFormFieldMap(workFormFieldMaps);
+             
+             List<DataSourceRequestParam> dataSourceRequestParamList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_data_source_request_params",DataSourceRequestParam.class, stmt);
+             formSpecContainer.setDataSourceRequestParams(dataSourceRequestParamList);
+             
+             
+             List<DataSourceRequestHeader> dataSourceRequestHeaderList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_data_source_request_headers",DataSourceRequestHeader.class, stmt);
+             formSpecContainer.setDataSourceRequestHeaders(dataSourceRequestHeaderList);
+
+ 			
+             List<DataSourceResponseMapping> dataSourceResponseMappingList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_data_source_response_mappings",DataSourceResponseMapping.class, stmt);
+             formSpecContainer.setDataSourceResponseMappings(dataSourceResponseMappingList);
+
+             List<FormFieldSpec> formFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_fields",FormFieldSpec.class, stmt);
+             formSpecContainer.setFields(formFieldSpecList);
+
+             List<FormSectionFieldSpec> formSectionFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_section_fields",FormSectionFieldSpec.class, stmt);
+             formSpecContainer.setSectionFields(formSectionFieldSpecList);
+             
+             List<FormSpec> formSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_form_specs",FormSpec.class, stmt);
+             formSpecContainer.setFormSpecs(formSpecList);
+
+             List<FormPageSpec> formPageSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_page_specs",FormPageSpec.class, stmt);
+             formSpecContainer.setPageSpecs(formPageSpecList);
+
+             List<FormFieldSpecValidValue> formFieldSpecValidValueList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_valid_values",FormFieldSpecValidValue.class, stmt);
+             formSpecContainer.setFieldValidValues(formFieldSpecValidValueList);
+
+             List<FormSectionSpec> formSectionSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_sections",FormSectionSpec.class, stmt);
+             formSpecContainer.setSections(formSectionSpecList);
+             
+             List<FormSectionFieldSpecValidValue> formSectionFieldSpecValidValueList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_section_field_valid_values",FormSectionFieldSpecValidValue.class, stmt);
+             formSpecContainer.setSectionFieldValidValues(formSectionFieldSpecValidValueList);
+             
+             List<VisibilityDependencyCriteria> visibilityDependencyCriteriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_visibility_dependency_criterias",VisibilityDependencyCriteria.class, stmt);
+             formSpecContainer.setVisibilityDependencyCriterias(visibilityDependencyCriteriaList);
+
+             List<FormFieldsColorDependencyCriterias> formFieldsColorDependencyCriteriasList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_fields_Color_dependency_criterias",FormFieldsColorDependencyCriterias.class, stmt);
+             formSpecContainer.setFormFieldsColorDependencyCriterias(formFieldsColorDependencyCriteriasList);
+
+             List<FormCleanUpRule> formCleanUpRuleList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_clean_up_rules",FormCleanUpRule.class, stmt);
+             formSpecContainer.setFormCleanUpRule(formCleanUpRuleList);
+
+             List<FormFieldGroupSpec> formFieldGroupSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_field_group_specs",FormFieldGroupSpec.class, stmt);
+             formSpecContainer.setFormFieldGroupSpecs(formFieldGroupSpecs);
+
+             List<FormFieldSpecsExtra> formFieldSpecExtraList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_field_specs_extra",FormFieldSpecsExtra.class, stmt);
+             formSpecContainer.setFieldsExtra(formFieldSpecExtraList);
+ 			
+             List<FormSectionFieldSpecsExtra> formSectionFieldSpecExtraList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_section_field_specs_extra",FormSectionFieldSpecsExtra.class, stmt);
+             formSpecContainer.setSectionFieldsExtra(formSectionFieldSpecExtraList);
+  			
+             List<CustomEntityFilteringCritiria> customEntityFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_custom_entity_filtering_criterias",CustomEntityFilteringCritiria.class, stmt);
+             formSpecContainer.setCustomEntityFilteringCritirias(customEntityFilteringCritiriaList);
+			
+		}catch(Exception e) {
+			
+		}
+		
+	}
+	 public <T> List<T> fetchDataFromSqliteAndMapToBean(String query, Class<T> clazz, Statement stmt) {
+	        ResultSet rs = null;
+	        List<T> items = new ArrayList<>();   
+	        
+	        try {
+	            rs = stmt.executeQuery(query);
+
+	            ObjectMapper objectMapper = new ObjectMapper();
+	            while (rs.next()) {
+	                String jsonData = rs.getString("json_data");
+
+	                try {
+	                    T item = objectMapper.readValue(jsonData, clazz);
+	                    items.add(item);
+	                } catch (JsonParseException | JsonMappingException e) {
+	                    System.err.println("Error parsing JSON: " + e.getMessage());
+	                } catch (IOException e) {
+	                    System.err.println("IO error: " + e.getMessage());
+	                }
+	            }
+	            
+	        } catch (SQLException e) {
+	            System.err.println("SQL error: " + e.getMessage());
+	        } finally {
+	            try {
+	                if (rs != null) {
+	                    rs.close();
+	                }
+	            } catch (SQLException e) {
+	                System.err.println("Error closing ResultSet: " + e.getMessage());
+	            }
+	        }
+	        return items;
+	    }
 
 }

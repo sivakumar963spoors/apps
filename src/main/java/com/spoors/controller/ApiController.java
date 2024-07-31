@@ -75,4 +75,35 @@ public class ApiController {
         return new ResponseEntity<>(responseString, HttpStatus.OK);
     }
 	
+	@PostMapping("/import")
+    public ResponseEntity<String> getImportApplication(@RequestBody String jsonString) {
+       String logtext = "applicationSpecsImport";
+		Map<String,Object> response = new HashMap<>();
+		try {
+			ObjectMapper objectMapper = new ObjectMapper();
+	        JsonNode jsonNode = objectMapper.readTree(jsonString);
+	        String companyId= "";
+	        JsonNode formsNode = jsonNode.get("forms");
+	        if (formsNode.isArray()) {
+	            List<FormSpecContainer> formSpecContainerList = new ArrayList<>();
+	        	for (JsonNode node : formsNode) {
+	            	String formSpecUniqueId = node.asText();
+	            	LOGGER.info(logtext+" --> Forms:- formSpecUniqueId : "+formSpecUniqueId+" starts.");
+	            	sqliteManager.importFormSpec(formSpecUniqueId,companyId);
+	            }
+	        	
+	        	
+	        } else {
+	            System.out.println("\"forms\" is not an array");
+	            LOGGER.info("forms is not an array");
+	        }
+		}catch(Exception e) {
+			 LOGGER.info("Got Exception in getApplicationForExport : "+e);
+			 LOGGER.error("Got Exception in getApplicationForExport : "+e);
+			 e.printStackTrace();
+		}
+		String responseString = Api.getJsonFromGivenObject(response);
+        return new ResponseEntity<>(responseString, HttpStatus.OK);
+    }
+	
 }
