@@ -47,8 +47,14 @@ import com.spoors.beans.StockFormConfiguration;
 import com.spoors.beans.VisibilityDependencyCriteria;
 import com.spoors.beans.WorkFormFieldMap;
 import com.spoors.beans.WorkSpecFormSpecFollowUp;
+import com.spoors.beans.workSpecs.AddingSubTaskEmployeeConfiguration;
+import com.spoors.beans.workSpecs.HideAddSubTaskConfiguration;
+import com.spoors.beans.workSpecs.WorkProcessSubTaskSpec;
+import com.spoors.beans.workSpecs.WorkSpec;
+import com.spoors.beans.workSpecs.WorkToSubTaskAutoFillConfiguration;
 import com.spoors.setting.Sqls;
 import com.spoors.util.Api;
+import com.spoors.util.Api.CsvOptions;
 
 import ch.qos.logback.classic.Logger;
 
@@ -520,6 +526,122 @@ public class EffortDao {
 							WorkFormFieldMap.class));
 		}
 		return new ArrayList<WorkFormFieldMap>();
+	}
+
+	public WorkSpec getWorkSpecByWorkSpecId(String workSpecId) {
+		WorkSpec workSpec = null;
+		try {
+			workSpec = jdbcTemplate.queryForObject(Sqls.SELECT_WORK_SPEC,
+					new Object[] { workSpecId }, new int[] {Types.INTEGER},
+					new BeanPropertyRowMapper<WorkSpec>(WorkSpec.class));
+		}catch(Exception e) {
+			LOGGER.info("Got Exception while getWorkSpecByWorkSpecId : "+e);
+		}
+		return workSpec;
+	}
+
+	public List<WorkProcessSubTaskSpec> getWorkPrcocessSubTaskSpecsForSync(String parentWorkSpecIds) {
+		List<WorkProcessSubTaskSpec> workProcessSubTaskSpecs = new ArrayList<WorkProcessSubTaskSpec>();
+		try
+		{
+			if(!Api.isEmptyString(parentWorkSpecIds))
+			{
+				String sql = Sqls.SELECT_WORK_PROCESS_SUB_TASK_SPEC_BY_PARENT_WORKSPEC_IDS_FOR_SYNC
+						.replace(":workSpecIds", parentWorkSpecIds);
+				workProcessSubTaskSpecs = jdbcTemplate.query(
+						sql,new BeanPropertyRowMapper<WorkProcessSubTaskSpec>(
+								WorkProcessSubTaskSpec.class));
+				
+			}
+			return workProcessSubTaskSpecs;
+		}
+		catch(Exception e)
+		{
+			return workProcessSubTaskSpecs;
+		}
+	}
+
+	public List<WorkSpec> getWorkSpecsForWorkSpecIdsIn(String subTaskWorkSpecIds) {
+		List<WorkSpec> subTaskWorkSpecs = new ArrayList<WorkSpec>();
+		try
+		{
+			if(!Api.isEmptyString(subTaskWorkSpecIds))
+			{
+				String sql = Sqls.SELECT_WORK_SPECS_FOR_WORK_SPEC_IDS_IN.replace(":subTaskWorkSpecIds", subTaskWorkSpecIds);
+				subTaskWorkSpecs =  jdbcTemplate.query(sql, new BeanPropertyRowMapper<WorkSpec>(WorkSpec.class));
+			}
+			return subTaskWorkSpecs;
+		}
+		catch(Exception e)
+		{
+			return subTaskWorkSpecs;
+		}
+	}
+
+	public List<WorkToSubTaskAutoFillConfiguration> getWorkToSubTaskAutoFillConfirationsForSync(
+			List<WorkSpec> workSpecs, int companyId)
+	{
+		String workSpecIdsCsv = Api.toCSV(workSpecs, "workSpecId",CsvOptions.FILTER_NULL_OR_EMPTY);
+		List<WorkToSubTaskAutoFillConfiguration> workToSubTaskAutoFillConfigurations = new ArrayList<WorkToSubTaskAutoFillConfiguration>();
+		if(!Api.isEmptyString(workSpecIdsCsv))
+		{
+			try
+			{
+				String sql = Sqls.SELECT_WORK_TO_SUB_TASK_AUTO_FILL_CONFIGURATIONS_FOR_SYNC.replace(":parentWorkSpecIds",workSpecIdsCsv );
+				workToSubTaskAutoFillConfigurations = jdbcTemplate.query(sql,
+						new Object[] {companyId}, new int[] {Types.INTEGER}, new BeanPropertyRowMapper<WorkToSubTaskAutoFillConfiguration>(
+								WorkToSubTaskAutoFillConfiguration.class));
+			}
+			catch(Exception e)
+			{
+				LOGGER.info("Got Exception in getWorkToSubTaskAutoFillConfirationsForSync :"+e);
+			}
+	
+		}
+		return workToSubTaskAutoFillConfigurations;
+	}
+
+	public List<AddingSubTaskEmployeeConfiguration> getAddingSubTaskEmployeeConfigurationsForSync(
+			String workProcessSubTaskSpecIdsCsv) {
+		List<AddingSubTaskEmployeeConfiguration> subTaskEmpConf = new ArrayList<AddingSubTaskEmployeeConfiguration>();
+		try
+		{
+			if(!Api.isEmptyString(workProcessSubTaskSpecIdsCsv))
+			{
+				String sql = Sqls.SELECT_ADDING_SUB_TASK_EMPLOYEE_CONFIGURATION_BY_WORK_PROCESS_SUB_TASK_SPEC_IDS
+						.replace(":workProcessSubTaskSpecIds", workProcessSubTaskSpecIdsCsv);
+				subTaskEmpConf = jdbcTemplate.query(
+						sql,new BeanPropertyRowMapper<AddingSubTaskEmployeeConfiguration>(
+								AddingSubTaskEmployeeConfiguration.class));
+			}
+			return subTaskEmpConf;
+		}
+		catch(Exception e)
+		{
+			LOGGER.info("got exception while getAddingSubTaskEmployeeConfigurationsForSync : "+ e );
+			return subTaskEmpConf;
+		}
+	}
+
+	public List<HideAddSubTaskConfiguration> getHideAddSubTaskConfigurationForSync(String workSpecIds) {
+		List<HideAddSubTaskConfiguration> hideAddSubTaskConfigurations = new ArrayList<HideAddSubTaskConfiguration>();
+		try
+		{
+			if(!Api.isEmptyString(workSpecIds))
+			{
+				String sql = Sqls.SELECT_HIDE_ADD_SUB_TASK_CONFIGURATION_BY_WORK_PROCESS_SUB_TASK_SPEC_IDS
+						.replace(":parentWorkSpecId", workSpecIds);
+				hideAddSubTaskConfigurations = jdbcTemplate.query(
+						sql,new BeanPropertyRowMapper<HideAddSubTaskConfiguration>(
+								HideAddSubTaskConfiguration.class));
+			}
+			return hideAddSubTaskConfigurations;
+		}
+		catch(Exception e)
+		{
+			LOGGER.info("got exception while getHideAddSubTaskConfigurationForSync : "+ e );
+			return hideAddSubTaskConfigurations;
+		}
 	}
 
 	

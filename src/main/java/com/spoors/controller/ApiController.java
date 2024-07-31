@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoors.beans.FormSpecContainer;
+import com.spoors.beans.workSpecs.WorkSpecContainer;
 import com.spoors.config.AppConfig;
 import com.spoors.manager.ServiceManager;
 import com.spoors.manager.SqliteManager;
@@ -69,10 +70,12 @@ public class ApiController {
 	        
 	        JsonNode worksNode = jsonNode.get("works");
 	        if(worksNode.isArray()) {
+	        	List<WorkSpecContainer> workSpecContainerList = new ArrayList<>();
 	        	for(JsonNode node : worksNode) {
+	        		WorkSpecContainer workSpecContainer = new WorkSpecContainer();
 	        		String workSpecId = node.asText();
 	        		LOGGER.info(logtext+" --> Works:- workSpecId : "+workSpecId+" starts.");
-	        		serviceManager.getExportWorkSpecData(workSpecId);
+	        		serviceManager.getExportWorkSpecData(workSpecId,workSpecContainer);
 	        	}
 	        }else {
 	        	System.out.println("works is not an array");

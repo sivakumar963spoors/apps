@@ -3,6 +3,7 @@ package com.spoors.util;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -442,5 +443,93 @@ public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
 				return long1.longValue() == long2.longValue();
 			}
 		}
+	}
+	
+	public static String toCSVFromList(List<?> list, String fieldName){
+		try{
+			return toCSV(list, fieldName);
+		}catch(Exception ex){
+			
+		}
+		
+		return null;
+	}
+	
+	public static String toCSV(List<?> list, String fieldName)
+			throws IllegalArgumentException, IllegalAccessException {
+		if (list != null) {
+			StringBuilder csv =  new StringBuilder("");
+			for (Object obj : list) {
+				if (csv.length() > 0) {
+					csv.append(",");
+				}
+
+				if (fieldName == null || fieldName.trim().length() == 0) {
+					csv.append(obj.toString());
+				} else {
+					Object val = getFieldValue(obj, fieldName);
+					csv.append(val == null ? "" : val.toString());
+				}
+			}
+
+			return csv.toString();
+		} else {
+			return null;
+		}
+	}
+	
+	public static Object getFieldValue(Object obj, String fieldName)
+			throws IllegalArgumentException, IllegalAccessException {
+		if (fieldName != null && fieldName.trim().length() >= 0) {
+			Field[] fields = obj.getClass().getDeclaredFields();
+			for (Field field : fields) {
+				String name = field.getName();
+				if (name.equalsIgnoreCase(fieldName.trim())) {
+					field.setAccessible(true);
+					return field.get(obj);
+				}
+			}
+		}
+
+		return null;
+	}
+	
+	public static List<Long> listToLongList(List<?> list, String fieldName) {
+		
+		String csv = "";
+		try {
+			csv = toCSV(list, fieldName);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		List<Long> resultStringList = new ArrayList<Long>();
+		
+		if(!isEmptyString(csv)){
+			resultStringList = csvToLongList(csv);
+			return resultStringList;
+		}
+		
+		//return null;
+		return new ArrayList<Long>();
+	}
+	
+	public static List<Long> csvToLongList(String csv) {
+		ArrayList<Long> list = new ArrayList<Long>();
+
+		if (!Api.isEmptyString(csv)) {
+			String[] parts = csv.split(",");
+			for (String part : parts) {
+				if(!Api.isEmptyString(part)) {
+					list.add(Long.parseLong(part.trim()));
+				}
+			}
+		}
+
+		return list;
 	}
 }

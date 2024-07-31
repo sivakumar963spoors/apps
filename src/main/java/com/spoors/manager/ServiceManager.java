@@ -44,6 +44,12 @@ import com.spoors.beans.StockFormConfiguration;
 import com.spoors.beans.VisibilityDependencyCriteria;
 import com.spoors.beans.WorkFormFieldMap;
 import com.spoors.beans.WorkSpecFormSpecFollowUp;
+import com.spoors.beans.workSpecs.AddingSubTaskEmployeeConfiguration;
+import com.spoors.beans.workSpecs.HideAddSubTaskConfiguration;
+import com.spoors.beans.workSpecs.WorkProcessSubTaskSpec;
+import com.spoors.beans.workSpecs.WorkSpec;
+import com.spoors.beans.workSpecs.WorkSpecContainer;
+import com.spoors.beans.workSpecs.WorkToSubTaskAutoFillConfiguration;
 import com.spoors.dao.EffortDao;
 import com.spoors.util.Api;
 import com.spoors.util.Api.CsvOptions;
@@ -404,8 +410,102 @@ public class ServiceManager
 	}
 
 	
-	public void getExportWorkSpecData(String workSpecId) {
+	public void getExportWorkSpecData(String workSpecId, WorkSpecContainer workSpecContainer) {
 		
+		try {
+			WorkSpec workSpec = getWorkSpec(workSpecId);
+			List<WorkSpec> workSpecs = new ArrayList<>();
+			if(workSpec!=null) {
+				workSpecs.add(workSpec);
+				
+				String workSpecIdsForSendingSubTaskSpecs =  Api.toCSVFromList(workSpecs, "workSpecId");
+				
+				List<WorkProcessSubTaskSpec> workProcessSubTaskSpecs = getWorkPrcocessSubTaskSpecsForSync(workSpecIdsForSendingSubTaskSpecs);
+				if(workProcessSubTaskSpecs!=null && workProcessSubTaskSpecs.size()>0)
+				{
+					
+					workSpecContainer.setWorkProcessSubTaskSpecConfigurations(workProcessSubTaskSpecs);
+					
+					String subTaskWorkSpecIds = Api.toCSVFromList(workProcessSubTaskSpecs, "subTaskWorkSpecId");
+					
+					if(!Api.isEmptyString(subTaskWorkSpecIds))
+					{
+						List<WorkSpec> subTaskWorkSpecs = getWorkSpecsForWorkSpecIdsIn(subTaskWorkSpecIds);
+						if(subTaskWorkSpecs!=null && subTaskWorkSpecs.size()>0)
+						{
+							if(workSpecs!=null && workSpecs.size()>0)
+							{
+								workSpecs.removeAll(subTaskWorkSpecs);
+								workSpecs.addAll(subTaskWorkSpecs);
+							}
+						}
+					}
+					
+					List<WorkToSubTaskAutoFillConfiguration> workToSubTaskAutoFillConfigurations = new ArrayList<WorkToSubTaskAutoFillConfiguration>();
+					if(workSpecs!=null && workSpecs.size()>0)
+					{
+						workToSubTaskAutoFillConfigurations = getWorkToSubTaskAutoFillConfirationsForSync(workSpecs,workSpec.getCompanyId());
+					}
+					workSpecContainer.setWorkToSubTaskAutoFillConfigurations(workToSubTaskAutoFillConfigurations);
+					
+					String workProcessSubTaskSpecIdsCsv = Api.toCSVFromList(workProcessSubTaskSpecs, "workProcessSubTaskSpecId");
+					
+					if(!Api.isEmptyString(workProcessSubTaskSpecIdsCsv))
+					{
+						List<AddingSubTaskEmployeeConfiguration> subTaskEmployeeConf = getAddingSubTaskEmployeeConfigurationsForSync(workProcessSubTaskSpecIdsCsv);
+						
+						if(subTaskEmployeeConf != null && subTaskEmployeeConf.size()>0)
+						{
+							workSpecContainer.setWorkProcessSubTaskEmployeesConfigurations(subTaskEmployeeConf);
+						}
+					}
+				}
+				
+				if(workSpecs != null && workSpecs.size() > 0)
+				{
+					List<Long> workSpecIdsList = Api.listToLongList(workSpecs, "workSpecId");
+					List<HideAddSubTaskConfiguration> hideAddSubTaskConfigurations = getHideAddSubTaskConfigurationForSync(Api.toCSV(workSpecIdsList));
+					
+					if(hideAddSubTaskConfigurations != null && hideAddSubTaskConfigurations.size()>0)
+					{
+						workSpecContainer.setHideAddSubTaskConfigurations(hideAddSubTaskConfigurations);
+					}
+				}
+				
+			}
+			
+		}catch(Exception e) {
+			LOGGER.info("Got Exception getExportWorkSpecData  : "+e );
+			LOGGER.error("Got Exception getExportWorkSpecData  : "+e );
+			e.printStackTrace();
+		}
+	}
+
+	private List<HideAddSubTaskConfiguration> getHideAddSubTaskConfigurationForSync(String workSpecIds) {
+		return effortDao.getHideAddSubTaskConfigurationForSync(workSpecIds);
+	}
+
+	private List<AddingSubTaskEmployeeConfiguration> getAddingSubTaskEmployeeConfigurationsForSync(
+			String workProcessSubTaskSpecIdsCsv) {
+		return effortDao.getAddingSubTaskEmployeeConfigurationsForSync(workProcessSubTaskSpecIdsCsv);
+	}
+
+	private List<WorkToSubTaskAutoFillConfiguration> getWorkToSubTaskAutoFillConfirationsForSync(
+			List<WorkSpec> workSpecs, int companyId) 
+	{
+		return effortDao.getWorkToSubTaskAutoFillConfirationsForSync(workSpecs,companyId);
+	}
+
+	private List<WorkSpec> getWorkSpecsForWorkSpecIdsIn(String subTaskWorkSpecIds) {
+		return effortDao.getWorkSpecsForWorkSpecIdsIn(subTaskWorkSpecIds);
+	}
+
+	private List<WorkProcessSubTaskSpec> getWorkPrcocessSubTaskSpecsForSync(String parentWorkSpecIds) {
+		return effortDao.getWorkPrcocessSubTaskSpecsForSync(parentWorkSpecIds);
+	}
+
+	private WorkSpec getWorkSpec(String workSpecId) {
+		return effortDao.getWorkSpecByWorkSpecId(workSpecId);
 	}
 
 }
