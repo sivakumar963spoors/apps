@@ -387,4 +387,60 @@ public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
 		return format.format(date);
 	}
 
+	
+	public static String[] csvToArray(String csv) {
+		String[] parts = null;
+
+		if (!Api.isEmptyString(csv)) {
+			parts = csv.split(",");
+		}
+
+		return parts;
+	}
+	
+	public static boolean isEqualString(String string1, String string2,
+			boolean makeNullIfEmpty) {
+		if (makeNullIfEmpty) {
+			return isEqualString(makeNullIfEmpty(string1),
+					makeNullIfEmpty(string2));
+		} else {
+			return isEqualString(string1, string2);
+		}
+	}
+
+	public static boolean isEqualStringIgnoreCase(String string1, String string2) {
+		if (string1 == null) {
+			if (string2 == null) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return string1.equalsIgnoreCase(string2);
+		}
+	}
+	
+	public static String makeNullIfEmpty(String value) {
+		if (value != null && value.trim().length() == 0) {
+			return null;
+		} else {
+			return value;
+		}
+	}
+	
+	public static boolean isEqualLong(Long long1, Long long2) {
+		if (long1 == null) {
+			if (long2 == null) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			if (long2 == null) {
+				return false;
+			} else {
+				return long1.longValue() == long2.longValue();
+			}
+		}
+	}
 }

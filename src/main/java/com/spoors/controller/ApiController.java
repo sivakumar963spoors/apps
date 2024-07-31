@@ -63,9 +63,23 @@ public class ApiController {
 	        	sqliteManager.saveFormSpecDataToSqlite(formSpecContainerList);
 	        	
 	        } else {
-	            System.out.println("\"forms\" is not an array");
+	            System.out.println("forms is not an array");
 	            LOGGER.info("forms is not an array");
 	        }
+	        
+	        JsonNode worksNode = jsonNode.get("works");
+	        if(worksNode.isArray()) {
+	        	for(JsonNode node : worksNode) {
+	        		String workSpecId = node.asText();
+	        		LOGGER.info(logtext+" --> Works:- workSpecId : "+workSpecId+" starts.");
+	        		serviceManager.getExportWorkSpecData(workSpecId);
+	        	}
+	        }else {
+	        	System.out.println("works is not an array");
+	        	LOGGER.info("works is not an array");
+	        }
+	        
+	        
 		}catch(Exception e) {
 			 LOGGER.info("Got Exception in getApplicationForExport : "+e);
 			 LOGGER.error("Got Exception in getApplicationForExport : "+e);
