@@ -89,4 +89,67 @@ public class Sqls {
 	
 	public static final String SELECT_HIDE_ADD_SUB_TASK_CONFIGURATION_BY_WORK_PROCESS_SUB_TASK_SPEC_IDS = "SELECT `id`, `parentWorkSpecId`, `workProcessSubTaskSpecId`, `actionSpecId`, `createdTime`, `createdBy` FROM `HideAddSubTaskConfiguration` WHERE `parentWorkSpecId` IN ( :parentWorkSpecId )";
 	
+	 public static final String SELECT_WORK_ACTION_SPECS_WITH_EMPGRPIDS = 
+  		   "SELECT was.`workActionSpecId`,was.`workSpecId`,was.`actionName`,was.`actionDesccription`,"+
+                    "was.`formSpecUniqueId`,was.`workFlowApplicable`,was.`createdBy`,was.`modifiedBy`,was.`createdTime`,was.`modifiedTime`,"+
+                    "was.`deleted`,was.`isStartAction`,was.`isEndAction`,was.`formReUse`,"+
+                    "was.`actionLevelAssignment`, was.`manual`, was.`allocationMethod`, was.`assignToImmediateManager`, "+
+                    "was.`immediateManagerActionSpecId`, was.`canOverrideAuto`,  was.`canReassignAction`, was.`employeeGroupBase`,was.`assignToHigherLevelOfWorkAssigne`, was.`assignToPreviousActionsEmp`, was.`previousActionEmployeeActionSpecId`, was.`accessToEditCompletedAction`, "+
+                    "wasAndEgm.empGroupId,GROUP_CONCAT(wasAndEgm.empGroupId) as empGroupIds,was.assignToWorkFieldEmp,was.assignToWorkFieldEmpExpression,was.sendInvitationOnlyWhenActionable,was.showNextActionInvitationWorkFieldGroup,was.nextActionInvitationWorkFieldGroupExp,was.restrictRepetition,was.systemAction,was.`workActionGroupId`,was.workActionActionableType,was.enableOnlineApiForm,was.groupBasedActionAssignment as groupBasedAssignment,was.enableSendInSync,was.enableActionAssignmentGroups,was.workCheckInRequiredForActivity,was.geoLocationCheckRequiredForActivity,was.sequenceOrder "+
+                    "FROM "+
+                    "WorkActionSpecs was "+
+                    "LEFT JOIN WorkActionSpecAndEmployeeGroupsMapping wasAndEgm "+
+                    "ON wasAndEgm.workActionSpecId = was.workActionSpecId AND wasAndEgm.deleted = 0 "+
+                    "WHERE was.workSpecId IN (:workSpecIds) AND was.deleted = 0 "+
+                    "GROUP BY workActionSpecId";
+	 
+	 public static final String SELECT_FROM_WORKACTIONSPECVISIBILITYCONDITION="SELECT * FROM `WorkActionSpecVisibilityConditions` WHERE `workActionSpecId` IN (:workActionSpecIds);";
+	 
+	 public static final String SELECT_WORK_ACTION_VISIBILITY_SPECS_BASED_ON_WORK_SPECID_AND_ACTION_SPECID = "SELECT `id`, `workSpecId`, `workActionSpecId`, `otherActionSpecId`, `createdBy`, `modifiedBy`, `createdTime`, `modifiedTime` FROM `WorkActionVisibilitySpecs` WHERE `workSpecId` = ? and `workActionSpecId` = ?";
+	 
+	 public static final String SELECT_NEXT_ACTION_SPECS="SELECT `Id`,`actionSpecId`, `nextActionSpecId`,`createdTime`, `modifiedTime`,`workSpecId`, `deleted`, `ruleName`,repetitionType FROM `NextActionSpecs` WHERE  `actionSpecId` IN (:actionSpecIds)";
+	 
+	 public static final String SELECT_NEXT_WORK_SPECS="select `id`, `workSpecId`, `nextWorkSpecId`, `actionSpecId`, `createdTime`, `modifiedTime`, `deleted` FROM  `NextWorkSpecs` WHERE  `actionSpecId` IN (:actionSpecIds)";
+	 
+	 public static final String SELECT_WORKSPEC_FORMSPEC_MAPS="SELECT `id`,`workSpecId`, `formSpecUniqueId` FROM `WorkSpecFormSpecMap` WHERE  `workSpecId` IN(:workSpecIds)";
+	 
+	 public static final String SELECT_WORK_ACTION_SPEC_CONDITIONS = "SELECT `id`, `actionSpecId`, `nextActionSpecId`, `fieldType`, `targetFieldExpression`, `value`, `fieldDataType`, `condition`, `conjunction`,`workSpecId`, `type` FROM `WorkActionSpecConditions` WHERE `actionSpecId` IN (:actionSpecIds)";
+	 
+	 public static final String SELECT_WORK_ACTION_SPEC_END_CONDITION_BY_ACTION_SPEC_IDS = "SELECT `id`, `workActionSpecId`, `workSpecId`, `fieldType`, `targetFieldExpression`, `value`, `isSectionField`, `condition`, `conditionType`, `conjunction`, `createdTime`, `modifiedTime` FROM `WorkActionSpecEndConditions` WHERE `workActionSpecId` IN (:workActionSpecIds)";
+	 
+	 public static final String SELECT_VISIBILITY_CONFIGURATION_FOR_COMPANY_ID_AND_WORKSPECIDS = "SELECT * FROM `WorkActionVisibilityConfiguration` WHERE `companyId` = ? AND workSpecId IN (:workSpecIds)";
+	 
+	 public static final String SELECT_EXTERNAL_ACTION_CONFIGURATION_BY_ACTIONSPEC_IDS = "SELECT `externalActionConfigurationId`, `workSpecId`, `workActionSpecId`, `canPerformActionByCustomer`, `expiryTimeLimit`, `canRegenerateNewLink`, `createdBy`, `modifiedBy`, `createdTime`, `modifiedTime`, `companyId`, `canOnlyPerformByExternalUser` FROM `ExternalActionConfigurations` WHERE `workActionSpecId` IN (:actionSpecIds)";
+	 
+	 public static final String SELECT_WORK_FIELDS_UNIQUE_CONFIGURATIONS_FOR_SYNC = "SELECT `id`, `workSpecId`, `formFieldUniqueId`, `uniqueCheck`, `companyId`, `modifiedBy`, `modifiedTime` FROM `WorkFieldsUniqueConfigurations` WHERE `workSpecId` IN (:workSpecIds) AND `companyId` = ? AND modifiedTime>=?";
+	 
+	 public static final String SELECT_OPEN_WORK_FIELDS_UNIQUE_CONFIGURATIONS_FOR_SYNC = "SELECT `id`, `workSpecId`, `formFieldUniqueId`, `uniqueCheck`, `companyId`, `modifiedBy`, `modifiedTime` FROM `OpenWorkUniqueFieldConfigurations` WHERE `workSpecId` IN (:workSpecIds) AND `companyId` = ? AND modifiedTime>=?";
+	 
+	 public static final String SELECT_WORKREASSIGNMENTRULES_FOR_SYNC = "SELECT `id`, `workSpecId`, `workActionSpecId`, `enableWorkReassignment`, `reassignFormFieldUniqueId`, `conditionRule`, `conjunction`, `targetFieldExpression`, `value`, `fieldDataType`, `condition`, `createdBy`, `modifiedBy`, `createdTime`, `modifiedTime` FROM `WorkReassignmentRules` WHERE `workSpecId` IN (:workSpecIds)";
+	 
+	 public static final String SELECT_WORKSPEC_APP_LABELS_FOR_SYNC = "SELECT `id`, `itemId`, `labelName`, `customeLabelName`, `displayOrder`, `itemType`, `visible`, `companyId`, `workSpecId`, `createdBy`, `modifiedBy`, `createdTime`, `modifiedTime` FROM `WorkSpecAppLabels` WHERE `workSpecId` IN (:workSpecIds) AND `companyId` = ? AND modifiedTime>=?";
+	 
+	 public static final String SELECT_WORKSPECPERMISSIONS_FOR_SYNC = "SELECT WorkSpecPermissions.`permissionId`,`workSpecId`,`companyId`,`permissionType`,`enable`, IFNULL(group_concat(WorkSpecPermissionGroupIds.groupId),'') as groupIds,`modifiedBy`, `createdTime`, `modifiedTime` FROM `WorkSpecPermissions` LEFT JOIN WorkSpecPermissionGroupIds ON (WorkSpecPermissions.permissionId = WorkSpecPermissionGroupIds.permissionId) where workSpecId IN (:workSpecIds) AND `companyId` = ? AND modifiedTime>=? group by WorkSpecPermissions.permissionId";
+	 
+	 public static final String SELECT_WORK_SPEC_LIST_LEVEL_VISIBILITY_CONFIGURATIONS_FOR_SYNC = "SELECT `id`, `workSpecId`, `workFieldSpecUniqueId`, `employeeFieldSpecUniqueId`, `deleted`, `createdTime`, `modifiedTime`, `createdBy`, `modifiedBy`, `companyId` FROM `WorkSpecListLevelVisibilityConfiguration` WHERE `workSpecId` IN (:workSpecIds) AND `companyId` = ? AND `modifiedTime` >= ? AND `deleted` = 0;";
+	 
+	 public static final String SELECT_WORK_SPEC_CUSTOM_DASHBOARD_CONFIGURATION = "SELECT `id`, `workSpecId`, `companyId`, `enable`, `createdTime`, `modifiedTime` FROM `WorkSpecCustomDashboardConfiguration` WHERE `workSpecId` IN (:workSpecIds) AND `companyId` = ? ";
+	 
+	 public static final String SELECT_WORK_SPEC_CUSTOM_DASHBOARD_METRICS = "SELECT `id`, `workSpecId`, `metricType`, `metricReferenceField` FROM `WorkSpecCustomDashboardMetrics` WHERE `workSpecId` IN (:workSpecIds)";
+	 
+	 public static final String SELECT_WORK_ACTION_FORM_VISIBILITY_BASED_ON_WORKSPECIDS_FOR_SYNC = "SELECT * FROM `WorkActionFormVisibility` WHERE `workSpecId` IN (:workSpecIds) AND `companyId` = ? ";
+	 
+	 public static final String SELECT_ACTIONABLE_EMPLOYEE_GROUP_SPECS_CONFIGURATION = "SELECT * FROM `ActionableEmployeeGroupSpecs` WHERE `workSpecId` IN (:workSpecIds) ";
+	 
+	 public static final String SELECT_WORK_ACTION_NOTIFICATION_MATRIX_CONFIGURATION = "SELECT * FROM `WorkActionNotificationEscalationMatrix` WHERE `workSpecId` IN (:workSpecIds) ";
+	 
+	public static final String SELECT_WORK_UNASSIGNMENT_CRITERIAS_BY_WORKSPECID = "SELECT `workUnassignmentCriteriaId`, `workSpecId`, `workActionSpecId`, `formSpecUniqueId`, `companyId`, `conjunction`, `createdBy`, `modifiedBy`, `createdTime`, `modifiedTime` FROM `WorkUnassignmentCriterias` WHERE workSpecId IN (:workSpecIds) AND `companyId` = ?";
+	
+	public static final String SELECT_WORK_ASSIGNMENT_CRITERIA_CONDITIONS_BY_CRITERIA_IDS = "SELECT `conditionId`, `workUnassignmentCriteriaId`, `fieldSpecUniqueId`, `fieldExpression`, `section`, `fieldDataType`, `condition`, `conditionValue`,`criteriaType`, `actionCount` FROM `WorkAssignmentCriteriaConditions` WHERE `workUnassignmentCriteriaId` IN (:criteriaIds)";
+
+	public static final String SELECT_WORK_SPEC_CUSTOMER_CALL_APIS = "SELECT `workSpecId`, `serviceApi`, `remoteUrlId`, `phoneNoFieldSpecUniqueId`, `createdBy`, `modifiedBy`, `createdTime`, `modifiedTime` FROM `WorkSpecCustomerCallApis` WHERE `workSpecId` IN (:workSpecIds)";
+	
+	public static final String SELECT_WORK_ACTION_GROUP_BY_WORK_SPEC_IDS_SYNC = "SELECT `groupId`, `groupName`, `workSpecId`, `displayOrder`, `createdTime`, `modifiedTime`, `createdBy`, `modifiedBy`, `deleted` FROM `WorkActionGroups` WHERE `workSpecId` IN (:workSpecIds)";
+	 
+	
 }
