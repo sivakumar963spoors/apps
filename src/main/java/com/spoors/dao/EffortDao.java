@@ -8,9 +8,11 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
 
 import org.objectweb.asm.Type;
 import org.slf4j.LoggerFactory;
@@ -69,8 +71,39 @@ import com.spoors.beans.VisibilityDependencyCriteria;
 import com.spoors.beans.WebUser;
 import com.spoors.beans.WorkFormFieldMap;
 import com.spoors.beans.WorkSpecFormSpecFollowUp;
+import com.spoors.beans.workSpecs.ActionableEmployeeGroupSpecs;
+import com.spoors.beans.workSpecs.AddingSubTaskEmployeeConfiguration;
+import com.spoors.beans.workSpecs.ExternalActionConfiguration;
+import com.spoors.beans.workSpecs.HideAddSubTaskConfiguration;
+import com.spoors.beans.workSpecs.NextActionSpec;
+import com.spoors.beans.workSpecs.NextWorkSpec;
+import com.spoors.beans.workSpecs.WorkActionEmployeeGroupSpecs;
+import com.spoors.beans.workSpecs.WorkActionFormVisibility;
+import com.spoors.beans.workSpecs.WorkActionGroup;
+import com.spoors.beans.workSpecs.WorkActionNotificationEscalationMatrix;
+import com.spoors.beans.workSpecs.WorkActionSpec;
+import com.spoors.beans.workSpecs.WorkActionSpecConditions;
+import com.spoors.beans.workSpecs.WorkActionSpecEndCondition;
+import com.spoors.beans.workSpecs.WorkActionSpecVisibilityCondition;
+import com.spoors.beans.workSpecs.WorkActionVisibilityConfiguration;
+import com.spoors.beans.workSpecs.WorkActionVisibilitySpecs;
+import com.spoors.beans.workSpecs.WorkAssignmentCriteriaConditions;
+import com.spoors.beans.workSpecs.WorkFieldsUniqueConfigurations;
+import com.spoors.beans.workSpecs.WorkProcessSubTaskSpec;
+import com.spoors.beans.workSpecs.WorkReassignmentRules;
+import com.spoors.beans.workSpecs.WorkSpec;
+import com.spoors.beans.workSpecs.WorkSpecAppLabel;
+import com.spoors.beans.workSpecs.WorkSpecCustomDashboardConfiguration;
+import com.spoors.beans.workSpecs.WorkSpecCustomDashboardMetric;
+import com.spoors.beans.workSpecs.WorkSpecCustomerCallApi;
+import com.spoors.beans.workSpecs.WorkSpecFormSpecMap;
+import com.spoors.beans.workSpecs.WorkSpecListLevelVisibilityConfiguration;
+import com.spoors.beans.workSpecs.WorkSpecPermission;
+import com.spoors.beans.workSpecs.WorkToSubTaskAutoFillConfiguration;
+import com.spoors.beans.workSpecs.WorkUnassignmentCriterias;
 import com.spoors.setting.Sqls;
 import com.spoors.util.Api;
+import com.spoors.util.Api.CsvOptions;
 
 import ch.qos.logback.classic.Logger;
 
@@ -2221,7 +2254,294 @@ public class EffortDao {
 						return fieldSpecFilters.size();
 					}
 				});
+	}
+	public WorkSpec getWorkSpecByWorkSpecId(String workSpecId) {
+		WorkSpec workSpec = null;
+		try {
+			workSpec = jdbcTemplate.queryForObject(Sqls.SELECT_WORK_SPEC,
+					new Object[] { workSpecId }, new int[] {Types.INTEGER},
+					new BeanPropertyRowMapper<WorkSpec>(WorkSpec.class));
+		}catch(Exception e) {
+			LOGGER.info("Got Exception while getWorkSpecByWorkSpecId : "+e);
+		}
+		return workSpec;
+	}
+
+	public List<WorkProcessSubTaskSpec> getWorkPrcocessSubTaskSpecsForSync(String parentWorkSpecIds) {
+		List<WorkProcessSubTaskSpec> workProcessSubTaskSpecs = new ArrayList<WorkProcessSubTaskSpec>();
+		try
+		{
+			if(!Api.isEmptyString(parentWorkSpecIds))
+			{
+				String sql = Sqls.SELECT_WORK_PROCESS_SUB_TASK_SPEC_BY_PARENT_WORKSPEC_IDS_FOR_SYNC
+						.replace(":workSpecIds", parentWorkSpecIds);
+				workProcessSubTaskSpecs = jdbcTemplate.query(
+						sql,new BeanPropertyRowMapper<WorkProcessSubTaskSpec>(
+								WorkProcessSubTaskSpec.class));
+				
+			}
+			return workProcessSubTaskSpecs;
+		}
+		catch(Exception e)
+		{
+			return workProcessSubTaskSpecs;
+		}
+	}
+
+	public List<WorkSpec> getWorkSpecsForWorkSpecIdsIn(String subTaskWorkSpecIds) {
+		List<WorkSpec> subTaskWorkSpecs = new ArrayList<WorkSpec>();
+		try
+		{
+			if(!Api.isEmptyString(subTaskWorkSpecIds))
+			{
+				String sql = Sqls.SELECT_WORK_SPECS_FOR_WORK_SPEC_IDS_IN.replace(":subTaskWorkSpecIds", subTaskWorkSpecIds);
+				subTaskWorkSpecs =  jdbcTemplate.query(sql, new BeanPropertyRowMapper<WorkSpec>(WorkSpec.class));
+			}
+			return subTaskWorkSpecs;
+		}
+		catch(Exception e)
+		{
+			return subTaskWorkSpecs;
+		}
+	}
+
+	public List<WorkToSubTaskAutoFillConfiguration> getWorkToSubTaskAutoFillConfirationsForSync(
+			List<WorkSpec> workSpecs, int companyId)
+	{
+		String workSpecIdsCsv = Api.toCSV(workSpecs, "workSpecId",CsvOptions.FILTER_NULL_OR_EMPTY);
+		List<WorkToSubTaskAutoFillConfiguration> workToSubTaskAutoFillConfigurations = new ArrayList<WorkToSubTaskAutoFillConfiguration>();
+		if(!Api.isEmptyString(workSpecIdsCsv))
+		{
+			try
+			{
+				String sql = Sqls.SELECT_WORK_TO_SUB_TASK_AUTO_FILL_CONFIGURATIONS_FOR_SYNC.replace(":parentWorkSpecIds",workSpecIdsCsv );
+				workToSubTaskAutoFillConfigurations = jdbcTemplate.query(sql,
+						new Object[] {companyId}, new int[] {Types.INTEGER}, new BeanPropertyRowMapper<WorkToSubTaskAutoFillConfiguration>(
+								WorkToSubTaskAutoFillConfiguration.class));
+			}
+			catch(Exception e)
+			{
+				LOGGER.info("Got Exception in getWorkToSubTaskAutoFillConfirationsForSync :"+e);
+			}
+	
+		}
+		return workToSubTaskAutoFillConfigurations;
+	}
+
+	public List<AddingSubTaskEmployeeConfiguration> getAddingSubTaskEmployeeConfigurationsForSync(
+			String workProcessSubTaskSpecIdsCsv) {
+		List<AddingSubTaskEmployeeConfiguration> subTaskEmpConf = new ArrayList<AddingSubTaskEmployeeConfiguration>();
+		try
+		{
+			if(!Api.isEmptyString(workProcessSubTaskSpecIdsCsv))
+			{
+				String sql = Sqls.SELECT_ADDING_SUB_TASK_EMPLOYEE_CONFIGURATION_BY_WORK_PROCESS_SUB_TASK_SPEC_IDS
+						.replace(":workProcessSubTaskSpecIds", workProcessSubTaskSpecIdsCsv);
+				subTaskEmpConf = jdbcTemplate.query(
+						sql,new BeanPropertyRowMapper<AddingSubTaskEmployeeConfiguration>(
+								AddingSubTaskEmployeeConfiguration.class));
+			}
+			return subTaskEmpConf;
+		}
+		catch(Exception e)
+		{
+			LOGGER.info("got exception while getAddingSubTaskEmployeeConfigurationsForSync : "+ e );
+			return subTaskEmpConf;
+		}
+	}
+
+	public List<HideAddSubTaskConfiguration> getHideAddSubTaskConfigurationForSync(String workSpecIds) {
+		List<HideAddSubTaskConfiguration> hideAddSubTaskConfigurations = new ArrayList<HideAddSubTaskConfiguration>();
+		try
+		{
+			if(!Api.isEmptyString(workSpecIds))
+			{
+				String sql = Sqls.SELECT_HIDE_ADD_SUB_TASK_CONFIGURATION_BY_WORK_PROCESS_SUB_TASK_SPEC_IDS
+						.replace(":parentWorkSpecId", workSpecIds);
+				hideAddSubTaskConfigurations = jdbcTemplate.query(
+						sql,new BeanPropertyRowMapper<HideAddSubTaskConfiguration>(
+								HideAddSubTaskConfiguration.class));
+			}
+			return hideAddSubTaskConfigurations;
+		}
+		catch(Exception e)
+		{
+			LOGGER.info("got exception while getHideAddSubTaskConfigurationForSync : "+ e );
+			return hideAddSubTaskConfigurations;
+		}
+	}
+
+	public List<WorkActionSpec> getWorkActionSpecsWithAllocationConfigForSync(String workSpecIdsCsv) {
+
+		List<WorkActionSpec> workActionSpecs = getWorkActionSpecs(workSpecIdsCsv);
+		try {
+			String workActionSpecIds = Api.toCSV(workActionSpecs, "workActionSpecId");
+			List<WorkActionSpecVisibilityCondition> workActionSpecVisibilityConditionList = getWorkActionSpecVisibilityConditionList(workActionSpecIds);
+			for (WorkActionSpec workActionSpec : workActionSpecs) {
+				List<WorkActionSpecVisibilityCondition> workActionConditionList = new ArrayList<WorkActionSpecVisibilityCondition>();
+				for (WorkActionSpecVisibilityCondition workActionSpecVisibilityCondition : workActionSpecVisibilityConditionList) {
+					if (workActionSpecVisibilityCondition.getWorkActionSpecId()
+							.equals(workActionSpec.getWorkActionSpecId())) {
+						workActionConditionList.add(workActionSpecVisibilityCondition);
+					}
+				}
+				workActionSpec.setWorkActionSpecVisibilityConditionList(workActionConditionList);
+				
+				// sending other action visibility config table records.
+				List<WorkActionVisibilitySpecs> workActionVisibilitySpecs = getWorkActionVisibilitySpecsBasedOnWorkSpecIdAndActionSpecId(workActionSpec);
+				if(workActionVisibilitySpecs.size()>0)
+				{
+					workActionSpec.setWorkActionVisibilitySpecs(workActionVisibilitySpecs);
+				}
+				else
+				{
+					workActionSpec.setWorkActionVisibilitySpecs(new ArrayList<WorkActionVisibilitySpecs>());
+				}
+			}
+			
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return workActionSpecs;
+	
+	}
+	
+	private List<WorkActionVisibilitySpecs> getWorkActionVisibilitySpecsBasedOnWorkSpecIdAndActionSpecId(
+			WorkActionSpec workActionSpec) {
+		try {
+			String sql = Sqls.SELECT_WORK_ACTION_VISIBILITY_SPECS_BASED_ON_WORK_SPECID_AND_ACTION_SPECID;
+			
+			return jdbcTemplate.query(sql,	new Object[] { workActionSpec.getWorkSpecId(),workActionSpec.getWorkActionSpecId() },
+					new int[] {Types.BIGINT,Types.BIGINT},
+					new BeanPropertyRowMapper<WorkActionVisibilitySpecs>(WorkActionVisibilitySpecs.class));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	private List<WorkActionSpecVisibilityCondition> getWorkActionSpecVisibilityConditionList(String workActionSpecsIds) {
+		List<WorkActionSpecVisibilityCondition> workActionSpecVisibilityConditionList = new ArrayList<WorkActionSpecVisibilityCondition>();
+		if (!Api.isEmptyString(workActionSpecsIds)) {
+			String query = Sqls.SELECT_FROM_WORKACTIONSPECVISIBILITYCONDITION.replace(":workActionSpecIds", workActionSpecsIds);
+			try {
+				workActionSpecVisibilityConditionList = jdbcTemplate
+						.query(query, new BeanPropertyRowMapper<WorkActionSpecVisibilityCondition>(
+										WorkActionSpecVisibilityCondition.class));
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+		}
+		return workActionSpecVisibilityConditionList;
+	}
+
+	public List<WorkActionSpec> getWorkActionSpecs(String workSpecIds) {
+
+		List<WorkActionSpec> workActionSpecs = new ArrayList<WorkActionSpec>();
+		if (!Api.isEmptyString(workSpecIds)) {
+			String sql = Sqls.SELECT_WORK_ACTION_SPECS_WITH_EMPGRPIDS.replace(":workSpecIds",workSpecIds);
+			workActionSpecs = jdbcTemplate.query(sql,
+					new BeanPropertyRowMapper<WorkActionSpec>(WorkActionSpec.class));
+		}
+
+		return workActionSpecs;
+	}
+
+	public List<NextActionSpec> getNextActionSpecs(String actionSpecIds) {
+		if (!Api.isEmptyString(actionSpecIds)) {
+			String sql = Sqls.SELECT_NEXT_ACTION_SPECS.replace(
+					":actionSpecIds", actionSpecIds);
+			return jdbcTemplate.query(sql,
+					new BeanPropertyRowMapper<NextActionSpec>(
+							NextActionSpec.class));
+		}
+		return new ArrayList<NextActionSpec>();
+	}
+	
+	public List<NextWorkSpec> getNextWorkSpecs(String actionSpecIds,
+			String workSpecIds) {
+
+		if (!Api.isEmptyString(actionSpecIds)) {
+			String sql = Sqls.SELECT_NEXT_WORK_SPECS.replace(":actionSpecIds",
+					actionSpecIds).replaceAll(":workSpecIds", workSpecIds);
+			return jdbcTemplate
+					.query(sql, new BeanPropertyRowMapper<NextWorkSpec>(
+							NextWorkSpec.class));
+		}
+
+		return new ArrayList<NextWorkSpec>();
+	}
+	
+	public List<WorkSpecFormSpecMap> getWorkSpecFormSpecMaps(
+			String workSpecIdsCsv) {
+		if (!Api.isEmptyString(workSpecIdsCsv)) {
+			String sql = Sqls.SELECT_WORKSPEC_FORMSPEC_MAPS.replace(
+					":workSpecIds", workSpecIdsCsv);
+			return jdbcTemplate.query(sql,
+					new BeanPropertyRowMapper<WorkSpecFormSpecMap>(
+							WorkSpecFormSpecMap.class));
+		}
+		return new ArrayList<WorkSpecFormSpecMap>();
+	}
+	
+	public List<WorkActionSpecConditions> getWorkActionSpecConditions(
+			String actionSpecIds) {
+		if (!Api.isEmptyString(actionSpecIds)) {
+			String sql = Sqls.SELECT_WORK_ACTION_SPEC_CONDITIONS.replace(
+					":actionSpecIds", actionSpecIds);
+			return jdbcTemplate.query(sql,
+					new BeanPropertyRowMapper<WorkActionSpecConditions>(
+							WorkActionSpecConditions.class));
+		}
+		return new ArrayList<WorkActionSpecConditions>();
+	}
+	
+	public List<WorkActionSpecEndCondition> getWorkActionSpecEndConditionsForWorkActionSpecIds(
+			String workActionSpecIds) 
+	{
+		String sql = Sqls.SELECT_WORK_ACTION_SPEC_END_CONDITION_BY_ACTION_SPEC_IDS.replace(":workActionSpecIds", workActionSpecIds);
+		return jdbcTemplate.query(sql, new BeanPropertyRowMapper<WorkActionSpecEndCondition>(WorkActionSpecEndCondition.class));
+	}
+	
+	public List<WorkActionVisibilityConfiguration> getWorkActionVisibilityConfigurationByCompanyIdForSync
+	 (Integer companyId,String workSpecIds){
 		
+		List<WorkActionVisibilityConfiguration> workActionVisibilityConfigurationList = new ArrayList<WorkActionVisibilityConfiguration>(); 
+		try
+		{
+			if(!Api.isEmptyString(workSpecIds))	
+			{
+				String sql = Sqls.SELECT_VISIBILITY_CONFIGURATION_FOR_COMPANY_ID_AND_WORKSPECIDS;
+				sql = sql.replace(":workSpecIds", workSpecIds);
+				workActionVisibilityConfigurationList = jdbcTemplate.query(sql,
+						new Object[]{companyId}, new int[] {Types.INTEGER}, new BeanPropertyRowMapper<WorkActionVisibilityConfiguration>(WorkActionVisibilityConfiguration.class));
+				return workActionVisibilityConfigurationList;
+			}
+		}
+		catch(Exception e)
+		{
+			LOGGER.error("getWorkActionVisibilityConfigurationByCompanyIdForSync // Exception occured ",e);
+			LOGGER.info("getWorkActionVisibilityConfigurationByCompanyIdForSync // Exception occured ",e);
+			e.printStackTrace();
+		}
+		return workActionVisibilityConfigurationList;
+	}
+	
+	public List<ExternalActionConfiguration> getExternalActionConnfigurationForSync(String actionSpecIds) {
+		
+		try {
+			String sql = Sqls.SELECT_EXTERNAL_ACTION_CONFIGURATION_BY_ACTIONSPEC_IDS.replace(":actionSpecIds", actionSpecIds); 
+			return jdbcTemplate.query(sql, new BeanPropertyRowMapper<ExternalActionConfiguration>(
+							ExternalActionConfiguration.class));
+
+		} catch (Exception e) {
+			return null;
+		}
+	
 	}
 	
 	public void insertFormSectionFieldSpecFilters(
@@ -2258,5 +2578,256 @@ public class EffortDao {
 	}
 
 	
+	public List<WorkFieldsUniqueConfigurations> getWorkFieldsUniqueConfigurationsForSync(
+			String workSpecIds, String syncDate, int companyId)
+	{
+		List<WorkFieldsUniqueConfigurations> WorkFieldsUniqueConfigurations = 
+				new ArrayList<WorkFieldsUniqueConfigurations>();
+		
+		if (!Api.isEmptyString(workSpecIds)) {
+			
+			if (Api.isEmptyString(syncDate)) {
+				syncDate = "1970-01-01T00:00:00Z";
+			}
+			syncDate = Api.getDateTimeFromXsd(syncDate);
+			
+			String sql = Sqls.SELECT_WORK_FIELDS_UNIQUE_CONFIGURATIONS_FOR_SYNC.replace(":workSpecIds",workSpecIds);
+			
+			WorkFieldsUniqueConfigurations = jdbcTemplate.query(sql,new Object[] {companyId,syncDate}, new int[] { Types.INTEGER,Types.VARCHAR },
+					new BeanPropertyRowMapper<WorkFieldsUniqueConfigurations>(WorkFieldsUniqueConfigurations.class));
+		
+		}
+
+		return WorkFieldsUniqueConfigurations;
+	}
+	
+	
+	public List<WorkFieldsUniqueConfigurations> getOpenWorkFieldsUniqueConfigurationsForSync(
+			String workSpecIds, String syncDate, int companyId)
+	{
+		List<WorkFieldsUniqueConfigurations> WorkFieldsUniqueConfigurations = 
+				new ArrayList<WorkFieldsUniqueConfigurations>();
+		
+		if (!Api.isEmptyString(workSpecIds)) {
+			
+			if (Api.isEmptyString(syncDate)) {
+				syncDate = "1970-01-01T00:00:00Z";
+			}
+			syncDate = Api.getDateTimeFromXsd(syncDate);
+			
+			String sql = Sqls.SELECT_OPEN_WORK_FIELDS_UNIQUE_CONFIGURATIONS_FOR_SYNC.replace(":workSpecIds",workSpecIds);
+			
+			WorkFieldsUniqueConfigurations = jdbcTemplate.query(sql,new Object[] {companyId,syncDate}, new int[] {Types.INTEGER,Types.INTEGER},
+					new BeanPropertyRowMapper<WorkFieldsUniqueConfigurations>(WorkFieldsUniqueConfigurations.class));
+		
+		}
+
+		return WorkFieldsUniqueConfigurations;
+	}
+
+	public List<WorkReassignmentRules> getWorkReassignmentRulesForSync(String workSpecIdsCsv, String syncDate) {
+		List<WorkReassignmentRules> workReassignmentRules = 
+				new ArrayList<WorkReassignmentRules>();
+		
+		if (!Api.isEmptyString(workSpecIdsCsv)) {
+			
+			if (Api.isEmptyString(syncDate)) {
+				syncDate = "1970-01-01T00:00:00Z";
+			}
+			syncDate = Api.getDateTimeFromXsd(syncDate);
+			
+			String sql = Sqls.SELECT_WORKREASSIGNMENTRULES_FOR_SYNC.replace(":workSpecIds",workSpecIdsCsv);
+			
+			workReassignmentRules = jdbcTemplate.query(sql,	new BeanPropertyRowMapper<WorkReassignmentRules>(WorkReassignmentRules.class));
+		
+		}
+
+		return workReassignmentRules;
+	}
+
+	public List<WorkSpecAppLabel> getWorkSpecAppLabelsForSync(String workSpecIds, String syncDate, int companyId)
+	{
+		List<WorkSpecAppLabel> workSpecAppLabels = new ArrayList<WorkSpecAppLabel>();
+		
+		if (!Api.isEmptyString(workSpecIds)) {
+			
+			if (Api.isEmptyString(syncDate)) {
+				syncDate = "1970-01-01T00:00:00Z";
+			}
+			syncDate = Api.getDateTimeFromXsd(syncDate);
+			
+			String sql = Sqls.SELECT_WORKSPEC_APP_LABELS_FOR_SYNC.replace(":workSpecIds",workSpecIds);
+			
+			workSpecAppLabels = jdbcTemplate.query(sql,new Object[] {companyId,syncDate},new int[] {Types.INTEGER,Types.VARCHAR},
+					new BeanPropertyRowMapper<WorkSpecAppLabel>(WorkSpecAppLabel.class));
+		
+		}
+
+		return workSpecAppLabels;
+	}
+
+	public List<WorkSpecPermission> getWorkSpecPermissionsForSync(String workSpecIds, String syncDate,
+			int companyId) {
+		List<WorkSpecPermission> workSpecPermissions = new ArrayList<WorkSpecPermission>();
+		
+		if (!Api.isEmptyString(workSpecIds)) {
+			
+			if (Api.isEmptyString(syncDate)) {
+				syncDate = "1970-01-01T00:00:00Z";
+			}
+			syncDate = Api.getDateTimeFromXsd(syncDate);
+			
+			String sql = Sqls.SELECT_WORKSPECPERMISSIONS_FOR_SYNC.replace(":workSpecIds",workSpecIds);
+			
+			workSpecPermissions = jdbcTemplate.query(sql,new Object[] {companyId,syncDate},new int[] {Types.INTEGER,Types.VARCHAR},
+					new BeanPropertyRowMapper<WorkSpecPermission>(WorkSpecPermission.class));
+		
+		}
+
+		return workSpecPermissions;
+	}
+
+	public List<WorkSpecListLevelVisibilityConfiguration> getWorkSpecListLevelVisibilityConfigurationsForSync(
+			String workSpecIds, String syncDate, int companyId) {
+		List<WorkSpecListLevelVisibilityConfiguration> listLevelVisibilityConfigurations = new ArrayList<WorkSpecListLevelVisibilityConfiguration>();
+
+		if (!Api.isEmptyString(workSpecIds)) {
+
+			if (Api.isEmptyString(syncDate)) {
+				syncDate = "1970-01-01T00:00:00Z";
+			}
+			syncDate = Api.getDateTimeFromXsd(syncDate);
+
+			String sql = Sqls.SELECT_WORK_SPEC_LIST_LEVEL_VISIBILITY_CONFIGURATIONS_FOR_SYNC.replace(":workSpecIds",
+					workSpecIds);
+
+			listLevelVisibilityConfigurations = jdbcTemplate.query(sql, new Object[] { companyId, syncDate },new int[] {Types.INTEGER,Types.VARCHAR},
+					new BeanPropertyRowMapper<WorkSpecListLevelVisibilityConfiguration>(
+							WorkSpecListLevelVisibilityConfiguration.class));
+
+		}
+
+		return listLevelVisibilityConfigurations;
+	}
+
+	public List<WorkSpecCustomDashboardConfiguration> getWorkSpecCustomDashboardConfiguration(String workSpecIds,
+			String syncDate, int companyId) 
+	{
+		List<WorkSpecCustomDashboardConfiguration> workSpecCustomDashboardConfigurations = new ArrayList<WorkSpecCustomDashboardConfiguration>();
+
+		if (!Api.isEmptyString(workSpecIds)) {
+
+			String sql = Sqls.SELECT_WORK_SPEC_CUSTOM_DASHBOARD_CONFIGURATION.replace(":workSpecIds",
+					workSpecIds);
+
+			workSpecCustomDashboardConfigurations = jdbcTemplate.query(sql, new Object[] {companyId},new int[] {Types.INTEGER},
+					new BeanPropertyRowMapper<WorkSpecCustomDashboardConfiguration>(
+							WorkSpecCustomDashboardConfiguration.class));
+
+		}
+
+		return workSpecCustomDashboardConfigurations;
+	}
+
+	public List<WorkSpecCustomDashboardMetric> getWorkSpecCustomDashboardMetrics(String workSpecIds, String syncDate,
+			int companyId) {
+		List<WorkSpecCustomDashboardMetric> workSpecCustomDashboardMetrics = new ArrayList<WorkSpecCustomDashboardMetric>();
+
+		if (!Api.isEmptyString(workSpecIds)) {
+
+			String sql = Sqls.SELECT_WORK_SPEC_CUSTOM_DASHBOARD_METRICS.replace(":workSpecIds",
+					workSpecIds);
+
+			workSpecCustomDashboardMetrics = jdbcTemplate.query(sql,new BeanPropertyRowMapper<WorkSpecCustomDashboardMetric>(
+							WorkSpecCustomDashboardMetric.class));
+
+		}
+
+		return workSpecCustomDashboardMetrics;
+	}
+	
+	public List<WorkActionFormVisibility> getWorkActionFormVisibilityForSync(
+			String workSpecIds, String syncDate, int companyId) {
+		List<WorkActionFormVisibility> workActionFormVisibility = new ArrayList<WorkActionFormVisibility>();
+
+		if (!Api.isEmptyString(workSpecIds)) {
+
+
+			String sql = Sqls.SELECT_WORK_ACTION_FORM_VISIBILITY_BASED_ON_WORKSPECIDS_FOR_SYNC.replace(":workSpecIds",
+					workSpecIds);
+
+			workActionFormVisibility = jdbcTemplate.query(sql, new Object[] { companyId },new int[] {Types.INTEGER},
+					new BeanPropertyRowMapper<WorkActionFormVisibility>(
+							WorkActionFormVisibility.class));
+
+		}
+
+		return workActionFormVisibility;
+		}
+	
+	public List<ActionableEmployeeGroupSpecs> getActionableEmployeeGroupSpecs(String workSpecIds,
+			String syncDate, int companyId) {
+		List<ActionableEmployeeGroupSpecs> actionableEmployeeGroupSpecs = new ArrayList<ActionableEmployeeGroupSpecs>();
+
+		if (!Api.isEmptyString(workSpecIds)) {
+
+			String sql = Sqls.SELECT_ACTIONABLE_EMPLOYEE_GROUP_SPECS_CONFIGURATION.replace(":workSpecIds",
+					workSpecIds);
+
+			actionableEmployeeGroupSpecs = jdbcTemplate.query(sql, new BeanPropertyRowMapper<ActionableEmployeeGroupSpecs>(
+							ActionableEmployeeGroupSpecs.class));
+
+		}
+
+		return actionableEmployeeGroupSpecs;
+	}
+	
+	public List<WorkActionNotificationEscalationMatrix> getWorkActionNotificationEscalationMatrix(String workSpecIds,
+			String syncDate, int companyId) {
+		List<WorkActionNotificationEscalationMatrix> actionableEmployeeGroupSpecs = new ArrayList<WorkActionNotificationEscalationMatrix>();
+
+		if (!Api.isEmptyString(workSpecIds)) {
+
+			String sql = Sqls.SELECT_WORK_ACTION_NOTIFICATION_MATRIX_CONFIGURATION.replace(":workSpecIds",
+					workSpecIds);
+
+			actionableEmployeeGroupSpecs = jdbcTemplate.query(sql, new BeanPropertyRowMapper<WorkActionNotificationEscalationMatrix>(
+							WorkActionNotificationEscalationMatrix.class));
+
+		}
+
+		return actionableEmployeeGroupSpecs;
+	}
+	
+	public List<WorkUnassignmentCriterias> getWorkUnassignmentCriteriasForWorkSpecs(String workSpecIds,
+			int companyId) {
+			List<WorkUnassignmentCriterias> workUnassignmentCriterias = new ArrayList<WorkUnassignmentCriterias>();
+			if (!Api.isEmptyString(workSpecIds)) {
+				String sql = Sqls.SELECT_WORK_UNASSIGNMENT_CRITERIAS_BY_WORKSPECID.replace(":workSpecIds",workSpecIds);
+				workUnassignmentCriterias = jdbcTemplate.query(sql,new Object[] {companyId},new int[] {Types.INTEGER},
+						new BeanPropertyRowMapper<WorkUnassignmentCriterias>(WorkUnassignmentCriterias.class));
+			}
+			return workUnassignmentCriterias;
+	}
+	
+	public List<WorkAssignmentCriteriaConditions> getWorkAssignmentCriteriaConditionsByCriteriaIds(
+			String criteriaIdCsv) {
+		String sql = Sqls.SELECT_WORK_ASSIGNMENT_CRITERIA_CONDITIONS_BY_CRITERIA_IDS.replace(":criteriaIds",
+				criteriaIdCsv);
+		return jdbcTemplate.query(sql,new BeanPropertyRowMapper<WorkAssignmentCriteriaConditions>(WorkAssignmentCriteriaConditions.class));
+	}
+	
+	public List<WorkSpecCustomerCallApi> getWorkSpecCustomerCallApis(String workSpecIds) {
+		String sql = Sqls.SELECT_WORK_SPEC_CUSTOMER_CALL_APIS.replace(":workSpecIds",workSpecIds);
+		return jdbcTemplate.query(sql,new BeanPropertyRowMapper<WorkSpecCustomerCallApi>(WorkSpecCustomerCallApi.class));
+	}
+	
+	public List<WorkActionGroup> getWorkActionGroupByWorkSpecIdsForSync(String workSpecIds) {
+		if(Api.isEmptyString(workSpecIds))
+			return new ArrayList<WorkActionGroup>();
+		
+		return jdbcTemplate.query(Sqls.SELECT_WORK_ACTION_GROUP_BY_WORK_SPEC_IDS_SYNC.replace(":workSpecIds", workSpecIds),
+				    new BeanPropertyRowMapper<WorkActionGroup>(WorkActionGroup.class));
+	}
 	
 }

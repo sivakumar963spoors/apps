@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -425,23 +426,6 @@ public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
 		String rounded = roundedBig.toString();
 		return rounded;
 	}
-	public static boolean isEqualString(String string1, String string2,
-			boolean makeNullIfEmpty) {
-		if (makeNullIfEmpty) {
-			return isEqualString(makeNullIfEmpty(string1),
-					makeNullIfEmpty(string2));
-		} else {
-			return isEqualString(string1, string2);
-		}
-	}
-	public static String makeNullIfEmpty(String value) {
-		if (value != null && value.trim().length() == 0) {
-			return null;
-		} else {
-			return value;
-		}
-	}
-
 	
 	public static String makeNullIfNull(String value) {
 		if (value == null) {
@@ -460,22 +444,6 @@ public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
 		}
 	}
 
-	public static boolean isEqualLong(Long long1, Long long2) {
-		if (long1 == null) {
-			if (long2 == null) {
-				return true;
-			} else {
-				return false;
-			}
-		} else {
-			if (long2 == null) {
-				return false;
-			} else {
-				return long1.longValue() == long2.longValue();
-			}
-		}
-	}
-	
 	public static Map<Object,List<Object>> getResolvedMapFromList(List<?> list, String requiredFieldKeyName) 
 	 {
 		Map<Object, List<Object>> map = new HashMap<Object, List<Object>>();
@@ -554,4 +522,148 @@ public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
 			}
 		}	
 
+	
+	public static String[] csvToArray(String csv) {
+		String[] parts = null;
+
+		if (!Api.isEmptyString(csv)) {
+			parts = csv.split(",");
+		}
+
+		return parts;
+	}
+	
+	public static boolean isEqualString(String string1, String string2,
+			boolean makeNullIfEmpty) {
+		if (makeNullIfEmpty) {
+			return isEqualString(makeNullIfEmpty(string1),
+					makeNullIfEmpty(string2));
+		} else {
+			return isEqualString(string1, string2);
+		}
+	}
+
+	public static boolean isEqualStringIgnoreCase(String string1, String string2) {
+		if (string1 == null) {
+			if (string2 == null) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return string1.equalsIgnoreCase(string2);
+		}
+	}
+	
+	public static String makeNullIfEmpty(String value) {
+		if (value != null && value.trim().length() == 0) {
+			return null;
+		} else {
+			return value;
+		}
+	}
+	
+	public static boolean isEqualLong(Long long1, Long long2) {
+		if (long1 == null) {
+			if (long2 == null) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			if (long2 == null) {
+				return false;
+			} else {
+				return long1.longValue() == long2.longValue();
+			}
+		}
+	}
+	
+	public static String toCSVFromList(List<?> list, String fieldName){
+		try{
+			return toCSV(list, fieldName);
+		}catch(Exception ex){
+			
+		}
+		
+		return null;
+	}
+	
+	public static String toCSV(List<?> list, String fieldName)
+			throws IllegalArgumentException, IllegalAccessException {
+		if (list != null) {
+			StringBuilder csv =  new StringBuilder("");
+			for (Object obj : list) {
+				if (csv.length() > 0) {
+					csv.append(",");
+				}
+
+				if (fieldName == null || fieldName.trim().length() == 0) {
+					csv.append(obj.toString());
+				} else {
+					Object val = getFieldValue(obj, fieldName);
+					csv.append(val == null ? "" : val.toString());
+				}
+			}
+
+			return csv.toString();
+		} else {
+			return null;
+		}
+	}
+	
+	public static Object getFieldValue(Object obj, String fieldName)
+			throws IllegalArgumentException, IllegalAccessException {
+		if (fieldName != null && fieldName.trim().length() >= 0) {
+			Field[] fields = obj.getClass().getDeclaredFields();
+			for (Field field : fields) {
+				String name = field.getName();
+				if (name.equalsIgnoreCase(fieldName.trim())) {
+					field.setAccessible(true);
+					return field.get(obj);
+				}
+			}
+		}
+
+		return null;
+	}
+	
+	public static List<Long> listToLongList(List<?> list, String fieldName) {
+		
+		String csv = "";
+		try {
+			csv = toCSV(list, fieldName);
+		} catch (IllegalArgumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		List<Long> resultStringList = new ArrayList<Long>();
+		
+		if(!isEmptyString(csv)){
+			resultStringList = csvToLongList(csv);
+			return resultStringList;
+		}
+		
+		//return null;
+		return new ArrayList<Long>();
+	}
+	
+	public static List<Long> csvToLongList(String csv) {
+		ArrayList<Long> list = new ArrayList<Long>();
+
+		if (!Api.isEmptyString(csv)) {
+			String[] parts = csv.split(",");
+			for (String part : parts) {
+				if(!Api.isEmptyString(part)) {
+					list.add(Long.parseLong(part.trim()));
+				}
+			}
+		}
+
+		return list;
+	}
 }
