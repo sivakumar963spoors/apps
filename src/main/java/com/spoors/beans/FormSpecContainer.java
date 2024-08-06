@@ -46,6 +46,8 @@ public class FormSpecContainer {
 	private List<FormSpecPermission> formSpecPermissions;
 	private List<FormSpecConfigSaveOnOtpVerify> saveFormOnOtpVerify;
 	
+	private List<AutoGenereteSequenceSpecConfiguaration> autoGenereteSequenceSpecConfiguarations;
+	
 	String printTemplate;
 	String emailTemplate;
 	String mobilePrintTemplate;
@@ -74,6 +76,8 @@ public class FormSpecContainer {
 	private List<CustomerAutoFilteringCritiria> customerAutoFilteringCritirias;
 	
 	private List<RemainderFieldsMap> remainderFieldsMap;
+	
+	List<FieldValidation> fieldValidations;
 	
 	
 //	private List<FormFieldType> fieldTypes;
@@ -483,6 +487,24 @@ public class FormSpecContainer {
 	public void setSaveFormOnOtpVerify(List<FormSpecConfigSaveOnOtpVerify> saveFormOnOtpVerify) {
 		this.saveFormOnOtpVerify = saveFormOnOtpVerify;
 	}
+
+	public List<FieldValidation> getFieldValidations() {
+		return fieldValidations;
+	}
+
+	public void setFieldValidations(List<FieldValidation> fieldValidations) {
+		this.fieldValidations = fieldValidations;
+	}
+
+	public List<AutoGenereteSequenceSpecConfiguaration> getAutoGenereteSequenceSpecConfiguarations() {
+		return autoGenereteSequenceSpecConfiguarations;
+	}
+
+	public void setAutoGenereteSequenceSpecConfiguarations(
+			List<AutoGenereteSequenceSpecConfiguaration> autoGenereteSequenceSpecConfiguarations) {
+		this.autoGenereteSequenceSpecConfiguarations = autoGenereteSequenceSpecConfiguarations;
+	}
+	
 	
 	
 	

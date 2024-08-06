@@ -210,6 +210,9 @@ public class FormSectionFieldSpec {
 	private Integer enableMappedTerritoriesRestriction = 0;
 	private Integer radioButtonOrientation;
 	private Integer includeEndDate;
+	
+	private Integer reminderConfigEnabled;
+	private String remainderRemarksFields;
 
 	public boolean isRestrictDataFromMobile() {
 		return restrictDataFromMobile;
@@ -1207,5 +1210,18 @@ public class FormSectionFieldSpec {
 	public void setIncludeEndDate(Integer includeEndDate) {
 		this.includeEndDate = includeEndDate;
 	}
+	public Integer getReminderConfigEnabled() {
+		return reminderConfigEnabled;
+	}
+	public void setReminderConfigEnabled(Integer reminderConfigEnabled) {
+		this.reminderConfigEnabled = reminderConfigEnabled;
+	}
+	public String getRemainderRemarksFields() {
+		return remainderRemarksFields;
+	}
+	public void setRemainderRemarksFields(String remainderRemarksFields) {
+		this.remainderRemarksFields = remainderRemarksFields;
+	}
+	
 	
 }

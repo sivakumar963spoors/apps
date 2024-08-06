@@ -38,5 +38,7 @@ public class MobileSqls {
 	public static final String FORM_SECTION_FIELD_SPECS_EXTRA = "CREATE TABLE form_section_field_specs_extra (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORMS_SPECS_CUSTOM_ENTITY_FILTERING_CRITIRIAS ="CREATE TABLE forms_specs_custom_entity_filtering_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 
+	public static final String FORM_SPEC_PERMISSIONS = "CREATE TABLE form_spec_permissions (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String SAVE_FORM_ON_OTP_VERIFY = "CREATE TABLE save_form_on_otp_verify (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 
 }

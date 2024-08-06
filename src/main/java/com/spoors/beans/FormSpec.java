@@ -206,6 +206,11 @@ public class FormSpec implements Serializable {
 	//private boolean enableDraftFormForMobile;
 	private String dynamicSaveButton;
 	private String dynamicSuccessMessage;
+	
+	private Boolean enableDraftFormForMobile;
+	
+	private String mobileLayout;
+	private boolean removeBlankLines;
 
 	
 	public boolean isFormSpecPermission() {
@@ -1011,6 +1016,24 @@ public class FormSpec implements Serializable {
 	}
 	public void setDynamicSuccessMessage(String dynamicSuccessMessage) {
 		this.dynamicSuccessMessage = dynamicSuccessMessage;
+	}
+	public Boolean getEnableDraftFormForMobile() {
+		return enableDraftFormForMobile;
+	}
+	public void setEnableDraftFormForMobile(Boolean enableDraftFormForMobile) {
+		this.enableDraftFormForMobile = enableDraftFormForMobile;
+	}
+	public String getMobileLayout() {
+		return mobileLayout;
+	}
+	public void setMobileLayout(String mobileLayout) {
+		this.mobileLayout = mobileLayout;
+	}
+	public boolean isRemoveBlankLines() {
+		return removeBlankLines;
+	}
+	public void setRemoveBlankLines(boolean removeBlankLines) {
+		this.removeBlankLines = removeBlankLines;
 	}
 	
 	
