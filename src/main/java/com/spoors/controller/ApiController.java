@@ -106,16 +106,17 @@ public class ApiController {
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
 	        JsonNode jsonNode = objectMapper.readTree(jsonString);
-	        String companyId= "";
+	        Integer companyId = 8748;
 	        JsonNode formsNode = jsonNode.get("forms");
 	        if (formsNode.isArray()) {
 	            List<FormSpecContainer> formSpecContainerList = new ArrayList<>();
 	        	for (JsonNode node : formsNode) {
 	            	String formSpecUniqueId = node.asText();
 	            	LOGGER.info(logtext+" --> Forms:- formSpecUniqueId : "+formSpecUniqueId+" starts.");
-	            	sqliteManager.importFormSpec(formSpecUniqueId,companyId);
+	            	FormSpecContainer formSpecContainer = sqliteManager.importFormSpec(formSpecUniqueId);
+	            	formSpecContainerList.add(formSpecContainer);
 	            }
-	        	
+	        	serviceManager.createFormSpecs(formSpecContainerList,companyId);
 	        	
 	        } else {
 	            System.out.println("\"forms\" is not an array");
@@ -131,3 +132,4 @@ public class ApiController {
     }
 	
 }
+;

@@ -17,6 +17,7 @@ import org.tmatesoft.sqljet.core.table.ISqlJetTable;
 import org.tmatesoft.sqljet.core.table.SqlJetDb;
 
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoors.beans.CustomEntityFilteringCritiria;
@@ -90,6 +91,10 @@ public class SqliteManager {
 			}
 
 			File dbFile = new File(sqliteFilePath);
+			
+			dbFile.delete();
+			
+			dbFile = new File(sqliteFilePath);
 
 			db = SqlJetDb.open(dbFile, true);
 
@@ -534,6 +539,8 @@ public class SqliteManager {
 		db.createTable(MobileSqls.FORMS_SPECS_VISIBILITY_DEPENDENCY_CRITERIAS);
 		db.createTable(MobileSqls.FORM_FIELDS_COLOR_DEPENDENCY_CRITERIAS);
 		db.createTable(MobileSqls.FORM_CLEAN_UP_RULES);
+		db.createTable(MobileSqls.FORM_SPEC_PERMISSIONS);
+		db.createTable(MobileSqls.SAVE_FORM_ON_OTP_VERIFY);
 		
 		db.createTable(MobileSqls.FORMS_SPECS_CUSTOMER_FILTERING_CRITERIAS);
 		db.createTable(MobileSqls.FORMS_SPECS_EMPLOYEE_FILTERING_CRITERIAS);
@@ -556,7 +563,7 @@ public class SqliteManager {
 	}
 	}
 
-	public void importFormSpec(String formSpecUniqueId,String companyId) {
+	public FormSpecContainer importFormSpec(String formSpecUniqueId) {
 		FormSpecContainer formSpecContainer = new FormSpecContainer();
 		try {
 			String url = "jdbc:sqlite:/home/spoors/Desktop/SqliteExport/"+formSpecUniqueId+".sqlite";
@@ -684,6 +691,7 @@ public class SqliteManager {
 		}catch(Exception e) {
 			
 		}
+		return formSpecContainer;
 		
 	}
 	 public <T> List<T> fetchDataFromSqliteAndMapToBean(String query, Class<T> clazz, Statement stmt) {
@@ -694,6 +702,7 @@ public class SqliteManager {
 	            rs = stmt.executeQuery(query);
 
 	            ObjectMapper objectMapper = new ObjectMapper();
+	            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 	            while (rs.next()) {
 	                String jsonData = rs.getString("json_data");
 

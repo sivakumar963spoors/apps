@@ -3,19 +3,23 @@ package com.spoors.util;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.lang.reflect.Field;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
 import java.util.TimeZone;
 
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -408,6 +412,136 @@ public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
 		format.setTimeZone(TimeZone.getTimeZone("GMT"));
 		return format.format(date);
 	}
+	public static Map<Object,Object> getMapFromList(List<?> list, String requiredFieldKeyName) {
+		Map<Object,Object> map=new HashMap<Object,Object>();
+		try{
+			if (requiredFieldKeyName != null) {
+				for (Object object : list) {
+					// String valueKey =BeanUtils.getProperty(object, requiredFieldKeyName);
+					Object valueKey = PropertyUtils.getProperty(object, requiredFieldKeyName);
+					map.put(valueKey, object);
+				}
+			}
+			}catch(Exception ex){
+			 
+		 }		
+		 return map;
+		}
+	public static double round(double unrounded, int precision) {
+		return round(unrounded, precision, BigDecimal.ROUND_HALF_DOWN);
+	}
+	public static double round(double unrounded, int precision, int roundingMode) {
+		BigDecimal bd = new BigDecimal(unrounded);
+		BigDecimal roundedBig = bd.setScale(precision, roundingMode);
+		double rounded = roundedBig.doubleValue();
+		return rounded;
+	}
+	
+	public static String roundToString(double unrounded, int precision) {
+		return roundToString(unrounded, precision, BigDecimal.ROUND_HALF_DOWN);
+	}
+
+	public static String roundToString(double unrounded, int precision, int roundingMode) {
+		BigDecimal bd = new BigDecimal(unrounded);
+		BigDecimal roundedBig = bd.setScale(precision, roundingMode);
+		String rounded = roundedBig.toString();
+		return rounded;
+	}
+	
+	public static String makeNullIfNull(String value) {
+		if (value == null) {
+			return null;
+		}
+
+		if (value.trim().length() == 0) {
+			return null;
+		} else {
+			if (value.equals("null") || value.equals("Null")
+					|| value.equals("NULL")) {
+				return null;
+			} else {
+				return value;
+			}
+		}
+	}
+
+	public static Map<Object,List<Object>> getResolvedMapFromList(List<?> list, String requiredFieldKeyName) 
+	 {
+		Map<Object, List<Object>> map = new HashMap<Object, List<Object>>();
+		try 
+		{
+			if (requiredFieldKeyName != null) 
+			{
+				for (Object object : list) 
+				{
+					List<Object> objects = new ArrayList<Object>();
+					Object valueKey = PropertyUtils.getProperty(object,
+							requiredFieldKeyName);
+					if(map.containsKey(valueKey))
+					{
+						objects = map.get(valueKey);
+					}
+					objects.add(object);
+					map.put(valueKey, objects);
+				}
+			}
+		} 
+		catch (Exception ex) 
+		{
+	
+		}
+		return map;
+	}
+	public static List<String> csvToList(String csv) {
+		ArrayList<String> list = new ArrayList<String>();
+
+		if (!Api.isEmptyString(csv)) {
+			String[] parts = csv.split(",");
+			for (String part : parts) {
+				list.add(part.trim());
+			}
+		}
+
+		return list;
+	}
+	 public static String processStringValuesList1(List<String> givenvalues) {
+ 		if (givenvalues != null) {
+ 			List<String> tempList = new ArrayList<String>();
+ 			for (String string : givenvalues) {
+ 				if(string!=null){
+ 				string = string.replaceAll("'", "");
+ 				string = "'" + string + "'";
+ 				tempList.add(string);
+  				}
+ 			}
+ 			return Api.toCSV(tempList);
+ 		}
+ 		return null;
+ 	}
+	 public static String makeEmptyIfNull(String value) {
+			if (value == null) {
+				return "";
+			} 
+			else if (value.equals("null") || value.equals("Null")
+					|| value.equals("NULL")) {
+				return "";
+			}
+			else {
+				return value;
+			}
+		}
+	 public static Object makeEmptyIfNull(Object value) {
+			if (value == null) {
+				return "";
+			} 
+			else if (value.equals("null") || value.equals("Null")
+					|| value.equals("NULL")) {
+				return "";
+			}
+			else {
+				return value;
+			}
+		}	
 
 	
 	public static String[] csvToArray(String csv) {
@@ -554,31 +688,4 @@ public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
 		return list;
 	}
 	
-	public static List<String> csvToList(String csv) {
-		ArrayList<String> list = new ArrayList<String>();
-
-		if (!Api.isEmptyString(csv)) {
-			String[] parts = csv.split(",");
-			for (String part : parts) {
-				list.add(part.trim());
-			}
-		}
-
-		return list;
-	}
-	
-	public static String processStringValuesList1(List<String> givenvalues) {
-		if (givenvalues != null) {
-			List<String> tempList = new ArrayList<String>();
-			for (String string : givenvalues) {
-				if(string!=null){
-				string = string.replaceAll("'", "");
-				string = "'" + string + "'";
-				tempList.add(string);
- 				}
-			}
-			return Api.toCSV(tempList);
-		}
-		return null;
-	}
 }
