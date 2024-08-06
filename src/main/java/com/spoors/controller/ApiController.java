@@ -2,8 +2,10 @@ package com.spoors.controller;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,38 +52,43 @@ public class ApiController {
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
 	        JsonNode jsonNode = objectMapper.readTree(jsonString);
-	        JsonNode formsNode = jsonNode.get("forms");
-	        if (formsNode.isArray()) {
-	            List<FormSpecContainer> formSpecContainerList = new ArrayList<>();
-	        	for (JsonNode node : formsNode) {
-	        		FormSpecContainer formSpecContainer = new FormSpecContainer();
-	            	String formSpecUniqueId = node.asText();
-	            	LOGGER.info(logtext+" --> Forms:- formSpecUniqueId : "+formSpecUniqueId+" starts.");
-	            	serviceManager.getExportFormSpecData(formSpecUniqueId,formSpecContainer,logtext);
-	            	formSpecContainerList.add(formSpecContainer);
-	            }
-	        	
-	        	sqliteManager.saveFormSpecDataToSqlite(formSpecContainerList);
-	        	
-	        } else {
-	            System.out.println("forms is not an array");
-	            LOGGER.info("forms is not an array");
-	        }
-	        
+	       
+	        List<WorkSpecContainer> workSpecContainerList = new ArrayList<>();
 	        JsonNode worksNode = jsonNode.get("works");
+	        Set<String> formSpecUniqueIds = new HashSet<>();
 	        if(worksNode.isArray()) {
-	        	List<WorkSpecContainer> workSpecContainerList = new ArrayList<>();
 	        	for(JsonNode node : worksNode) {
 	        		WorkSpecContainer workSpecContainer = new WorkSpecContainer();
 	        		String workSpecId = node.asText();
 	        		LOGGER.info(logtext+" --> Works:- workSpecId : "+workSpecId+" starts.");
 	        		serviceManager.getExportWorkSpecData(workSpecId,workSpecContainer);
+	        		workSpecContainerList.add(workSpecContainer);
 	        	}
 	        }else {
 	        	System.out.println("works is not an array");
 	        	LOGGER.info("works is not an array");
 	        }
 	        
+	        FormSpecContainer formSpecContainer = new FormSpecContainer();
+	        JsonNode formsNode = jsonNode.get("forms");
+	        if (formsNode.isArray()) {
+	        	for (JsonNode node : formsNode) {
+	        		
+	            	String formSpecUniqueId = node.asText();
+	            	LOGGER.info(logtext+" --> Forms:- formSpecUniqueId : "+formSpecUniqueId+" starts.");
+	            	formSpecUniqueIds.add(formSpecUniqueId);
+	            }
+	        	serviceManager.getExportFormSpecData(formSpecUniqueIds,formSpecContainer,logtext);
+	        	
+	        } else {
+	            System.out.println("forms is not an array");
+	            LOGGER.info("forms is not an array");
+	        }
+	        
+	       
+	        
+	        
+	        sqliteManager.saveFormSpecDataToSqlite(formSpecContainer);
 	        
 		}catch(Exception e) {
 			 LOGGER.info("Got Exception in getApplicationForExport : "+e);

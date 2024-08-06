@@ -307,11 +307,7 @@ public class EffortDao {
 		return formFieldSpecs;
 	}
 
-	public List<FormPageSpec> getFormPageSpecsForFormSpec(long formSpecId) {
-		return getFormPageSpecsForFormSpec(formSpecId + "");
-	}
-
-	private List<FormPageSpec> getFormPageSpecsForFormSpec(String formSpecIds) {
+	public List<FormPageSpec> getFormPageSpecsForFormSpec(String formSpecIds) {
 		if (!Api.isEmptyString(formSpecIds)) {
 			String sql = Sqls.SELECT_FORM_PAGE_SPECS_FOR_FORM_SPEC_IN.replace(
 					":ids", formSpecIds);
@@ -1095,6 +1091,74 @@ public class EffortDao {
 		
 		return jdbcTemplate.query(Sqls.SELECT_WORK_ACTION_GROUP_BY_WORK_SPEC_IDS_SYNC.replace(":workSpecIds", workSpecIds),
 				    new BeanPropertyRowMapper<WorkActionGroup>(WorkActionGroup.class));
+	}
+	
+	public List<FormSpec> getLatestFormSpecsForUnquids(String uniqueIds) {
+
+		if (!Api.isEmptyString(uniqueIds)) {
+			   String formSpecUniqueId = Api.processStringValuesList1(Api.csvToList(uniqueIds));
+			String sql = Sqls.SELECT_LATEST_FORM_SPECS.replace(":uniqueIds",
+					formSpecUniqueId);
+			return jdbcTemplate.query(sql, new BeanPropertyRowMapper<FormSpec>(
+					FormSpec.class));
+		}
+		return new ArrayList<FormSpec>();
+	}
+	
+	public List<FormFieldSpec> getFormFieldSpecForIn(String ids) {
+		if (!Api.isEmptyString(ids)) {
+			List<FormFieldSpec> formFieldSpecs = jdbcTemplate.query(
+					Sqls.SELECT_FORM_FIELD_SPECS_IN.replace(":ids", ids), new BeanPropertyRowMapper<FormFieldSpec>(
+							FormFieldSpec.class));
+			return formFieldSpecs;
+		}
+
+		return new ArrayList<FormFieldSpec>();
+	}
+	
+	public List<FormSectionSpec> getFormSectionSpecForIn(
+			List<FormSpec> formSpecs) {
+		if (formSpecs != null && formSpecs.size() > 0) {
+			String ids = "";
+			for (FormSpec formSpec : formSpecs) {
+				if (!Api.isEmptyString(ids)) {
+					ids += ",";
+				}
+				ids += formSpec.getFormSpecId();
+			}
+
+			List<FormSectionSpec> formSectionSpecs = jdbcTemplate.query(
+					Sqls.SELECT_FORM_SECTION_SPECS_IN.replace(":ids", ids),
+					new BeanPropertyRowMapper<FormSectionSpec>(
+							FormSectionSpec.class));
+
+			return formSectionSpecs;
+		}
+
+		return new ArrayList<FormSectionSpec>();
+	}
+	
+	 public List<FormSpecPermission> geFormSpecPermissionsForSync(
+			 String syncDate,String formSpecIds,String formSpecUniqueIdsCsv)
+	{
+		List<FormSpecPermission> formSpecPermissions = new ArrayList<FormSpecPermission>();
+		String uniqueIds = Api.processStringValuesList1(Api.csvToList(formSpecUniqueIdsCsv));
+		if (!Api.isEmptyString(formSpecIds)) {
+			
+			if (Api.isEmptyString(syncDate)) {
+				syncDate = "1970-01-01T00:00:00Z";
+			}
+			syncDate = Api.getDateTimeFromXsd(syncDate);
+			
+			String sql = Sqls.FORM_SPEC_PERMISSIONS_FOR_SYNC.replace(":uniqueIds",uniqueIds);
+			
+			/*formSpecPermissions = jdbcTemplate.query(sql,new Object[] {companyId,syncDate},
+					new BeanPropertyRowMapper<FormSpecPermission>(FormSpecPermission.class));*/
+			formSpecPermissions = jdbcTemplate.query(sql,new BeanPropertyRowMapper<FormSpecPermission>(FormSpecPermission.class));
+		
+		}
+
+		return formSpecPermissions;
 	}
 	
 }

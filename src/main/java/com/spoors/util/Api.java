@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 
 import javax.xml.bind.DatatypeConverter;
@@ -245,6 +246,26 @@ public class Api {
 	}
 	
 	public static String toCSV(List<?> list) {
+		if (list != null) {
+			StringBuilder csv = new StringBuilder("");
+			for (Object obj : list) {
+				if(obj != null)
+				{
+					if (csv.length() > 0) {
+						csv.append(", ");
+					}
+	
+					csv.append(obj.toString());
+				}
+			}
+
+			return csv.toString();
+		} else {
+			return null;
+		}
+	}
+	
+	public static String toCSV(Set<?> list) {
 		if (list != null) {
 			StringBuilder csv = new StringBuilder("");
 			for (Object obj : list) {
@@ -531,5 +552,33 @@ public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
 		}
 
 		return list;
+	}
+	
+	public static List<String> csvToList(String csv) {
+		ArrayList<String> list = new ArrayList<String>();
+
+		if (!Api.isEmptyString(csv)) {
+			String[] parts = csv.split(",");
+			for (String part : parts) {
+				list.add(part.trim());
+			}
+		}
+
+		return list;
+	}
+	
+	public static String processStringValuesList1(List<String> givenvalues) {
+		if (givenvalues != null) {
+			List<String> tempList = new ArrayList<String>();
+			for (String string : givenvalues) {
+				if(string!=null){
+				string = string.replaceAll("'", "");
+				string = "'" + string + "'";
+				tempList.add(string);
+ 				}
+			}
+			return Api.toCSV(tempList);
+		}
+		return null;
 	}
 }

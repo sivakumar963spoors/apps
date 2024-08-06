@@ -59,18 +59,14 @@ import com.spoors.util.Api;
 @Service
 public class SqliteManager {
 
-	public void saveFormSpecDataToSqlite(List<FormSpecContainer> formSpecContainerList) {
+	public void saveFormSpecDataToSqlite(FormSpecContainer formSpecContainer) {
 		
-		for(FormSpecContainer formSpecContainer : formSpecContainerList) {
-			
 			try {
 				saveToSqlite(formSpecContainer);
 			} catch (SqlJetException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
-		
 	}
 
 	private void saveToSqlite(FormSpecContainer formSpecContainer) throws SqlJetException {

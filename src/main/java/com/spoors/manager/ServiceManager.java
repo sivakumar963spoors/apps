@@ -3,6 +3,7 @@ package com.spoors.manager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -90,28 +91,28 @@ public class ServiceManager
 		this.effortDao = effortDao;
 	}
 
-	public void getExportFormSpecData(String formSpecUniqueId, FormSpecContainer formSpecContainer, String logtext)
+	public void getExportFormSpecData(Set<String> formSpecUniqueIds, FormSpecContainer formSpecContainer, String logtext)
 	{
 		try {
 			
-			FormSpec formSpec = effortDao.getLatestFormSpecByUniqueId(formSpecUniqueId);
-			List<FormSpec> formSpecs = new ArrayList<>();
-			if(formSpec!=null) {
-				formSpecs.add(formSpec);
+			List<FormSpec> formSpecs = effortDao.getLatestFormSpecsForUnquids(Api.toCSV(formSpecUniqueIds));
+			if(formSpecs!=null) {
 				List<String> uniqueIdsList = new ArrayList<>();
-				uniqueIdsList.add(formSpecUniqueId);
+				uniqueIdsList.addAll(formSpecUniqueIds);
 				
 				String uniqueIdsCsv = Api.processStringValuesList(uniqueIdsList);
 				
-				List<FormPageSpec> pageSpecs = getFormPageSpecs(formSpec.getFormSpecId());
+				String formSpecIds = Api.toCSV(formSpecs,"formSpecId",CsvOptions.FILTER_NULL_OR_EMPTY);
 				
-				List<FormFieldSpec> fieldSpecs = getFormFieldSpecs(formSpec.getFormSpecId());
+				List<FormPageSpec> pageSpecs = getFormPageSpecsForFormSpec(formSpecIds);
+				
+				List<FormFieldSpec> fieldSpecs = getFormFieldSpecForIn(formSpecs);
 				
 				List<FormFieldSpecsExtra> fieldSpecsExtra =	getFormFieldSpecsExtraForIn(formSpecs);
 				
 				List<FormFieldSpecValidValue> fieldSpecValidValues = getFormFieldSpecValidValues(fieldSpecs);
 				
-				List<FormSectionSpec> sectionSpecs = getFormSectionSpecs(formSpec.getFormSpecId());
+				List<FormSectionSpec> sectionSpecs = effortDao.getFormSectionSpecForIn(formSpecs);
 				
 				List<FormSectionFieldSpec> sectionFieldSpecs = getFormSectionFieldSpecForIn(sectionSpecs);
 				
@@ -119,39 +120,39 @@ public class ServiceManager
 				
 				List<FormSectionFieldSpecValidValue> sectionFieldSpecValidValues = getFormSectionFieldSpecValidValuesIn(sectionFieldSpecs);
 				
-				List<FormFieldGroupSpec> formFieldGroupSpecs = getFormFieldGroupSpecForIn(formSpec.getFormSpecId()+"");
+				List<FormFieldGroupSpec> formFieldGroupSpecs = getFormFieldGroupSpecForIn(formSpecIds);
 				
-				List<VisibilityDependencyCriteria> visibilityDependencyCriterias = getVisibilityDependencyCriteriasForFormSpecs(formSpec.getFormSpecId()+"");
+				List<VisibilityDependencyCriteria> visibilityDependencyCriterias = getVisibilityDependencyCriteriasForFormSpecs(formSpecIds);
 				
-				List<FormFieldsColorDependencyCriterias> formFieldsColorDependencyCriterias = getFormFieldsColorDependencyCriteriasByFormSpecId(formSpec.getFormSpecId()+"");
+				List<FormFieldsColorDependencyCriterias> formFieldsColorDependencyCriterias = getFormFieldsColorDependencyCriteriasByFormSpecId(formSpecIds);
 				
-				List<FormCleanUpRule> formCleanUpRule = getFormDataCleanUpRulesForFormSpecId(formSpec.getFormSpecId()+"");
+				List<FormCleanUpRule> formCleanUpRule = getFormDataCleanUpRulesForFormSpecId(formSpecIds);
 				
-				List<ListFilteringCritiria> lisFilteringCritirias =  getListFilteringCritiriasForFormSpecs(formSpec.getFormSpecId()+"");
+				List<ListFilteringCritiria> lisFilteringCritirias =  getListFilteringCritiriasForFormSpecs(formSpecIds);
 				
-				List<RemainderFieldsMap> remainderFieldsMap = getRemainderFieldsMapForFormSpecs(formSpec.getFormSpecId()+"");
+				List<RemainderFieldsMap> remainderFieldsMap = getRemainderFieldsMapForFormSpecs(formSpecIds);
 				
-				List<CustomerAutoFilteringCritiria> customerAutoFilteringCritirias = getCustomerAutoFilteringCritiriasForFormSpecs(formSpec.getFormSpecId()+"");
+				List<CustomerAutoFilteringCritiria> customerAutoFilteringCritirias = getCustomerAutoFilteringCritiriasForFormSpecs(formSpecIds);
 				
-				List<CustomerFilteringCritiria> customerFilteringCritirias = getListOfCustomerFilterCriterias(formSpec.getFormSpecId()+"");
+				List<CustomerFilteringCritiria> customerFilteringCritirias = getListOfCustomerFilterCriterias(formSpecIds);
 				
-				List<EmployeeFilteringCritiria> employeeFilteringCritirias = getListOfEmployeeFilterCriterias(formSpec.getFormSpecId()+"");
+				List<EmployeeFilteringCritiria> employeeFilteringCritirias = getListOfEmployeeFilterCriterias(formSpecIds);
 				
-				List<FieldValidationCritiria> fieldValidationCritirias = getFieldValidationCritirias(formSpec.getFormSpecId()+"");
+				List<FieldValidationCritiria> fieldValidationCritirias = getFieldValidationCritirias(formSpecIds);
 				
-				List<FormFilteringCritiria> formFilteringCritirias = getFormFilteringCritiriasForFormSpecs(formSpec.getFormSpecId()+"");
+				List<FormFilteringCritiria> formFilteringCritirias = getFormFilteringCritiriasForFormSpecs(formSpecIds);
 				
-				List<CustomEntityFilteringCritiria> customEntityFilteringCritirias = getListOfCustomEntityFilteringCritiriaForFormSpecs(formSpec.getFormSpecId()+"");
+				List<CustomEntityFilteringCritiria> customEntityFilteringCritirias = getListOfCustomEntityFilteringCritiriaForFormSpecs(formSpecIds);
 				
-				List<StockFormConfiguration> stockFormConfigurations = getStockFieldConfigurationsForSync(formSpec.getFormSpecId()+"");
+				List<StockFormConfiguration> stockFormConfigurations = getStockFieldConfigurationsForSync(formSpecIds);
 				
-				List<OfflineListUpdateConfiguration> offlineListUpdateConfiguration = getOfflineListUpdateConfigurationsForSync(formSpec.getFormSpecId()+"");
+				List<OfflineListUpdateConfiguration> offlineListUpdateConfiguration = getOfflineListUpdateConfigurationsForSync(formSpecIds);
 				
-				List<OfflineCustomEntityUpdateConfiguration> offlineCustomEntityUpdateConfiguration = getOfflineCustomEntityUpdateConfigurationForSync(formSpec.getFormSpecId()+"");
+				List<OfflineCustomEntityUpdateConfiguration> offlineCustomEntityUpdateConfiguration = getOfflineCustomEntityUpdateConfigurationForSync(formSpecIds);
 				
-				List<FieldSpecFilter> formFieldSpecFilters = getFieldSpecFiltersFormFormSpecIds(formSpec.getFormSpecId()+"", FieldSpecFilter.FIELD_IS_FORMFIELD);
+				List<FieldSpecFilter> formFieldSpecFilters = getFieldSpecFiltersFormFormSpecIds(formSpecIds, FieldSpecFilter.FIELD_IS_FORMFIELD);
 				
-				List<FieldSpecFilter> formSectionFieldSpecFilters = getFieldSpecFiltersFormFormSpecIds(formSpec.getFormSpecId()+"", FieldSpecFilter.FIELD_IS_SECTIONFIELD);
+				List<FieldSpecFilter> formSectionFieldSpecFilters = getFieldSpecFiltersFormFormSpecIds(formSpecIds, FieldSpecFilter.FIELD_IS_SECTIONFIELD);
 				
 				List<PaymentMapping> paymentMappings = getPaymentMappingByFormSpec(uniqueIdsCsv);
 				
@@ -208,16 +209,16 @@ public class ServiceManager
 					
 				}
 				
-				List<FormSpecPermission> formSpecPermissions = geFormSpecPermissions(formSpec.getUniqueId(),true);
+				List<FormSpecPermission> formSpecPermissions = effortDao.geFormSpecPermissionsForSync("",formSpecIds,uniqueIdsCsv);
 				formSpecContainer.setFormSpecPermissions(formSpecPermissions);
 				
 				List<FormSpecConfigSaveOnOtpVerify> saveFormOnOtpVerifyList = getFormSpecConfigSaveOnOtpVerifyList(uniqueIdsCsv);
 				formSpecContainer.setSaveFormOnOtpVerify(saveFormOnOtpVerifyList);
 				
-				List<JobFormMapBean> jobFormMapBeans = getJobFormMapBeans(formSpec.getFormSpecId()+"",null);
+				List<JobFormMapBean> jobFormMapBeans = getJobFormMapBeans(formSpecIds+"",null);
 				formSpecContainer.setJobFormMapBeans(jobFormMapBeans);
 				
-				List<WorkSpecFormSpecFollowUp> workSpecFormSpecFollowUpList = getWorkSpecFormSpecFollowUpForSync(formSpec.getFormSpecId()+"","1970-01-01 00:00:00");
+				List<WorkSpecFormSpecFollowUp> workSpecFormSpecFollowUpList = getWorkSpecFormSpecFollowUpForSync(formSpecIds,"1970-01-01 00:00:00");
 				List<WorkFormFieldMap> workFormFieldMaps = getWorkFormFieldMappingByWorkSpecFormSpecFollowUpIds(Api.toCSV(workSpecFormSpecFollowUpList, "workSpecFormSpecFollowUpId", CsvOptions.NONE));
 				
 				formSpecContainer.setWorkSpecFormSpecFollowUp(workSpecFormSpecFollowUpList);
@@ -233,6 +234,19 @@ public class ServiceManager
 		}
 	}
 
+	public List<FormFieldSpec> getFormFieldSpecForIn(List<FormSpec> formSpecs) {
+		String ids = "";
+		for (FormSpec formSpec : formSpecs) {
+			if (!Api.isEmptyString(ids)) {
+				ids += ",";
+			}
+
+			ids += "'" + formSpec.getFormSpecId() + "'";
+		}
+
+		return effortDao.getFormFieldSpecForIn(ids);
+	}
+	
 	private List<WorkFormFieldMap> getWorkFormFieldMappingByWorkSpecFormSpecFollowUpIds(String workSpecFormSpecFollowUpIds) {
 		// TODO Auto-generated method stub
 		return effortDao.getWorkFormFieldMappingByWorkSpecFormSpecFollowUpIds(workSpecFormSpecFollowUpIds);
@@ -419,16 +433,8 @@ public class ServiceManager
 		return effortDao.getFormFieldSpecs(formSpecId);
 	}
 
-	private List<FormPageSpec> getFormPageSpecs(long formSpecId) {
-		List<FormPageSpec> formPageSpecs = effortDao
-				.getFormPageSpecsForFormSpec(formSpecId);
-		if (formPageSpecs.size() == 0) {
-			FormPageSpec formPageSpec = new FormPageSpec();
-			formPageSpec.setPageId(0);
-			formPageSpec.setPageTitle("Page 1");
-			formPageSpec.setPageOrder(0);
-			formPageSpecs.add(formPageSpec);
-		}
+	private List<FormPageSpec> getFormPageSpecsForFormSpec(String formSpecIds) {
+		List<FormPageSpec> formPageSpecs = effortDao.getFormPageSpecsForFormSpec(formSpecIds);
 		return formPageSpecs;
 	}
 
@@ -872,5 +878,7 @@ public class ServiceManager
 	private WorkSpec getWorkSpec(String workSpecId) {
 		return effortDao.getWorkSpecByWorkSpecId(workSpecId);
 	}
+	
+	
 
 }
