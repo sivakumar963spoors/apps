@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoors.beans.FormSpecContainer;
+import com.spoors.beans.workSpecs.WorkActionSpec;
+import com.spoors.beans.workSpecs.WorkSpec;
 import com.spoors.beans.workSpecs.WorkSpecContainer;
 import com.spoors.config.AppConfig;
 import com.spoors.manager.ServiceManager;
@@ -62,6 +64,21 @@ public class ApiController {
 	        		String workSpecId = node.asText();
 	        		LOGGER.info(logtext+" --> Works:- workSpecId : "+workSpecId+" starts.");
 	        		serviceManager.getExportWorkSpecData(workSpecId,workSpecContainer);
+	        		
+	        		List<WorkSpec> workSpecs = workSpecContainer.getWorkSpecs();
+	        		if(workSpecs != null && workSpecs.size() > 0) {
+	        			for(WorkSpec workSpec : workSpecs) {
+	        				formSpecUniqueIds.add(workSpec.getFormSpecUniqueId());
+	        			}
+	        		}
+	        		List<WorkActionSpec>  workActionSpecs = workSpecContainer.getWorkActionSpecs();
+	        		if(workActionSpecs != null && workActionSpecs.size() > 0) {
+	        			for(WorkActionSpec workActionSpec : workActionSpecs) {
+	        				if(!Api.isEmptyString(workActionSpec.getFormSpecUniqueId())) {
+	        					formSpecUniqueIds.add(workActionSpec.getFormSpecUniqueId());
+	        				}
+	        			}
+	        		}
 	        		workSpecContainerList.add(workSpecContainer);
 	        	}
 	        }else {
@@ -85,10 +102,7 @@ public class ApiController {
 	            LOGGER.info("forms is not an array");
 	        }
 	        
-	       
-	        
-	        
-	        sqliteManager.saveFormSpecDataToSqlite(formSpecContainer);
+	        sqliteManager.saveFormSpecDataToSqlite(formSpecContainer,workSpecContainerList);
 	        
 		}catch(Exception e) {
 			 LOGGER.info("Got Exception in getApplicationForExport : "+e);
@@ -122,6 +136,25 @@ public class ApiController {
 	            System.out.println("\"forms\" is not an array");
 	            LOGGER.info("forms is not an array");
 	        }
+		}catch(Exception e) {
+			 LOGGER.info("Got Exception in getApplicationForExport : "+e);
+			 LOGGER.error("Got Exception in getApplicationForExport : "+e);
+			 e.printStackTrace();
+		}
+		String responseString = Api.getJsonFromGivenObject(response);
+        return new ResponseEntity<>(responseString, HttpStatus.OK);
+    }
+	
+	@PostMapping("/import/bySqliteName")
+    public ResponseEntity<String> getImportApplicationBySqliteName(@RequestBody String jsonString) {
+       String logtext = "getImportApplicationBySqliteName";
+		Map<String,Object> response = new HashMap<>();
+		try {
+			ObjectMapper objectMapper = new ObjectMapper();
+	        JsonNode jsonNode = objectMapper.readTree(jsonString);
+	        Integer companyId = jsonNode.get("companyId").asInt();
+	        String sqliteName = jsonNode.get("sqliteName").asText();
+	        sqliteManager.importDataFromSqlite(sqliteName,companyId);
 		}catch(Exception e) {
 			 LOGGER.info("Got Exception in getApplicationForExport : "+e);
 			 LOGGER.error("Got Exception in getApplicationForExport : "+e);

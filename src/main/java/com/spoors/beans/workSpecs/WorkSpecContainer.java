@@ -54,12 +54,16 @@ public class WorkSpecContainer {
 	
 	private List<WorkSpecCustomerCallApi> workSpecCustomerCallApis;
 	private List<WorkActionGroup> workActionGroups;
+	
 	private List<ExternalActionConfiguration> externalActionConfigurations;
 	private List<FormToWorkAutoFillSectionConfiguration> formToWorkAutoFillSectionConfiguration;
 	private List<FormToWorkAutoFillSectionFieldsConfiguration> formToWorkAutoFillSectionFieldsConfiguration;
 	
 	private List<WorkFieldsUniqueConfigurations> openWorkFieldsUniqueConfigurations;
-	private List<WorkSpecFeedBackFormSpecMap> workSpecFeedBackFormSpecMap;
+	
+	private List<WorkSpecFeedBackFormSpecMap> workSpecFeedBackFormSpecMap; // have to send in sqlite 
+	
+	
 	private List<WorkSpecListLevelVisibilityConfiguration> workSpecListLevelVisibilityConfigurations;
 	private List<WorkActionFormVisibility> workActionFormVisibility;
 	private List<WorkSpecCustomDashboardConfiguration> workSpecCustomDashboardConfigurations;

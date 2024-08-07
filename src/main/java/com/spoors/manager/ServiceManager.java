@@ -1,5 +1,8 @@
 package com.spoors.manager;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -2056,6 +2059,7 @@ public class ServiceManager
 	private WorkSpec getWorkSpec(String workSpecId) {
 		return effortDao.getWorkSpecByWorkSpecId(workSpecId);
 	}
+
 	
 	
 
