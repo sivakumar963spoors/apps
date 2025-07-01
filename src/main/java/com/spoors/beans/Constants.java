@@ -2,6 +2,7 @@ package com.spoors.beans;
 
 import java.io.Serializable;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -49,6 +50,9 @@ public class Constants implements Serializable{
 	public static final int TYPE_CURRENT_MONTH = -100;
 	
 	public static final int FORM_FIELD_TYPE_RICH_TEXT = 35;
+	
+	@Value("${mediaStoragePath}")
+	private String mediaStoragePath;
 
 	public String getRootEmpKey() {
 		return rootEmpKey;
@@ -57,6 +61,16 @@ public class Constants implements Serializable{
 	public void setRootEmpKey(String rootEmpKey) {
 		this.rootEmpKey = rootEmpKey;
 	}
+
+	public String getMediaStoragePath() {
+		return mediaStoragePath;
+	}
+
+	public void setMediaStoragePath(String mediaStoragePath) {
+		this.mediaStoragePath = mediaStoragePath;
+	}
+	
+	
 	
 	
 

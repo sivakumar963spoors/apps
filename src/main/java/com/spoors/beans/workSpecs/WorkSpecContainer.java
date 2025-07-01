@@ -7,70 +7,72 @@ import java.util.Map;
 
 public class WorkSpecContainer {
 	private Map<Long, Boolean> workSpecVisibilityMap = new HashMap<Long, Boolean>();
-	List<WorkSpec> WorkSpecs;
-	List<WorkActionSpec> workActionSpecs;
-	List<NextActionSpec> nextActionSpecs;
-	List<NextWorkSpec> nextWorkSpecs;
-	List<WorkSpecFormSpecMap> workSpecFormSpecMaps;
-	private List<WorkActionSpecConditions> workActionSpecConditions;
-	private List<WorkFormAutoFill> workFormAutoFillStageConfig;
-	private List<WorkFormAutoFillField> workFormAutoFillFieldMapping;
+	List<WorkSpec> WorkSpecs;//done
+	List<WorkActionSpec> workActionSpecs;//done
+	List<NextActionSpec> nextActionSpecs;//done
+	List<NextWorkSpec> nextWorkSpecs; // not cloning this now
+	List<WorkSpecFormSpecMap> workSpecFormSpecMaps; // done
+	private List<WorkActionSpecConditions> workActionSpecConditions;//done
+	private List<WorkFormAutoFill> workFormAutoFillStageConfig; // done
+	private List<WorkFormAutoFillField> workFormAutoFillFieldMapping; // done
 	
-	private List<WorkAttachmentAutoFill> workAttachmentFormAutoFillStageConfig;
-	private List<WorkAttachmentFormAutoFillField> workAttachmentFormAutoFillFieldMapping;
+	private List<WorkAttachmentAutoFill> workAttachmentFormAutoFillStageConfig; // done
+	private List<WorkAttachmentFormAutoFillField> workAttachmentFormAutoFillFieldMapping; // done
 	
-	private List<AttachmnetFormAutoFillSectionConfiguration> attachmentFormAutoFillSectionConfiguration;
-	private List<WorkAttachmentAutoFillSectionFieldsConfiguration> attachmentFormAutoFillSectionFieldsConfiguration;
+	private List<AttachmnetFormAutoFillSectionConfiguration> attachmentFormAutoFillSectionConfiguration; // done
+	private List<WorkAttachmentAutoFillSectionFieldsConfiguration> attachmentFormAutoFillSectionFieldsConfiguration; // done
 	
-	private List<FormToWorkAutoFill> formToWorkAutoFillStageConfig;
-	private List<FormToWorkAutoFillField> formToWorkAutoFillFieldMapping;
+	private List<FormToWorkAutoFill> formToWorkAutoFillStageConfig; // done
+	private List<FormToWorkAutoFillField> formToWorkAutoFillFieldMapping; // done
 	
-	private List<FormAutoFillSectionConfiguration> formAutoFillSectionConfiguration;
-	private List<FormAutoFillSectionFieldsConfiguration> formAutoFillSectionFieldsConfiguration;
+	private List<FormAutoFillSectionConfiguration> formAutoFillSectionConfiguration; // done
+	private List<FormAutoFillSectionFieldsConfiguration> formAutoFillSectionFieldsConfiguration; // done
 	
 	
-	private List<WorkActionSpecEndCondition> workActionSpecEndConditions;
+	private List<WorkActionSpecEndCondition> workActionSpecEndConditions; // done
 	
-	private List<WorkActionVisibilityConfiguration> workActionVisibilityConfigurations;
+	private List<WorkActionVisibilityConfiguration> workActionVisibilityConfigurations; // done
 	
-	private List<WorkProcessSubTaskSpec> workProcessSubTaskSpecConfigurations;
+	private List<WorkProcessSubTaskSpec> workProcessSubTaskSpecConfigurations; // not sure
 	
-	private List<AddingSubTaskEmployeeConfiguration> workProcessSubTaskEmployeesConfigurations;
+	private List<AddingSubTaskEmployeeConfiguration> workProcessSubTaskEmployeesConfigurations; // not sure
 	
-	private List<WorkToSubTaskAutoFillConfiguration> workToSubTaskAutoFillConfigurations;
+	private List<WorkToSubTaskAutoFillConfiguration> workToSubTaskAutoFillConfigurations; // not sure
 	
-	private List<WorkFieldsUniqueConfigurations> workFieldsUniqueConfigurations;
+	private List<WorkFieldsUniqueConfigurations> workFieldsUniqueConfigurations; // not done
 	
-	private List<WorkReassignmentRules> workReassignmentRules;
+	private List<WorkReassignmentRules> workReassignmentRules; // done
 	
-	private List<WorkSpecAppLabel> workSpecAppLabels;
+	private List<WorkSpecAppLabel> workSpecAppLabels; // done
 	
-	private List<HideAddSubTaskConfiguration> hideAddSubTaskConfigurations;
+	private List<HideAddSubTaskConfiguration> hideAddSubTaskConfigurations; // not sure
 	
-	private List<WorkSpecPermission> workSpecPermissions;
+	private List<WorkSpecPermission> workSpecPermissions; // no need
 	
-	private List<WorkUnassignmentCriterias> workUnassignmentCriterias;
-	private List<WorkAssignmentCriteriaConditions> workAssignmentCriteriaConditions;
+	private List<WorkUnassignmentCriterias> workUnassignmentCriterias; // done
+	private List<WorkAssignmentCriteriaConditions> workAssignmentCriteriaConditions; // done
 	
-	private List<WorkSpecCustomerCallApi> workSpecCustomerCallApis;
-	private List<WorkActionGroup> workActionGroups;
+	private List<WorkSpecCustomerCallApi> workSpecCustomerCallApis; // not sure
+	private List<WorkActionGroup> workActionGroups; // not cloning
 	
-	private List<ExternalActionConfiguration> externalActionConfigurations;
-	private List<FormToWorkAutoFillSectionConfiguration> formToWorkAutoFillSectionConfiguration;
-	private List<FormToWorkAutoFillSectionFieldsConfiguration> formToWorkAutoFillSectionFieldsConfiguration;
+	private List<ExternalActionConfiguration> externalActionConfigurations; // done
+	private List<FormToWorkAutoFillSectionConfiguration> formToWorkAutoFillSectionConfiguration; // done
+	private List<FormToWorkAutoFillSectionFieldsConfiguration> formToWorkAutoFillSectionFieldsConfiguration; //done
 	
 	private List<WorkFieldsUniqueConfigurations> openWorkFieldsUniqueConfigurations;
 	
 	private List<WorkSpecFeedBackFormSpecMap> workSpecFeedBackFormSpecMap; // have to send in sqlite 
 	
 	
-	private List<WorkSpecListLevelVisibilityConfiguration> workSpecListLevelVisibilityConfigurations;
-	private List<WorkActionFormVisibility> workActionFormVisibility;
+	private List<WorkSpecListLevelVisibilityConfiguration> workSpecListLevelVisibilityConfigurations; // not sure
+	private List<WorkActionFormVisibility> workActionFormVisibility; // done
 	private List<WorkSpecCustomDashboardConfiguration> workSpecCustomDashboardConfigurations;
-	private List<WorkSpecCustomDashboardMetric> workSpecCustomDashboardMetrics;
-	private List<ActionableEmployeeGroupSpecs> actionableEmployeeGroupSpecs;
-	private List<WorkActionNotificationEscalationMatrix> workActionNotificationEscalationMatrix;
-	private List<WorkActionExcalatedEmpIds> workActionExcalatedEmpIds;
+	private List<WorkSpecCustomDashboardMetric> workSpecCustomDashboardMetrics; 
+	private List<ActionableEmployeeGroupSpecs> actionableEmployeeGroupSpecs; // not needed
+	private List<WorkActionNotificationEscalationMatrix> workActionNotificationEscalationMatrix; // not needed
+	private List<WorkActionExcalatedEmpIds> workActionExcalatedEmpIds; // not needed
+	
+	private List<WorkActionSpecVisibilityCondition> workActionSpecVisibilityConditions; // done
 
 	public WorkSpecContainer() {
 		WorkSpecs=new ArrayList<WorkSpec>();
@@ -104,6 +106,7 @@ public class WorkSpecContainer {
 		actionableEmployeeGroupSpecs = new ArrayList<ActionableEmployeeGroupSpecs>();
 		workActionNotificationEscalationMatrix = new ArrayList<WorkActionNotificationEscalationMatrix>();
 		workActionExcalatedEmpIds = new ArrayList<WorkActionExcalatedEmpIds>();
+		workActionSpecVisibilityConditions = new ArrayList<WorkActionSpecVisibilityCondition>();
 	}
 	
 	public List<WorkSpec> getWorkSpecs() {
@@ -467,6 +470,15 @@ public class WorkSpecContainer {
 
 	public void setWorkActionExcalatedEmpIds(List<WorkActionExcalatedEmpIds> workActionExcalatedEmpIds) {
 		this.workActionExcalatedEmpIds = workActionExcalatedEmpIds;
+	}
+
+	public List<WorkActionSpecVisibilityCondition> getWorkActionSpecVisibilityConditions() {
+		return workActionSpecVisibilityConditions;
+	}
+
+	public void setWorkActionSpecVisibilityConditions(
+			List<WorkActionSpecVisibilityCondition> workActionSpecVisibilityConditions) {
+		this.workActionSpecVisibilityConditions = workActionSpecVisibilityConditions;
 	}	
 	
 

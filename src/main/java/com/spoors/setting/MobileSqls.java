@@ -99,9 +99,15 @@ public class MobileSqls {
 	 public static final String WORK_ACTION_EXCALATION_EMPIDS = "CREATE TABLE work_action_excalated_empIds (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	 public static final String WORK_SPEC_CUSTOM_DASHBOARD_CONFIGURATIONS = "CREATE TABLE work_spec_custom_dashboard_configurations (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	    
+	 public static final String ENTITIES_SPECS_FIELDS= "CREATE TABLE entities_specs_fields (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	 public static final String ENTITIES_SPECS_ENTITY_SPECS= "CREATE TABLE entities_specs_entity_specs (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	 
+	 public static final String ENTITIES_SPECS_SECTIONS_SPECS = "CREATE TABLE entities_specs_sections_specs (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	 public static final String ENTITIES_SPECS_SECTIONS_FIELDS = "CREATE TABLE entities_specs_sections_fields (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 
-
-	
-	
+	 public static final String CUSTOM_ENTITY_SPEC  = "CREATE TABLE custom_entity_spec (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	 public static final String ENTITIES_DATA_ADDED= "CREATE TABLE entities_data_added (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	 public static final String ENTITIES_DATA_FIELDS= "CREATE TABLE entities_data_fields (entityId INTEGER,json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER )";
+	 public static final String ENTITIES_DATA_SECTION_FIELDS = "CREATE TABLE entities_data_section_fields (entityId INTEGER,json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER) ";
 
 }

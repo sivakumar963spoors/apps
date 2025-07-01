@@ -6,6 +6,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +14,13 @@ import java.util.Set;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.spoors.beans.EntityFieldSpecValidValue;
+import com.spoors.beans.EntitySectionField;
+import com.spoors.beans.EntitySectionFieldSpec;
+import com.spoors.beans.EntitySectionSpec;
 import com.spoors.beans.AutoGenereteSequenceSpecConfiguaration;
 import com.spoors.beans.AutoGenereteSequenceSpecConfiguarationField;
 import com.spoors.beans.FieldSpecRestrictionGroup;
@@ -30,6 +36,8 @@ import com.spoors.beans.DataSourceRequestParam;
 import com.spoors.beans.DataSourceResponseMapping;
 import com.spoors.beans.Employee;
 import com.spoors.beans.EmployeeFilteringCritiria;
+import com.spoors.beans.Entity;
+import com.spoors.beans.EntityField;
 import com.spoors.beans.EntityFieldSpec;
 import com.spoors.beans.EntitySpec;
 import com.spoors.beans.FieldSpecFilter;
@@ -64,7 +72,14 @@ import com.spoors.beans.WorkFormFieldMap;
 import com.spoors.beans.WorkSpecFormSpecFollowUp;
 import com.spoors.beans.workSpecs.ActionableEmployeeGroupSpecs;
 import com.spoors.beans.workSpecs.AddingSubTaskEmployeeConfiguration;
+import com.spoors.beans.workSpecs.AttachmnetFormAutoFillSectionConfiguration;
 import com.spoors.beans.workSpecs.ExternalActionConfiguration;
+import com.spoors.beans.workSpecs.FormAutoFillSectionConfiguration;
+import com.spoors.beans.workSpecs.FormAutoFillSectionFieldsConfiguration;
+import com.spoors.beans.workSpecs.FormToWorkAutoFill;
+import com.spoors.beans.workSpecs.FormToWorkAutoFillField;
+import com.spoors.beans.workSpecs.FormToWorkAutoFillSectionConfiguration;
+import com.spoors.beans.workSpecs.FormToWorkAutoFillSectionFieldsConfiguration;
 import com.spoors.beans.workSpecs.HideAddSubTaskConfiguration;
 import com.spoors.beans.workSpecs.NextActionSpec;
 import com.spoors.beans.workSpecs.NextWorkSpec;
@@ -75,9 +90,15 @@ import com.spoors.beans.workSpecs.WorkActionNotificationEscalationMatrix;
 import com.spoors.beans.workSpecs.WorkActionSpec;
 import com.spoors.beans.workSpecs.WorkActionSpecConditions;
 import com.spoors.beans.workSpecs.WorkActionSpecEndCondition;
+import com.spoors.beans.workSpecs.WorkActionSpecVisibilityCondition;
 import com.spoors.beans.workSpecs.WorkActionVisibilityConfiguration;
 import com.spoors.beans.workSpecs.WorkAssignmentCriteriaConditions;
+import com.spoors.beans.workSpecs.WorkAttachmentAutoFill;
+import com.spoors.beans.workSpecs.WorkAttachmentAutoFillSectionFieldsConfiguration;
+import com.spoors.beans.workSpecs.WorkAttachmentFormAutoFillField;
 import com.spoors.beans.workSpecs.WorkFieldsUniqueConfigurations;
+import com.spoors.beans.workSpecs.WorkFormAutoFill;
+import com.spoors.beans.workSpecs.WorkFormAutoFillField;
 import com.spoors.beans.workSpecs.WorkProcessSubTaskSpec;
 import com.spoors.beans.workSpecs.WorkReassignmentRules;
 import com.spoors.beans.workSpecs.WorkSpec;
@@ -108,7 +129,7 @@ public class ServiceManager
 		this.effortDao = effortDao;
 	}
 
-	public void getExportFormSpecData(Set<String> formSpecUniqueIds, FormSpecContainer formSpecContainer, String logtext)
+	public void getExportFormSpecData(Set<String> formSpecUniqueIds, FormSpecContainer formSpecContainer)
 	{
 		try {
 			
@@ -498,7 +519,7 @@ public class ServiceManager
 		
 		
 	}
-	private void copyTemplatesFromSkeleton(WebUser webUser, FormSpecContainer formSpecContainer,
+	public void copyTemplatesFromSkeleton(WebUser webUser, FormSpecContainer formSpecContainer,
 			Map<Long, Long> entitySpecsIdMap,
 			Map<Long, EntitySpec> entitySpecMap, Map<Long, Long> formSpecIdsMap,
 			Map<String, String> formSpecUniqueIdsMap, Map<String, String> formFieldSpecUniqueIdsMap,
@@ -1158,6 +1179,37 @@ public class ServiceManager
 		}
 		
 	}
+	private void resolveFormSectionFieldSpecFilters(List<FieldSpecFilter> fieldSpecFilters,
+			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, Map<Long, Long> formSpecIdsMap) {
+
+		try {
+			Iterator<FieldSpecFilter> fieldValidationsIterator = fieldSpecFilters.iterator();
+			while (fieldValidationsIterator.hasNext()) {
+				FieldSpecFilter remainderFieldsMap = (FieldSpecFilter) fieldValidationsIterator.next();
+				Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+				
+				if(newFormSpecId != null) {
+					remainderFieldsMap.setFormSpecId(newFormSpecId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
+
+
+					if (formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFormSectionFieldSpecId()) != null) {
+						remainderFieldsMap
+								.setFormSectionFieldSpecId(formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFormSectionFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				
+			}
+		} catch (Exception e) {
+			fieldSpecFilters = new ArrayList<>();
+		}
+		
+	}
 
 	private void resolveFormFieldSpecFilters(List<FieldSpecFilter> fieldSpecFilters,
 			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, FormSpec formSpec) {
@@ -1167,6 +1219,36 @@ public class ServiceManager
 			while (fieldValidationsIterator.hasNext()) {
 				FieldSpecFilter remainderFieldsMap = (FieldSpecFilter) fieldValidationsIterator.next();
 				remainderFieldsMap.setFormSpecId(formSpec.getFormSpecId());
+
+					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFormFieldSpecId()) != null) {
+						remainderFieldsMap.setFormFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFormFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+
+			}
+		} catch (Exception e) {
+			fieldSpecFilters = new ArrayList<>();
+		}
+	
+	}
+	
+	private void resolveFormFieldSpecFilters(List<FieldSpecFilter> fieldSpecFilters,
+			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, Map<Long, Long> formSpecIdsMap) {
+
+		try {
+			Iterator<FieldSpecFilter> fieldValidationsIterator = fieldSpecFilters.iterator();
+			while (fieldValidationsIterator.hasNext()) {
+				FieldSpecFilter remainderFieldsMap = (FieldSpecFilter) fieldValidationsIterator.next();
+				Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+				
+				if(newFormSpecId != null) {
+					remainderFieldsMap.setFormSpecId(newFormSpecId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
 
 					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFormFieldSpecId()) != null) {
 						remainderFieldsMap.setFormFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFormFieldSpecId()));
@@ -1205,6 +1287,36 @@ public class ServiceManager
 		}
 	
 	}
+	
+	private void resolveAutoGenereteSequenceSpecConfiguarationFields(
+			List<AutoGenereteSequenceSpecConfiguarationField> autoGenereteSequenceSpecConfiguarationFields,
+			Map<String, String> formFieldSpecUniqueIdsMap, Map<String, String> formSpecUniqueIdsMap) {
+
+		try {
+			Iterator<AutoGenereteSequenceSpecConfiguarationField> fieldValidationsIterator = autoGenereteSequenceSpecConfiguarationFields.iterator();
+			while (fieldValidationsIterator.hasNext()) {
+				AutoGenereteSequenceSpecConfiguarationField remainderFieldsMap = (AutoGenereteSequenceSpecConfiguarationField) fieldValidationsIterator.next();
+				String newUniqueId = formSpecUniqueIdsMap.get(remainderFieldsMap.getFormSpecUniqueId());
+				if(!Api.isEmptyString(newUniqueId)) {
+					remainderFieldsMap.setFormSpecUniqueId(newUniqueId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
+				
+					if (formFieldSpecUniqueIdsMap.get(remainderFieldsMap.getFieldSpecUniqueId()) != null) {
+						remainderFieldsMap.setFieldSpecUniqueId(formFieldSpecUniqueIdsMap.get(remainderFieldsMap.getFieldSpecUniqueId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+
+			}
+		} catch (Exception e) {
+			autoGenereteSequenceSpecConfiguarationFields = new ArrayList<>();
+		}
+	
+	}
 
 	private void resolveAutoGeneratedSequenceSpecConfigurations(
 			List<AutoGenereteSequenceSpecConfiguaration> autoGenereteSequenceSpecConfiguarations,
@@ -1215,6 +1327,50 @@ public class ServiceManager
 			while (fieldValidationsIterator.hasNext()) {
 				AutoGenereteSequenceSpecConfiguaration remainderFieldsMap = (AutoGenereteSequenceSpecConfiguaration) fieldValidationsIterator.next();
 				remainderFieldsMap.setFormSpecId(formSpec.getFormSpecId());
+				
+
+				if (remainderFieldsMap.getFieldType()==1) {
+					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFormFieldSpecId()) != null) {
+						remainderFieldsMap.setFormFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFormFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+
+				if (remainderFieldsMap.getFieldType()==2) {
+					if (formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFormFieldSpecId()) != null) {
+						remainderFieldsMap
+								.setFormFieldSpecId(formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFormFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+				
+			}
+		} catch (Exception e) {
+			autoGenereteSequenceSpecConfiguarations = new ArrayList<>();
+		}
+	
+	}
+	
+	private void resolveAutoGeneratedSequenceSpecConfigurations(
+			List<AutoGenereteSequenceSpecConfiguaration> autoGenereteSequenceSpecConfiguarations,
+			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, Map<Long, Long> formSpecIdsMap) {
+
+		try {
+			Iterator<AutoGenereteSequenceSpecConfiguaration> fieldValidationsIterator = autoGenereteSequenceSpecConfiguarations.iterator();
+			while (fieldValidationsIterator.hasNext()) {
+				AutoGenereteSequenceSpecConfiguaration remainderFieldsMap = (AutoGenereteSequenceSpecConfiguaration) fieldValidationsIterator.next();
+				Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+				
+				if(newFormSpecId != null) {
+					remainderFieldsMap.setFormSpecId(newFormSpecId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
 				
 
 				if (remainderFieldsMap.getFieldType()==1) {
@@ -1279,6 +1435,50 @@ public class ServiceManager
 		}
 	
 	}
+	
+	private void resolveFormFieldsColorDependencyCriterias(
+			List<FormFieldsColorDependencyCriterias> formFieldColorDependencyCriterias,
+			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, Map<Long, Long> formSpecIdsMap) {
+
+		try {
+			Iterator<FormFieldsColorDependencyCriterias> fieldValidationsIterator = formFieldColorDependencyCriterias.iterator();
+			while (fieldValidationsIterator.hasNext()) {
+				FormFieldsColorDependencyCriterias remainderFieldsMap = (FormFieldsColorDependencyCriterias) fieldValidationsIterator.next();
+				Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+				
+				if(newFormSpecId != null) {
+					remainderFieldsMap.setFormSpecId(newFormSpecId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
+				
+
+				if (remainderFieldsMap.getFieldType()==1) {
+					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+
+				if (remainderFieldsMap.getFieldType()==2) {
+					if (formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap
+								.setFieldSpecId(formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+				
+			}
+		} catch (Exception e) {
+			formFieldColorDependencyCriterias = new ArrayList<>();
+		}
+	
+	}
 
 	private void resolveFieldValidationCritria(List<FieldValidationCritiria> fieldValidationCritirias,
 			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, FormSpec formSpec) {
@@ -1288,6 +1488,49 @@ public class ServiceManager
 			while (fieldValidationsIterator.hasNext()) {
 				FieldValidationCritiria remainderFieldsMap = (FieldValidationCritiria) fieldValidationsIterator.next();
 				remainderFieldsMap.setFormSpecId(formSpec.getFormSpecId());
+				
+
+				if (!remainderFieldsMap.isSectionField()) {
+					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+
+				if (remainderFieldsMap.isSectionField()) {
+					if (formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap
+								.setFieldSpecId(formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+				
+			}
+		} catch (Exception e) {
+			fieldValidationCritirias = new ArrayList<>();
+		}
+	
+	}
+	
+	private void resolveFieldValidationCritria(List<FieldValidationCritiria> fieldValidationCritirias,
+			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, Map<Long, Long> formSpecIdsMap) {
+
+		try {
+			Iterator<FieldValidationCritiria> fieldValidationsIterator = fieldValidationCritirias.iterator();
+			while (fieldValidationsIterator.hasNext()) {
+				FieldValidationCritiria remainderFieldsMap = (FieldValidationCritiria) fieldValidationsIterator.next();
+				Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+				
+				if(newFormSpecId != null) {
+					remainderFieldsMap.setFormSpecId(newFormSpecId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
 				
 
 				if (!remainderFieldsMap.isSectionField()) {
@@ -1351,6 +1594,48 @@ public class ServiceManager
 		}
 	
 	}
+	private void resolveCustomerFilterCritria(List<CustomerFilteringCritiria> customerFilteringCritirias,
+			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap,Map<Long, Long> formSpecIdsMap) {
+
+		try {
+			Iterator<CustomerFilteringCritiria> fieldValidationsIterator = customerFilteringCritirias.iterator();
+			while (fieldValidationsIterator.hasNext()) {
+				CustomerFilteringCritiria remainderFieldsMap = (CustomerFilteringCritiria) fieldValidationsIterator.next();
+				Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+				
+				if(newFormSpecId != null) {
+					remainderFieldsMap.setFormSpecId(newFormSpecId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
+				
+
+				if (remainderFieldsMap.getType() == 1) {
+					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+
+				if (remainderFieldsMap.getType() == 2) {
+					if (formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap
+								.setFieldSpecId(formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+				
+			}
+		} catch (Exception e) {
+			customerFilteringCritirias = new ArrayList<>();
+		}
+	
+	}
 
 	private void resolveVisibilityDependencyCritirias(List<VisibilityDependencyCriteria> visibilityDependencyCriterias,
 			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, FormSpec formSpec) {
@@ -1360,6 +1645,53 @@ public class ServiceManager
 			while (fieldValidationsIterator.hasNext()) {
 				VisibilityDependencyCriteria remainderFieldsMap = (VisibilityDependencyCriteria) fieldValidationsIterator.next();
 				remainderFieldsMap.setFormSpecId(formSpec.getFormSpecId());
+				
+				if(!supportedDataTypes.contains(remainderFieldsMap.getFieldDataType())) {
+					fieldValidationsIterator.remove();
+				}
+				
+
+				if (remainderFieldsMap.getFieldType() == 1) {
+					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+
+				if (remainderFieldsMap.getFieldType() == 2) {
+					if (formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap
+								.setFieldSpecId(formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+				
+			}
+		} catch (Exception e) {
+			visibilityDependencyCriterias = new ArrayList<>();
+		}
+		
+	}
+	
+	private void resolveVisibilityDependencyCritirias(List<VisibilityDependencyCriteria> visibilityDependencyCriterias,
+			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap,Map<Long, Long> formSpecIdsMap) {
+		try {
+			Iterator<VisibilityDependencyCriteria> fieldValidationsIterator = visibilityDependencyCriterias.iterator();
+			List<Integer> supportedDataTypes = Arrays.asList(1,2,3,4,8,9,10,11,16,19,20,44);
+			while (fieldValidationsIterator.hasNext()) {
+				VisibilityDependencyCriteria remainderFieldsMap = (VisibilityDependencyCriteria) fieldValidationsIterator.next();
+				Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+				
+				if(newFormSpecId != null) {
+					remainderFieldsMap.setFormSpecId(newFormSpecId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
 				
 				if(!supportedDataTypes.contains(remainderFieldsMap.getFieldDataType())) {
 					fieldValidationsIterator.remove();
@@ -1434,6 +1766,57 @@ public class ServiceManager
 		}
 		
 	}
+	
+	private void resolveListFilterCritrias(List<ListFilteringCritiria> listFilteringCritirias,
+			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap,Map<Long, Long> formSpecIdsMap,
+			Map<Long, Long> entityFieldSpecsIdMap) {
+		try {
+			Iterator<ListFilteringCritiria> fieldValidationsIterator = listFilteringCritirias.iterator();
+			while (fieldValidationsIterator.hasNext()) {
+				ListFilteringCritiria remainderFieldsMap = (ListFilteringCritiria) fieldValidationsIterator.next();
+				
+				Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+				
+				if(newFormSpecId != null) {
+					remainderFieldsMap.setFormSpecId(newFormSpecId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
+				
+				if (remainderFieldsMap.getType() == 1) {
+					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+
+				if (remainderFieldsMap.getType() == 2) {
+					if (formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap
+								.setFieldSpecId(formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+				
+				if (entityFieldSpecsIdMap.get(remainderFieldsMap.getListFieldSpecId()) != null) {
+					remainderFieldsMap
+							.setListFieldSpecId(entityFieldSpecsIdMap.get(remainderFieldsMap.getListFieldSpecId()));
+				} else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
+
+			}
+		} catch (Exception e) {
+			listFilteringCritirias = new ArrayList<>();
+		}
+		
+	}
 
 	private void resolveFieldValidations(List<FieldValidation> fieldValidations,
 			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, FormSpec formSpec) {
@@ -1442,6 +1825,48 @@ public class ServiceManager
 			while (fieldValidationsIterator.hasNext()) {
 				FieldValidation remainderFieldsMap = (FieldValidation) fieldValidationsIterator.next();
 				remainderFieldsMap.setFormSpecId(formSpec.getFormSpecId());
+
+				if (remainderFieldsMap.getFieldType() == 1) {
+					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+
+				if (remainderFieldsMap.getFieldType() == 2) {
+					if (formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+						remainderFieldsMap
+								.setFieldSpecId(formSectionFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+					} else {
+						fieldValidationsIterator.remove();
+						continue;
+					}
+				}
+
+			}
+		} catch (Exception e) {
+			fieldValidations = new ArrayList<>();
+		}
+
+	}
+	
+	private void resolveFieldValidations(List<FieldValidation> fieldValidations,
+			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap,Map<Long, Long> formSpecIdsMap) {
+		try {
+			Iterator<FieldValidation> fieldValidationsIterator = fieldValidations.iterator();
+			while (fieldValidationsIterator.hasNext()) {
+				FieldValidation remainderFieldsMap = (FieldValidation) fieldValidationsIterator.next();
+				
+				Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+				
+				if(newFormSpecId != null) {
+					remainderFieldsMap.setFormSpecId(newFormSpecId);
+				}else {
+					fieldValidationsIterator.remove();
+					continue;
+				}
 
 				if (remainderFieldsMap.getFieldType() == 1) {
 					if (formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
@@ -1487,6 +1912,40 @@ public class ServiceManager
 			
 			if(formFieldSpecsIdMap.get(remainderFieldsMap.getReferenceFieldSpecId()) != null) {
 				remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+			}else {
+				remainderFieldsIerator.remove();
+				continue;
+			}
+
+		}
+		
+	}
+	private void resolveRemainderFieldsMaps(List<RemainderFieldsMap> remainderFieldsMaps,
+			Map<Long, Long> formFieldSpecsIdMap,Map<Long, Long> formSpecIdsMap) {
+		
+		Iterator<RemainderFieldsMap> remainderFieldsIerator = remainderFieldsMaps
+				.iterator();
+		while (remainderFieldsIerator.hasNext()) {
+			RemainderFieldsMap remainderFieldsMap = (RemainderFieldsMap) remainderFieldsIerator
+					.next();
+			Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+			
+			if(newFormSpecId != null) {
+				remainderFieldsMap.setFormSpecId(newFormSpecId);
+			}else {
+				remainderFieldsIerator.remove();
+				continue;
+			}
+			
+			if(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+				remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+			}else {
+				remainderFieldsIerator.remove();
+				continue;
+			}
+			
+			if(formFieldSpecsIdMap.get(remainderFieldsMap.getReferenceFieldSpecId()) != null) {
+				remainderFieldsMap.setReferenceFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getReferenceFieldSpecId()));
 			}else {
 				remainderFieldsIerator.remove();
 				continue;
@@ -2059,7 +2518,1409 @@ public class ServiceManager
 	private WorkSpec getWorkSpec(String workSpecId) {
 		return effortDao.getWorkSpecByWorkSpecId(workSpecId);
 	}
+	public void copyTemplatesFromSkeletonNew(WebUser webUser, FormSpecContainer formSpecContainer,
+			Map<Long, Long> entitySpecsIdMap,
+			Map<Long, EntitySpec> entitySpecMap, Map<Long, Long> formSpecIdsMap,
+			Map<String, String> formSpecUniqueIdsMap, Map<String, String> formFieldSpecUniqueIdsMap,
+			Map<String, String> formSectionFieldSpecUniqueIdsMap, Map<Long, Long> formFieldSpecsIdMap,
+			Map<Long, Long> formSectionFieldSpecsIdMap, Map<Long, Long> entityFieldSpecsIdMap, Boolean isSkeleton,
+			boolean isWorkSpec, Map<String, String> formSectionSpecUniqueIdsMap, Map<Long, Long> formSectionSpecsIdMap,
+			Map<String, String> customEntitySpecIdsMap, Map<Long, CustomEntitySpec> customEntitySpecsMap,
+			Map<String, String> innerformSpecUniqueIdsMap,boolean cloneInnerFormSpecs) {
+		
+		
+		List<FormPageSpec> formPageSpecs = formSpecContainer.getPageSpecs();
+		List<FormSpec> formSpecList = formSpecContainer.getFormSpecs();
+		
+		
+		String printTemplate = "";
+		String emailTemplate = "";
+		String mobilePrintTemplate = "";
+		
+		String printTemplatePdfSaveNameFieldUniqueId = null;
 
+		List<FormFieldSpec> formFieldSpecs = formSpecContainer.getFields();
+		List<FormSectionSpec> formSectionSpecs = formSpecContainer.getSections();
+		
+		List<FormFieldGroupSpec> formFieldGroupSpecs = formSpecContainer.getFormFieldGroupSpecs();
+		List<FormSectionFieldSpec> formSectionFieldSpecs = formSpecContainer.getSectionFields();
+		
+		List<FormFieldSpecValidValue> formFieldSpecValidValues = formSpecContainer.getFieldValidValues();
+
+		List<FormSectionFieldSpecValidValue> formSectionFieldSpecValidValues = formSpecContainer
+				.getSectionFieldValidValues();
+		
+
+		for(FormSpec formSpec : formSpecList) {
+			
+			FormSpec formSpecBySkeletonSpecId = effortDao.getFormSpecBySkeletonSpecId(formSpec.getFormSpecId());
+			/*
+			 * if(formSpecBySkeletonSpecId != null) {
+			 * LOGGER.info(" FormSpec already Exported  : "+formSpecBySkeletonSpecId.
+			 * getFormSpecId()); continue; }
+			 */
+			
+			Long oldFormSpecId = formSpec.getFormSpecId();
+			String oldFormSpecUniqueId = formSpec.getUniqueId();
+			formSpec.setParentId(formSpec.getFormSpecId());
+			
+			formSpec.setUniqueId(null);
+			
+
+			if (formSpec.getSkeletonFormSpecId() == null) {
+				formSpec.setSkeletonFormSpecId(formSpec.getFormSpecId());
+			} else {
+				formSpec.setSkeletonFormSpecId(formSpec.getSkeletonFormSpecId());
+			}
+
+			if(formSpec.getPurpose()==100 || formSpec.getPurpose() == FormSpec.PURPOUSE_SIGN_IN_SIGN_OUT_UPDATE_FORM) {
+			     formSpec.setIsSystemDefined(0);
+			     formSpec.setPurpose(-1);
+			}if(formSpec.getPurpose() == 12) {
+				formSpec.setIsSystemDefined(1);
+			}else{
+				if (isWorkSpec) {
+					formSpec.setIsSystemDefined(0);
+				} else {
+					formSpec.setIsSystemDefined(1);
+				}
+				
+			}
+			formSpec.setIsPublic(true);
+			formSpec.setAllAccess(true);
+			effortDao.insertFormSpec(formSpec, webUser.getCompanyId(),
+					webUser.getEmpId());
+			FormSpec formSpecForUniqueId = getFormSpec(formSpec.getFormSpecId()
+					+ "");
+			formSpecIdsMap.put(oldFormSpecId, formSpec.getFormSpecId());
+			formSpecUniqueIdsMap.put(oldFormSpecUniqueId,
+					formSpecForUniqueId.getUniqueId());
+			effortDao.updateFormSpecForInitialFormSpecId(formSpec);
+			LOGGER.info(" insertFormSpec done ... "+formSpec.getFormSpecId());
+		}
+		resolveFormPageSpecs(formPageSpecs,formSpecIdsMap);
+		effortDao.insertFormPageSpec(formPageSpecs);
+		
+		resolveFormFieldGroupSpec(formFieldGroupSpecs,formSpecIdsMap);
+		effortDao.insertFormFieldGroupSpec(formFieldGroupSpecs,webUser.getCompanyId());
+		
+		if (formFieldSpecs != null) {
+			for (FormFieldSpec formFieldSpec : formFieldSpecs) {
+				long oldFieldSpecId = formFieldSpec.getFieldSpecId();
+				boolean mandatory = formFieldSpec.isMandatory();
+				boolean visible = formFieldSpec.getIsVisible();
+				String oldFieldSpecUniqueId = formFieldSpec.getUniqueId();
+				if ((formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST
+						|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST)
+						&& !Api.isEmptyString(formFieldSpec.getFieldTypeExtra())) {
+					if (entitySpecsIdMap.size() > 0) {
+						Long entitySpecId = entitySpecsIdMap.get(Long
+								.parseLong(formFieldSpec.getFieldTypeExtra()));
+						formFieldSpec.setFieldTypeExtra(entitySpecId + "");
+					}
+				}
+				
+				if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY
+						&& !Api.isEmptyString(formFieldSpec.getFieldTypeExtraCustomEntity())) {
+					if (formFieldSpec.getFieldTypeExtraCustomEntity() != null) {
+						String fieldTypeExtraCustomEntity =  customEntitySpecIdsMap.get(formFieldSpec.getFieldTypeExtraCustomEntity());
+						if (fieldTypeExtraCustomEntity != null) {
+							formFieldSpec.setFieldTypeExtraCustomEntity(fieldTypeExtraCustomEntity);
+						}
+					}
+
+				}
+				 
+				if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_DATE_TIME) {
+					if(!Api.isEmptyString(formFieldSpec.getRemainderRemarksFields())) {
+						List<String> remainderFields = Api.csvToList(formFieldSpec.getRemainderRemarksFields());
+						formFieldSpec.setRemainderRemarksFieldsCsv(formFieldSpec.getRemainderRemarksFields());
+						if(remainderFields != null && remainderFields.size() > 0) {
+							formFieldSpec.setRemainderRemarksFields(remainderFields.get(0));
+						}
+					}
+				}
+				formFieldSpec.setUniqueId(null);
+				
+				if (formFieldSpec.getSkeletonFormFieldSpecId() != null) {
+					formFieldSpec.setSkeletonFormFieldSpecId(formFieldSpec
+							.getSkeletonFormFieldSpecId());
+				} 
+
+				formFieldSpec.setMandatory(mandatory);
+				formFieldSpec.setIsVisible(visible);
+				Long newFormSpecId = formSpecIdsMap.get(formFieldSpec.getFormSpecId());
+				if(newFormSpecId == null) {
+					continue;
+				}
+				effortDao.insertFormFieldSpec(formFieldSpec,
+						newFormSpecId);
+				effortDao.updateInitialFormFieldSpecId(formFieldSpec);
+				FormFieldSpec formFieldSpec2 = getFormFieldSpec(formFieldSpec
+						.getFieldSpecId() + "");
+				
+				printTemplate = printTemplate.replace("id=\"F" + oldFieldSpecId
+						+ "\"", "id=\"F" + formFieldSpec.getFieldSpecId()
+						+ "\"");
+				emailTemplate = emailTemplate.replaceAll("F" + oldFieldSpecId,
+						"F" + formFieldSpec.getFieldSpecId());
+
+				mobilePrintTemplate = mobilePrintTemplate.replace("<F"
+						+ oldFieldSpecId + ">",
+						"<F" + formFieldSpec.getFieldSpecId() + ">");
+
+				formFieldSpecsIdMap.put(oldFieldSpecId,
+						formFieldSpec.getFieldSpecId());
+				formFieldSpecUniqueIdsMap.put(oldFieldSpecUniqueId,
+						formFieldSpec2.getUniqueId());
+			}
+		}
+
+		if (formSectionSpecs != null) {
+			for (FormSectionSpec formSectionSpec : formSectionSpecs) {
+				long oldSectionSpecId = formSectionSpec.getSectionSpecId();
+				String oldSectionSpecUniqueId = formSectionSpec.getSectionSpecUniqueId();
+
+				if (isSkeleton)
+					formSectionSpec
+							.setSkeletonFormSectionSpecId(oldSectionSpecId);
+				else
+					formSectionSpec
+							.setSkeletonFormSectionSpecId(formSectionSpec
+									.getSkeletonFormSectionSpecId());
+
+				formSectionSpec.setSectionSpecUniqueId(null);
+				Long newFormSpecId = formSpecIdsMap.get(formSectionSpec.getFormSpecId());
+				if(newFormSpecId == null) {
+					continue;
+				}
+				effortDao.insertFormSectionSpec(formSectionSpec,
+						newFormSpecId, webUser.getCompanyId());
+				effortDao.updateInitialFormSectionSpecId(formSectionSpec);
+				
+				printTemplate = printTemplate.replace("id=\"S"
+						+ oldSectionSpecId + "\"",
+						"id=\"S" + formSectionSpec.getSectionSpecId() + "\"");
+				emailTemplate = emailTemplate.replaceAll(
+						"S" + oldSectionSpecId,
+						"S" + formSectionSpec.getSectionSpecId());
+
+				mobilePrintTemplate = mobilePrintTemplate.replace("<S"
+						+ oldSectionSpecId + ">",
+						"<S" + formSectionSpec.getSectionSpecId() + ">");
+
+				formSectionSpecsIdMap.put(oldSectionSpecId,
+						formSectionSpec.getSectionSpecId());
+				
+				if(formSectionSpecUniqueIdsMap != null)
+				{
+					formSectionSpecUniqueIdsMap.put(oldSectionSpecUniqueId,
+							formSectionSpec.getSectionSpecUniqueId());
+				}
+			}
+		}
+
+		if (formSectionFieldSpecs != null) {
+			for (FormSectionFieldSpec formSectionFieldSpec : formSectionFieldSpecs) {
+				long oldSectionSpecId = formSectionFieldSpec.getSectionSpecId();
+				long oldSectionFieldSpecId = formSectionFieldSpec
+						.getSectionFieldSpecId();
+				String oldSectionFieldSpecUniqueId = formSectionFieldSpec
+						.getUniqueId();
+
+				long sectionSpecId = formSectionSpecsIdMap
+						.get(formSectionFieldSpec.getSectionSpecId());
+				if (formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST
+						|| formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST) {
+					if(!Api.isEmptyString(formSectionFieldSpec.getFieldTypeExtra()))
+					{
+						Long entitySpecId = entitySpecsIdMap
+								.get(Long.parseLong(formSectionFieldSpec
+										.getFieldTypeExtra()));
+						formSectionFieldSpec.setFieldTypeExtra(entitySpecId + "");
+					}
+					
+				}
+				if (formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY
+						&& !Api.isEmptyString(formSectionFieldSpec.getFieldTypeExtraCustomEntity())) {
+					if (formSectionFieldSpec.getFieldTypeExtraCustomEntity() != null) {
+						String fieldTypeExtraCustomEntity =  customEntitySpecIdsMap.get(formSectionFieldSpec.getFieldTypeExtraCustomEntity());
+						if (fieldTypeExtraCustomEntity != null) {
+							formSectionFieldSpec.setFieldTypeExtraCustomEntity(fieldTypeExtraCustomEntity);
+						}
+					}
+
+				}
+				formSectionFieldSpec.setUniqueId(null);
+
+				if (formSectionFieldSpec.getSkeletonFormSectionFieldSpecId() == null) {
+					formSectionFieldSpec
+							.setSkeletonFormSectionFieldSpecId(oldSectionFieldSpecId);
+				} else {
+					formSectionFieldSpec
+							.setSkeletonFormSectionFieldSpecId(formSectionFieldSpec
+									.getSkeletonFormSectionFieldSpecId());
+				}
+
+				Long newFormSpecId = formSpecIdsMap.get(formSectionFieldSpec.getFormSpecId());
+				if(newFormSpecId == null) {
+					continue;
+				}
+				effortDao.insertFormSectionFieldSpec(formSectionFieldSpec,
+						newFormSpecId, sectionSpecId);
+				effortDao.updateFormSectionFieldSpecId(formSectionFieldSpec);
+				FormSectionFieldSpec formSectionFieldSpec2 = getFormSectionFieldSpec(formSectionFieldSpec
+						.getSectionFieldSpecId() + "");
+				
+				printTemplate = printTemplate.replace("id=\"T"
+						+ oldSectionFieldSpecId + "\"", "id=\"T"
+						+ formSectionFieldSpec.getSectionFieldSpecId() + "\"");
+				emailTemplate = emailTemplate.replaceAll("T"
+						+ oldSectionFieldSpecId,
+						"T" + formSectionFieldSpec.getSectionFieldSpecId());
+
+				mobilePrintTemplate = mobilePrintTemplate.replace("<S"
+						+ oldSectionSpecId + "",
+						"<S" + formSectionFieldSpec.getSectionSpecId() + "");
+				mobilePrintTemplate = mobilePrintTemplate.replace("F"
+						+ oldSectionFieldSpecId + ">", "F"
+						+ formSectionFieldSpec.getSectionFieldSpecId() + ">");
+
+				formSectionFieldSpecsIdMap.put(oldSectionFieldSpecId,
+						formSectionFieldSpec.getSectionFieldSpecId());
+				formSectionFieldSpecUniqueIdsMap.put(
+						oldSectionFieldSpecUniqueId,
+						formSectionFieldSpec2.getUniqueId());
+			}
+		}
+
+		for (FormFieldSpecValidValue fieldSpecValidValue : formFieldSpecValidValues) {
+			long fieldSpecId = formFieldSpecsIdMap.get(fieldSpecValidValue
+					.getFieldSpecId());
+			FormFieldSpec formFieldSpec = effortDao.getFormFieldSpec(fieldSpecId+"");
+				
+			effortDao.insertFormFieldSpecValidValue(fieldSpecId,
+					fieldSpecValidValue.getValue());
+		}
+
+		for (FormSectionFieldSpecValidValue sectionFieldSpecValidValue : formSectionFieldSpecValidValues) {
+			long sectionFieldSpecId = formSectionFieldSpecsIdMap
+					.get(sectionFieldSpecValidValue.getSectionFieldSpecId());
+
+			FormSectionFieldSpec formSectionFieldSpec = effortDao.getFormSectionFieldSpec(sectionFieldSpecValidValue.getSectionFieldSpecId()+"");
+			
+			effortDao.insertFormSectionFieldSpecValidValue(sectionFieldSpecId,
+					sectionFieldSpecValidValue.getValue());
+		}
+
+
+		List<FieldValidation> fieldValidations = formSpecContainer.getFieldValidations();
+		List<VisibilityDependencyCriteria> visibilityDependencyCriterias = formSpecContainer.getVisibilityDependencyCriterias();
+		List<ListFilteringCritiria> listFilteringCritirias = formSpecContainer.getListFilteringCriterias();
+		List<CustomerFilteringCritiria> customerFilteringCritirias = formSpecContainer.getCustomerFilteringCriterias();
+		List<FieldValidationCritiria> fieldValidationCritirias = formSpecContainer.getFieldValidationCritirias();
+		List<AutoGenereteSequenceSpecConfiguaration> autoGenereteSequenceSpecConfiguarations = formSpecContainer.getAutoGenereteSequenceSpecConfiguarations();
+		List<FormFieldsColorDependencyCriterias> formFieldColorDependencyCriterias = formSpecContainer.getFormFieldsColorDependencyCriterias();
+		List<FieldSpecFilter> fieldSpecFilters = formSpecContainer.getFormFieldSpecFilters();
+		List<FieldSpecFilter> sectionFieldSpecFilters = formSpecContainer.getFormSectionFieldSpecFilters();
+		
+		List<AutoGenereteSequenceSpecConfiguarationField> autoGenereteSequenceSpecConfiguarationFields = new ArrayList<AutoGenereteSequenceSpecConfiguarationField>();
+		List<RemainderFieldsMap> remainderFieldsMaps = formSpecContainer.getRemainderFieldsMap();
+		
+		resolveRemainderFieldsMaps(remainderFieldsMaps,formFieldSpecsIdMap,formSpecIdsMap);
+		
+	    effortDao.insertRemainderFieldsMap(remainderFieldsMaps);
+		
+	    resolveFieldValidations(fieldValidations,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertFieldValidations(fieldValidations); //  have to set values in bean
+		
+		resolveListFilterCritrias(listFilteringCritirias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap,entityFieldSpecsIdMap);
+		effortDao.insertListFilterCritria(listFilteringCritirias);
+		
+		resolveVisibilityDependencyCritirias(visibilityDependencyCriterias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertVisibilityDependencyCritirias(visibilityDependencyCriterias);
+		
+		resolveCustomerFilterCritria(customerFilteringCritirias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertCustomerFilterCritria(customerFilteringCritirias);
+		
+		resolveFieldValidationCritria(fieldValidationCritirias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertFieldValidationCritria(fieldValidationCritirias);
+		
+		resolveFormFieldsColorDependencyCriterias(formFieldColorDependencyCriterias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertFormFieldsColorDependencyCriterias(formFieldColorDependencyCriterias);
+		if(autoGenereteSequenceSpecConfiguarations!=null && !autoGenereteSequenceSpecConfiguarations.isEmpty())
+		{
+			resolveAutoGeneratedSequenceSpecConfigurations(autoGenereteSequenceSpecConfiguarations,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+			effortDao.insertAutoGeneratedSequenceSpecConfigurations(autoGenereteSequenceSpecConfiguarations);
+		}
+		if(autoGenereteSequenceSpecConfiguarationFields!=null && !autoGenereteSequenceSpecConfiguarationFields.isEmpty())
+		{
+			resolveAutoGenereteSequenceSpecConfiguarationFields(autoGenereteSequenceSpecConfiguarationFields,formFieldSpecUniqueIdsMap,formSpecUniqueIdsMap);
+			effortDao.insertAutoGenereteSequenceSpecConfiguarationFields(autoGenereteSequenceSpecConfiguarationFields);
+		}
+		
+		resolveFormFieldSpecFilters(fieldSpecFilters,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertFormFieldSpecFilters(fieldSpecFilters);
+		resolveFormSectionFieldSpecFilters(fieldSpecFilters,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertFormSectionFieldSpecFilters(sectionFieldSpecFilters);
+		
+	}
+
+	private void resolveFormFieldGroupSpec(List<FormFieldGroupSpec> formFieldGroupSpecs,
+			Map<Long, Long> formSpecIdsMap) {
+		try {
+				Iterator<FormFieldGroupSpec> formPageSpecsIterator = formFieldGroupSpecs.iterator();
+				while (formPageSpecsIterator.hasNext()) {
+					FormFieldGroupSpec formFieldGroupSpec = (FormFieldGroupSpec) formPageSpecsIterator.next();
+					Long newFormSpecId = formSpecIdsMap.get(formFieldGroupSpec.getFormSpecId());
+					if(newFormSpecId != null) {
+						formFieldGroupSpec.setFormSpecId(newFormSpecId);
+					}else {
+						formPageSpecsIterator.remove();
+					}
+				}
+			} catch (Exception e) {
+				formFieldGroupSpecs = new ArrayList<>();
+			}
+		}
+
+	private void resolveFormPageSpecs(List<FormPageSpec> formPageSpecs, Map<Long, Long> formSpecIdsMap) {
+		try {
+			Iterator<FormPageSpec> formPageSpecsIterator = formPageSpecs.iterator();
+			while (formPageSpecsIterator.hasNext()) {
+				FormPageSpec formPageSpec = (FormPageSpec) formPageSpecsIterator.next();
+				Long newFormSpecId = formSpecIdsMap.get(formPageSpec.getFormSpecId());
+				if(newFormSpecId != null) {
+					formPageSpec.setFormSpecId(newFormSpecId);
+				}else {
+					formPageSpecsIterator.remove();
+				}
+			}
+		} catch (Exception e) {
+			formPageSpecs = new ArrayList<>();
+		}
+		
+	}
+
+	public void exportEntityAndCustomEntitySpecs(FormSpecContainer formSpecContainer,boolean exportData) {
+		try {
+			List<FormFieldSpec> formFieldSpecs = formSpecContainer.getFields();
+			List<FormSectionFieldSpec> formSectionFieldSpecs = formSpecContainer.getSectionFields();
+			Set<String> entitySpecIds = new HashSet<String>();
+			Set<String> customEntitySpecIds = new HashSet<String>();
+			
+			if (formFieldSpecs != null && formFieldSpecs.size() > 0) {
+				for (FormFieldSpec formFieldSpec : formFieldSpecs) {
+					if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST
+							|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST) {
+						if (!Api.isEmptyString(formFieldSpec.getFieldTypeExtra())) {
+							entitySpecIds.add(formFieldSpec.getFieldTypeExtra());
+						}
+
+					}
+					if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY) {
+						if (!Api.isEmptyString(formFieldSpec.getFieldTypeExtraCustomEntity())) {
+
+							customEntitySpecIds.add(formFieldSpec.getFieldTypeExtraCustomEntity());
+						}
+
+					}
+				}
+			}
+			
+			if (formSectionFieldSpecs != null && formSectionFieldSpecs.size() > 0) {
+				for (FormSectionFieldSpec formFieldSpec : formSectionFieldSpecs) {
+					if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST
+							|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST) {
+						if (!Api.isEmptyString(formFieldSpec.getFieldTypeExtra())) {
+							entitySpecIds.add(formFieldSpec.getFieldTypeExtra());
+						}
+
+					}
+					if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY) {
+						if (!Api.isEmptyString(formFieldSpec.getFieldTypeExtraCustomEntity())) {
+
+							customEntitySpecIds.add(formFieldSpec.getFieldTypeExtraCustomEntity());
+						}
+
+					}
+				}
+			}
+			
+			Set<String> subEntitySpecIds = new HashSet<String>();
+			Set<String> subCustomEntitySpecIds = new HashSet<String>();
+			if (entitySpecIds != null && entitySpecIds.size() > 0) {
+				List<EntitySpec> entitySpecs = effortDao.getEntitySpecsIn(Api.toCSV(entitySpecIds));
+				if (entitySpecs != null && entitySpecs.size() > 0) {
+					formSpecContainer.setEntitySpecs(entitySpecs);
+
+					List<Long> specIds = Api.listToLongList(entitySpecs, "entitySpecId");
+
+					List<EntityFieldSpec> entityFieldSpecs = effortDao.getEntityFieldSpecs(Api.toCSV(specIds));
+					formSpecContainer.setEntityFields(entityFieldSpecs);
+					for (EntityFieldSpec entityFieldSpec : entityFieldSpecs) {
+						if(entityFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST) {
+							if(!entitySpecIds.contains(entityFieldSpec.getFieldTypeExtra())){
+							subEntitySpecIds.add(entityFieldSpec.getFieldTypeExtra());
+							}
+						}
+						if(entityFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY) {
+							if(!customEntitySpecIds.contains(entityFieldSpec.getFieldTypeExtraCustomEntity())){
+								subCustomEntitySpecIds.add(entityFieldSpec.getFieldTypeExtraCustomEntity());
+							}
+						}
+					}
+					
+					List<EntitySectionSpec> entitySectionSpecs = effortDao.getEntitySectionSpecForIn(Api.toCSV(specIds));
+					formSpecContainer.setEntitySections(entitySectionSpecs);
+
+					List<EntitySectionFieldSpec> entitySectionFieldSpecs = effortDao
+							.getEntitySectionFieldSpecs(Api.toCSV(specIds));
+					formSpecContainer.setEntitySectionFields(entitySectionFieldSpecs);
+				}
+				
+				
+				if (exportData) {
+					List<Entity> entities = effortDao.getEntitiesByEntitySpecIds(Api.toCSV(entitySpecIds));
+
+					if (entities != null && entities.size() > 0) {
+						formSpecContainer.setEntities(entities);
+						List<EntityField> entityFields = effortDao.getEntityFieldByEntityIn(entities);
+
+						formSpecContainer.setEntityFieldsData(entityFields);
+
+						List<EntitySectionField> sectionFields = effortDao.getEntitySectionFieldsByEntityIn(entities);
+
+						formSpecContainer.setEntitySectionFieldsData(sectionFields);
+					}
+				}
+
+			}
+			
+			if (subEntitySpecIds != null && subEntitySpecIds.size() > 0) {
+				List<EntitySpec> entitySpecs = effortDao.getEntitySpecsIn(Api.toCSV(subEntitySpecIds));
+				if (entitySpecs != null && entitySpecs.size() > 0) {
+					formSpecContainer.getEntitySpecs().addAll(entitySpecs);
+
+					List<Long> specIds = Api.listToLongList(entitySpecs, "entitySpecId");
+
+					List<EntityFieldSpec> entityFieldSpecs = effortDao.getEntityFieldSpecs(Api.toCSV(specIds));
+					formSpecContainer.getEntityFields().addAll(entityFieldSpecs);
+				}
+				
+				
+				if (exportData) {
+					List<Entity> entities = effortDao.getEntitiesByEntitySpecIds(Api.toCSV(subEntitySpecIds));
+
+					if (entities != null && entities.size() > 0) {
+						formSpecContainer.getEntities().addAll(entities);
+						List<EntityField> entityFields = effortDao.getEntityFieldByEntityIn(entities);
+
+						formSpecContainer.getEntityFieldsData().addAll(entityFields);
+					}
+				}
+
+			}
+			
+			if (customEntitySpecIds != null && customEntitySpecIds.size() > 0) {
+				List<CustomEntitySpec> customEntitySpecs = effortDao.getCustomEntitySpecsByIds(Api.toCSV(customEntitySpecIds));
+				if (customEntitySpecs != null && customEntitySpecs.size() > 0) {
+					formSpecContainer.setCustomEntitySpecs(customEntitySpecs);
+					Set<String> formSpecUniqueIds = new HashSet<>();
+					for(CustomEntitySpec customEntitySpec : customEntitySpecs) {
+						formSpecUniqueIds.add(customEntitySpec.getFormSpecUniqueId());
+					}
+					getExportFormSpecData(formSpecUniqueIds,formSpecContainer);
+				}
+			}
+			if (subCustomEntitySpecIds != null && subCustomEntitySpecIds.size() > 0) {
+				List<CustomEntitySpec> customEntitySpecs = effortDao.getCustomEntitySpecsByIds(Api.toCSV(subCustomEntitySpecIds));
+				if (customEntitySpecs != null && customEntitySpecs.size() > 0) {
+					formSpecContainer.getCustomEntitySpecs().addAll(customEntitySpecs);
+					Set<String> formSpecUniqueIds = new HashSet<>();
+					for(CustomEntitySpec customEntitySpec : customEntitySpecs) {
+						formSpecUniqueIds.add(customEntitySpec.getFormSpecUniqueId());
+					}
+					getExportFormSpecData(formSpecUniqueIds,formSpecContainer);
+				}
+			}
+		}catch(Exception e) {
+			
+		}
+	}
+
+	public void copyEntitySpecsFromSqlite(Map<Long, Long> entitySpecsIdMap, Map<Long, Long> entityFieldSpecsIdMap,
+			Map<Long, Long> entitySectionSpecsIdMap, Map<Long, Long> entitySectionFieldSpecsIdMap,
+			FormSpecContainer formSpecContainer,WebUser webUser) {
+		
+		List<EntitySpec> entitySpecs = formSpecContainer.getEntitySpecs();
+		List<EntityFieldSpec> entityFieldSpecs = formSpecContainer.getEntityFields();
+		List<EntitySectionSpec> entitySectionSpecs = formSpecContainer.getEntitySections();
+		List<EntitySectionFieldSpec> entitySectionFieldSpecs = formSpecContainer.getEntitySectionFields();
+		
+		
+		List<Entity> entities = formSpecContainer.getEntities();
+		List<EntityField> entityFields = formSpecContainer.getEntityFieldsData();
+		List<EntitySectionField> entitySectionFieldsData = formSpecContainer.getEntitySectionFieldsData();
+		
+		
+		Map<Long,Boolean> entitySpecsMap = new HashMap<Long,Boolean>();
+		
+		for (EntitySpec entitySpec : entitySpecs) {
+				long oldEntitySpecId = entitySpec.getEntitySpecId();
+
+				EntitySpec existingEntitySpec = effortDao.getEntitySpecBySkeletonSpecId(oldEntitySpecId,webUser.getCompanyId());
+				if(existingEntitySpec != null) {
+					entitySpecsMap.put(oldEntitySpecId, true);
+					
+					entitySpecsIdMap.put(oldEntitySpecId,
+							existingEntitySpec.getEntitySpecId());
+					
+					List<EntityFieldSpec> existingEntityFieldSpecs = effortDao.getEntityFieldSpecs(existingEntitySpec.getEntitySpecId());
+					for(EntityFieldSpec entityFieldSpec : existingEntityFieldSpecs) {
+						entityFieldSpecsIdMap.put(entityFieldSpec.getSkeletonEntityFieldSpecId(),
+								entityFieldSpec.getEntityFieldSpecId());
+					}
+					
+				}else {
+					entitySpec.setParentId(oldEntitySpecId);
+					entitySpec.setSkeletonEntitySpecId(oldEntitySpecId);
+					entitySpec.setIsSystemDefined(0);
+					effortDao.insertEntitySpec(entitySpec, webUser.getCompanyId(),
+							webUser.getEmpId());
+					entitySpecsIdMap.put(oldEntitySpecId,
+							entitySpec.getEntitySpecId());
+					
+					LOGGER.info(" insertEntitySpec done ... "+entitySpec.getEntitySpecId());
+				}
+		}
+
+		if (entityFieldSpecs != null) {
+			for (EntityFieldSpec entityFieldSpec : entityFieldSpecs) {
+				long oldEntityFieldSpecId = entityFieldSpec
+						.getEntityFieldSpecId();
+				if(entitySpecsMap.get(entityFieldSpec.getEntitySpecId()) == null){
+					long entitySpecId = entitySpecsIdMap.get(entityFieldSpec
+							.getEntitySpecId());
+						entityFieldSpec
+								.setSkeletonEntityFieldSpecId(oldEntityFieldSpecId);
+					effortDao.insertEntityFieldSpec(entityFieldSpec, entitySpecId);
+					entityFieldSpecsIdMap.put(oldEntityFieldSpecId,
+							entityFieldSpec.getEntityFieldSpecId());
+					LOGGER.info(" insertEntityFieldSpec done ... "+entityFieldSpec.getEntityFieldSpecId());
+				}
+			}
+
+		}
+		
+		if (entitySectionSpecs != null) {
+			for (EntitySectionSpec entitySectionSpec : entitySectionSpecs) {
+				long oldEntitySectionSpecId = entitySectionSpec
+						.getSectionSpecId();
+				if(entitySpecsMap.get(entitySectionSpec.getEntitySpecId()) == null){
+				long entitySpecId = entitySpecsIdMap.get(entitySectionSpec
+						.getEntitySpecId());
+				entitySectionSpec.setInitialEntitySectionSpecId(null);
+				entitySectionSpec
+							.setSkeletonEntitySectionSpecId(oldEntitySectionSpecId);
+				effortDao.insertEntitySectionSpec(entitySectionSpec, entitySpecId,webUser.getCompanyId());
+				entitySectionSpecsIdMap.put(oldEntitySectionSpecId,
+						entitySectionSpec.getSectionSpecId());
+				}
+			}
+
+		}
+		
+		if (entitySectionFieldSpecs != null) {
+			for (EntitySectionFieldSpec entitySectionFieldSpec : entitySectionFieldSpecs) {
+				long oldEntitySectionFieldSpecId = entitySectionFieldSpec
+						.getSectionSpecId();
+				if(entitySpecsMap.get(entitySectionFieldSpec.getEntitySpecId()) == null){
+				long entitySpecId = entitySpecsIdMap.get(entitySectionFieldSpec
+						.getEntitySpecId());
+				long sectionSpecId = entitySpecsIdMap.get(entitySectionFieldSpec.getSectionSpecId());
+				entitySectionFieldSpec.setSectionSpecId(sectionSpecId);
+				entitySectionFieldSpec.setInitialEntitySectionFieldSpecId(null);
+				entitySectionFieldSpec
+							.setSkeletonEntitySectionFieldSpecId(oldEntitySectionFieldSpecId);
+				effortDao.insertEntitySectionFieldSpec(entitySectionFieldSpec, entitySpecId,webUser.getCompanyId());
+				entitySectionSpecsIdMap.put(oldEntitySectionFieldSpecId,
+						entitySectionFieldSpec.getSectionFieldSpecId());
+				}
+			}
+
+		}
+		
+		// 
+		Map<Long,Long> entityIdsMap = new HashMap<Long,Long>();
+		
+		for(Entity entity : entities) {
+			if(entitySpecsMap.get(entity.getEntitySpecId()) == null){
+				Long oldEntityId = entity.getEntityId();
+				long entitySpecId = entitySpecsIdMap.get(entity
+						.getEntitySpecId());
+				entity.setEntitySpecId(entitySpecId);
+				entity.setClientSideId(null);
+				long entityId = effortDao.insertEntity(entity,webUser.getCompanyId(),webUser.getEmpId(),null);
+				entityIdsMap.put(oldEntityId, entityId);
+			}
+		}
+		
+		for(EntityField entityField : entityFields) {
+			if(entityIdsMap.get(entityField.getEntityId()) != null){
+				Long entityId = entityIdsMap.get(entityField.getEntityId());
+				long entitySpecId = entitySpecsIdMap.get(entityField
+						.getEntitySpecId());
+				entityField.setEntityId(entityId);
+				entityField.setEntitySpecId(entitySpecId);
+				entityField.setClientSideId(null);
+				if(entityFieldSpecsIdMap.get(entityField.getEntityFieldSpecId()) != null) {
+					entityField.setEntityFieldSpecId(entityFieldSpecsIdMap.get(entityField.getEntityFieldSpecId()));
+				}
+				 effortDao.insertEntityField(entityField);
+			}
+		}
+		
+		
+		
+	}
+
+	public void copyWorkSpecTemplate(WebUser webUser, WorkSpecContainer workSpecContainer,
+			Map<Long, Long> entitySpecsIdMap, Map<Long, EntitySpec> entitySpecMap, Map<Long, Long> formSpecIdsMap,
+			Map<String, String> formSpecUniqueIdsMap, Map<String, String> formFieldSpecUniqueIdsMap,
+			Map<String, String> formSectionFieldSpecUniqueIdsMap, Map<Long, Long> formFieldSpecsIdMap,
+			Map<Long, Long> formSectionFieldSpecsIdMap, Map<Long, Long> entityFieldSpecsIdMap,
+			Map<String, String> formSectionSpecUniqueIdsMap, Map<Long, Long> formSectionSpecsIdMap,
+			Map<String, String> customEntitySpecIdsMap, Map<Long, CustomEntitySpec> customEntitySpecsMap,
+			Map<String, String> innerformSpecUniqueIdsMap) {
+		
+		Map<Long, Long> workSpecsCopied = new HashMap<Long, Long>();
+		Map<Long, Long> workActionSpecsCopied = new HashMap<Long, Long>();
+		
+		List<WorkSpec> workSpecs = workSpecContainer.getWorkSpecs();
+		for(WorkSpec workSpec : workSpecs) {
+			
+			Long newWorkSpecId = null;
+			Long oldWorkSpecId = null;
+			
+			WorkSpec newWorkSpec = new WorkSpec();
+			newWorkSpec = workSpec;
+			String uniqueId = workSpec.getFormSpecUniqueId();
+			oldWorkSpecId = workSpec.getWorkSpecId();
+			
+
+			String newUniqueId = null;
+			if (!Api.isEmptyString(uniqueId))
+				newUniqueId = formSpecUniqueIdsMap.get(uniqueId);
+			if (newUniqueId == null && !Api.isEmptyString(uniqueId)) {
+
+			}
+			newWorkSpec.setFormSpecUniqueId(newUniqueId);
+
+			newWorkSpec.setCopiedFrom(workSpec.getWorkSpecId());
+			newWorkSpec.setCopiedFromTitle(workSpec.getWorkSpecTitle());
+			newWorkSpec.setIsSystemDefined(0);
+			newWorkSpec.setSkeletonWorkSpecId(workSpec.getWorkSpecId());
+			newWorkSpec.setWorkSpecTitle(workSpec.getWorkSpecTitle());
+			newWorkSpec.setWorkSpecDescription(workSpec
+						.getWorkSpecDescription());
+
+			newWorkSpec.setProductId(workSpec.getProductId());
+			newWorkSpecId = effortDao.insertIntoWorkSpecs(newWorkSpec,
+					webUser.getCompanyId(), webUser.getEmpId(), newWorkSpec.getFormSpecUniqueId());
+			workSpecsCopied.put(oldWorkSpecId, newWorkSpecId);
+			LOGGER.info(" insertIntoWorkSpecs done ... "+newWorkSpecId);
+		}
+		
+		List<WorkActionSpec> workActionSpecs = workSpecContainer.getWorkActionSpecs();
+		for (WorkActionSpec workActionSpecOld : workActionSpecs) {
+
+			String uniqueId = workActionSpecOld.getFormSpecUniqueId();
+			String newUniqueId = null;
+			Long workActionSpecId = workActionSpecOld.getWorkActionSpecId();
+
+			if (!Api.isEmptyString(uniqueId))
+				newUniqueId = formSpecUniqueIdsMap.get(uniqueId);
+			
+			Long newWorkSpecId  = workSpecsCopied.get(workActionSpecOld.getWorkSpecId());
+			
+			if(newWorkSpecId != null) {
+				WorkActionSpec workActionSpecNew = workActionSpecOld;
+				workActionSpecNew.setWorkSpecId(newWorkSpecId);
+				workActionSpecNew.setCreatedBy(webUser.getEmpId());
+				workActionSpecNew.setModifiedBy(webUser.getEmpId());
+				workActionSpecNew.setFormSpecUniqueId(newUniqueId);
+
+				workActionSpecNew.setSkeletonWorkActionSpecId(workActionSpecOld.getWorkActionSpecId());
+
+				Long newWorkActionSpecId = null;
+				newWorkActionSpecId = effortDao.insertIntoWorkActionSpecs(workActionSpecNew, newWorkSpecId, webUser.getEmpId());
+				workActionSpecsCopied.put(workActionSpecId, newWorkActionSpecId);
+			}
+
+			
+		}
+		
+		List<NextActionSpec> nextActionSpecs = workSpecContainer.getNextActionSpecs();
+		resolveNextActionSpecs(nextActionSpecs,workActionSpecsCopied,workSpecsCopied);
+		for(NextActionSpec nextActionSpec : nextActionSpecs) {
+			effortDao.insertNextActionSpec(nextActionSpec);
+		}
+		
+		List<WorkActionSpecConditions> workActionSpecConditions = workSpecContainer.getWorkActionSpecConditions();
+		for (WorkActionSpecConditions workActionSpecCondition : workActionSpecConditions) {
+			workActionSpecCondition
+					.setActionSpecId(workActionSpecsCopied.get(workActionSpecCondition.getActionSpecId()));
+			if(workActionSpecsCopied.get(workActionSpecCondition.getNextActionSpecId()) != null) {
+				workActionSpecCondition
+				.setNextActionSpecId(workActionSpecsCopied.get(workActionSpecCondition.getNextActionSpecId()));
+			}
+			Long newWorkSpecId  = workSpecsCopied.get(workActionSpecCondition.getWorkSpecId());
+			effortDao.insertWorkActionSpecCondition(workActionSpecCondition, newWorkSpecId);
+		}
+		
+		List<WorkActionSpecVisibilityCondition> workActionSpecVisibilityConditionList = workSpecContainer.getWorkActionSpecVisibilityConditions();
+		
+		for (WorkActionSpecVisibilityCondition workActionSpecVisibilityCondition : workActionSpecVisibilityConditionList) {
+			Long newWorkSpecId  = workSpecsCopied.get(workActionSpecVisibilityCondition.getWorkSpecId());
+			workActionSpecVisibilityCondition.setWorkSpecId(newWorkSpecId);
+			workActionSpecVisibilityCondition
+			.setWorkActionSpecId(workActionSpecsCopied.get(workActionSpecVisibilityCondition.getWorkActionSpecId()));
+			if (workActionSpecsCopied != null) {
+				workActionSpecVisibilityCondition.setConditionalWorkActionSpecId(workActionSpecsCopied
+						.get(workActionSpecVisibilityCondition.getConditionalWorkActionSpecId()));
+				if (workActionSpecVisibilityCondition.getFieldCondtionSourceActionSpecId() != null
+						&& workActionSpecVisibilityCondition.getFieldCondtionSourceActionSpecId() > 0) {
+					workActionSpecVisibilityCondition.setFieldCondtionSourceActionSpecId(workActionSpecsCopied
+							.get(workActionSpecVisibilityCondition.getFieldCondtionSourceActionSpecId()));
+				}
+
+			}
+			if (workActionSpecVisibilityCondition.getTargetFieldExpression().startsWith("F")) {
+				workActionSpecVisibilityCondition.setFieldType(
+						Long.parseLong(WorkActionSpecVisibilityCondition.FIELD_IS_FORM_FIELD + ""));
+			} else if (workActionSpecVisibilityCondition.getTargetFieldExpression().startsWith("SF")) {
+				workActionSpecVisibilityCondition.setFieldType(
+						Long.parseLong(WorkActionSpecVisibilityCondition.FIELD_IS_SECTION_FIELD + ""));
+			} else if (workActionSpecVisibilityCondition.getTargetFieldExpression().startsWith("WA")) {
+				workActionSpecVisibilityCondition.setFieldType(
+						Long.parseLong(WorkActionSpecVisibilityCondition.FIELD_IS_WORK_ACTION + ""));
+				String array[] = workActionSpecVisibilityCondition.getTargetFieldExpression().split("WA");
+				workActionSpecVisibilityCondition.setWorkSpecId(Long.parseLong(array[1]));
+				if (workActionSpecsCopied != null) {
+					workActionSpecVisibilityCondition
+							.setWorkSpecId(workActionSpecsCopied.get(Long.parseLong(array[1])));
+					workActionSpecVisibilityCondition
+							.setTargetFieldExpression("WA" + workActionSpecVisibilityCondition.getWorkSpecId());
+				}
+			} else if (workActionSpecVisibilityCondition.getTargetFieldExpression().startsWith("ST")) {
+				workActionSpecVisibilityCondition
+						.setFieldType(Long.parseLong(WorkActionSpecVisibilityCondition.FIELD_IS_SUB_TASK + ""));
+				String array[] = workActionSpecVisibilityCondition.getTargetFieldExpression().split("ST");
+				workActionSpecVisibilityCondition.setWorkSpecId(Long.parseLong(array[1]));
+			}
+		}
+		effortDao.insertWorkActionSpecVisibilityCondition(workActionSpecVisibilityConditionList);
+		
+		List<WorkActionSpecEndCondition> workActionSpecEndConditionList = workSpecContainer.getWorkActionSpecEndConditions();
+
+		Iterator<WorkActionSpecEndCondition> iter = workActionSpecEndConditionList.iterator();
+		while (iter.hasNext()) {
+			WorkActionSpecEndCondition workActionSpecEndCondition = iter.next();
+			Long newWorkSpecId  = workSpecsCopied.get(workActionSpecEndCondition.getWorkSpecId());
+			Long newWorkActionSpecId = workActionSpecsCopied.get(workActionSpecEndCondition.getWorkActionSpecId());
+			if(newWorkActionSpecId == null) {
+				iter.remove();
+				continue;
+			}
+			if (workActionSpecEndCondition.getCondition() != null
+					&& workActionSpecEndCondition.getConjunction() != null) {
+				workActionSpecEndCondition.setWorkSpecId(newWorkSpecId);
+				workActionSpecEndCondition.setWorkActionSpecId(newWorkActionSpecId);
+				if (workActionSpecEndCondition.getTargetFieldExpression().startsWith("F")) {
+					workActionSpecEndCondition.setIsSectionField(0);
+				} else if (workActionSpecEndCondition.getTargetFieldExpression().startsWith("SF")) {
+					workActionSpecEndCondition.setIsSectionField(1);
+				}
+			}
+		}
+
+		if (workActionSpecEndConditionList != null && workActionSpecEndConditionList.size() > 0) {
+			effortDao.insertWorkActionSpecEndCondition(workActionSpecEndConditionList);
+		}
+		
+		List<WorkActionVisibilityConfiguration> workActionVisibilityConfigurations = workSpecContainer.getWorkActionVisibilityConfigurations();
+		
+		for(WorkActionVisibilityConfiguration workActionVisibilityConfiguration : workActionVisibilityConfigurations) {
+			Long newWorkSpecId  = workSpecsCopied.get(workActionVisibilityConfiguration.getWorkSpecId());
+			Long newWorkActionSpecId = workActionSpecsCopied.get(workActionVisibilityConfiguration.getWorkActionSpecId());
+			workActionVisibilityConfiguration.setWorkSpecId(newWorkSpecId);
+			workActionVisibilityConfiguration.setWorkActionSpecId(newWorkActionSpecId);
+			workActionVisibilityConfiguration.setCreatedBy(webUser.getEmpId());
+			workActionVisibilityConfiguration.setModifiedBy(webUser.getEmpId());
+			workActionVisibilityConfiguration.setCompanyId(webUser.getCompanyId());
+		}
+		effortDao.insertOrUpdateWorkActionVisibilityConfiguration(workActionVisibilityConfigurations);
+		
+		Map<Long, Long> workFormAutoFillIdsMap = new HashMap<Long,Long>();
+		
+		// Form Fields to Section Auto copy Clone
+		List<WorkFormAutoFill> workFormAutoFillConfigurations = workSpecContainer.getWorkFormAutoFillStageConfig();
+		List<WorkFormAutoFillField> workFormAutoFillFields = workSpecContainer.getWorkFormAutoFillFieldMapping();
+		List<WorkFormAutoFillField> workFormAutoFillFieldsList = new ArrayList<WorkFormAutoFillField>();
+		if(workFormAutoFillConfigurations != null && workFormAutoFillConfigurations.size() > 0)
+		{
+			for(WorkFormAutoFill workFormAutoFill : workFormAutoFillConfigurations)
+			{
+				Long oldAutoFillId = workFormAutoFill.getWorkFormAutoFillId();
+				workFormAutoFill.setFormSpecUniqueId(formSpecUniqueIdsMap.get(workFormAutoFill.getFormSpecUniqueId()));
+				workFormAutoFill.setWorkActionSpecId(workActionSpecsCopied.get(workFormAutoFill.getWorkActionSpecId()));
+				if(!Api.isEmptyString(workFormAutoFill.getFormSpecUniqueId()))
+				{
+					effortDao.createWorkAutoFillFormConfig(workFormAutoFill, webUser.getEmpId());
+					workFormAutoFillIdsMap.put(oldAutoFillId,workFormAutoFill.getWorkFormAutoFillId());
+				}
+				
+				
+			}
+			for(WorkFormAutoFillField workFormAutoFillField : workFormAutoFillFields)
+			{
+				if (workFormAutoFillIdsMap.get(workFormAutoFillField.getWorkFormAutoFillId()) != null) {
+					workFormAutoFillField.setWorkFormAutoFillId(
+							workFormAutoFillIdsMap.get(workFormAutoFillField.getWorkFormAutoFillId()));
+				} else {
+					workFormAutoFillField.setWorkFormAutoFillId(-1);
+				}
+
+				if (workFormAutoFillField.getSourceSpecId() != null) {
+					workFormAutoFillField
+							.setSourceSpecId(workActionSpecsCopied.get(workFormAutoFillField.getSourceSpecId()));
+				}
+				if (!Api.isEmptyString(workFormAutoFillField.getWorkFieldSpecUniqueId())) {
+					if(formFieldSpecUniqueIdsMap.get(workFormAutoFillField.getWorkFieldSpecUniqueId())!=null) {
+						workFormAutoFillField.setWorkFieldSpecUniqueId(
+								formFieldSpecUniqueIdsMap.get(workFormAutoFillField.getWorkFieldSpecUniqueId()));
+					}else {
+						workFormAutoFillField.setWorkFieldSpecUniqueId(workFormAutoFillField.getWorkFieldSpecUniqueId());
+					}
+				}
+				if (!Api.isEmptyString(workFormAutoFillField.getSourceSpecUniqueId())) {
+					workFormAutoFillField.setSourceSpecUniqueId(
+							formSpecUniqueIdsMap.get(workFormAutoFillField.getSourceSpecUniqueId()));
+				}
+				if (workFormAutoFillField.getFieldType() == 2) {
+					workFormAutoFillField.setFieldSpecUniqueId(
+							formSectionFieldSpecUniqueIdsMap.get(workFormAutoFillField.getFieldSpecUniqueId()));
+				} else if(workFormAutoFillField.getFieldType() == 1){
+					workFormAutoFillField.setFieldSpecUniqueId(
+							formFieldSpecUniqueIdsMap.get(workFormAutoFillField.getFieldSpecUniqueId()));
+				}
+				if (workFormAutoFillField.getSourceType() != null && workFormAutoFillField.getSourceType() == 1) {
+					Long newWorkSpecId  = workSpecsCopied.get(workFormAutoFillField.getSourceSpecId());
+					workFormAutoFillField.setSourceSpecId(newWorkSpecId);
+				}
+
+				if (workFormAutoFillField.getWorkFormAutoFillId() > 0) {
+					workFormAutoFillFieldsList.add(workFormAutoFillField);
+				}
+
+			}
+			
+			effortDao.insertWorkAutoFillFormFields(workFormAutoFillFieldsList);
+			
+			
+		}
+		// Section to Section Auto copy Clone
+		
+		
+		Map<Long, Long> formAutoFillSectionConfigurationIdsMap = new HashMap<Long,Long>();
+	
+			List<FormAutoFillSectionConfiguration> formAutoFillSectionConfigurations = workSpecContainer.getFormAutoFillSectionConfiguration();
+			List<FormAutoFillSectionFieldsConfiguration> formAutoFillSectionFieldsConfiguration = workSpecContainer.getFormAutoFillSectionFieldsConfiguration();
+			
+			if (formAutoFillSectionConfigurations != null && formAutoFillSectionConfigurations.size() > 0) {
+				for(FormAutoFillSectionConfiguration formAutoFillSectionConfiguration : formAutoFillSectionConfigurations)
+				{
+					long oldFormAutoFillSectionConfigurationId = formAutoFillSectionConfiguration.getFormAutoFillSectionConfigurationId();
+					formAutoFillSectionConfiguration.setSectionSpecUniqueId(formSectionSpecUniqueIdsMap.get(formAutoFillSectionConfiguration.getSectionSpecUniqueId()));
+					formAutoFillSectionConfiguration.setSourceActionSpecId(workActionSpecsCopied.get(formAutoFillSectionConfiguration.getSourceActionSpecId()));
+					formAutoFillSectionConfiguration.setSourceSectionSpecUniqueId(formSectionSpecUniqueIdsMap.get(formAutoFillSectionConfiguration.getSourceSectionSpecUniqueId()));
+					formAutoFillSectionConfiguration.setWorkFormAutoFillId(workFormAutoFillIdsMap.get(formAutoFillSectionConfiguration.getWorkFormAutoFillId()));
+					if (!Api.isEmptyString(formAutoFillSectionConfiguration.getSectionSpecUniqueId()) && !Api
+							.isEmptyString(formAutoFillSectionConfiguration.getSourceSectionSpecUniqueId()) && formAutoFillSectionConfiguration.getSourceActionSpecId() != null && formAutoFillSectionConfiguration.getWorkFormAutoFillId() != null) {
+						long sectionConfigId = effortDao.insertWorkAutoFillsectionSpecs(
+								formAutoFillSectionConfiguration,
+								formAutoFillSectionConfiguration.getWorkFormAutoFillId());
+						formAutoFillSectionConfigurationIdsMap.put(oldFormAutoFillSectionConfigurationId,
+								sectionConfigId);
+					}
+					
+					
+				}
+				
+				if(formAutoFillSectionFieldsConfiguration != null && formAutoFillSectionFieldsConfiguration.size() > 0)
+				{
+					List<FormAutoFillSectionFieldsConfiguration> formAutoFillSectionFieldsConfigurationsList = new ArrayList<FormAutoFillSectionFieldsConfiguration>();
+					for(FormAutoFillSectionFieldsConfiguration obj : formAutoFillSectionFieldsConfiguration)
+					{
+						obj.setFieldSpecUniqueId(formSectionFieldSpecUniqueIdsMap.get(obj.getFieldSpecUniqueId()));
+						obj.setSourceFieldSpecUniqueId(formSectionFieldSpecUniqueIdsMap.get(obj.getSourceFieldSpecUniqueId()));
+						obj.setFormAutoFillSectionConfigurationId(formAutoFillSectionConfigurationIdsMap.get(obj.getFormAutoFillSectionConfigurationId()));
+						obj.setWorkFormAutoFillId(workFormAutoFillIdsMap.get(obj.getWorkFormAutoFillId()));
+						if(!Api.isEmptyString(obj.getFieldSpecUniqueId()) && !Api.isEmptyString(obj.getSourceFieldSpecUniqueId()) && obj.getFormAutoFillSectionConfigurationId() != null && obj.getWorkFormAutoFillId() != null)
+						{
+							formAutoFillSectionFieldsConfigurationsList.add(obj);
+						}
+						
+					}
+					effortDao.insertIntoFormAutoFillSectionFieldConfigurations(formAutoFillSectionFieldsConfigurationsList);
+				}
+				
+			}
+			
+			List<FormToWorkAutoFill> formToWorkAutoFillConigurations = workSpecContainer.getFormToWorkAutoFillStageConfig();
+			Map<Long, Long> formToWorkAutoFillIds = new HashMap<Long,Long>();
+			
+			if(formToWorkAutoFillConigurations !=  null && formToWorkAutoFillConigurations.size() > 0)
+			{
+				List<FormToWorkAutoFillField> formToWorkAutoFillFields = workSpecContainer.getFormToWorkAutoFillFieldMapping();
+				
+				for(FormToWorkAutoFill formToWorkAutoFill : formToWorkAutoFillConigurations)
+				{
+					Long oldFormToWorkAutoFillId = formToWorkAutoFill.getFormToWorkAutoFillId();
+					Long newWorkSpecId  = workSpecsCopied.get(formToWorkAutoFill.getWorkSpecId());
+					formToWorkAutoFill.setWorkSpecId(newWorkSpecId);
+					formToWorkAutoFill.setWorkActionSpecId(workActionSpecsCopied.get(formToWorkAutoFill.getWorkActionSpecId()));
+					formToWorkAutoFill.setWorkActionFormSpecUniqueId(formSpecUniqueIdsMap.get(formToWorkAutoFill.getWorkActionFormSpecUniqueId()));
+					effortDao.createFormToWorkAutoFillFormConfig(formToWorkAutoFill, webUser.getEmpId());
+					formToWorkAutoFillIds.put(oldFormToWorkAutoFillId, formToWorkAutoFill.getFormToWorkAutoFillId());
+				}
+				for(FormToWorkAutoFillField formToWorkAutoFillField : formToWorkAutoFillFields)
+				{
+					formToWorkAutoFillField.setFormToWorkAutoFillId(
+							formToWorkAutoFillIds.get(formToWorkAutoFillField.getFormToWorkAutoFillId()));
+					if (formToWorkAutoFillField.getFieldType() == 2) {
+						if (formSectionFieldSpecUniqueIdsMap
+								.get(formToWorkAutoFillField.getFormFieldSpecUniqueId()) != null) {
+							formToWorkAutoFillField.setFormFieldSpecUniqueId(formSectionFieldSpecUniqueIdsMap
+									.get(formToWorkAutoFillField.getFormFieldSpecUniqueId()));
+						}
+
+					} else if (formToWorkAutoFillField.getFieldType() == 1) {
+						if (formFieldSpecUniqueIdsMap.get(formToWorkAutoFillField.getFormFieldSpecUniqueId()) != null) {
+							formToWorkAutoFillField.setFormFieldSpecUniqueId(
+									formFieldSpecUniqueIdsMap.get(formToWorkAutoFillField.getFormFieldSpecUniqueId()));
+						}
+
+					}
+
+					formToWorkAutoFillField.setWorkFieldSpecUniqueId(
+							formFieldSpecUniqueIdsMap.get(formToWorkAutoFillField.getWorkFieldSpecUniqueId()));
+				}
+				effortDao.insertFormToWorkAutoFillFormFields(formToWorkAutoFillFields);
+				
+			}
+			
+			List<WorkAttachmentAutoFill> workAttachmentFormAutoFillStageConfig = workSpecContainer.getWorkAttachmentFormAutoFillStageConfig();
+			
+			Map<Long, Long> workAttachmentFormAutoFillIdsMap = new HashMap<Long,Long>();
+			
+			for(WorkAttachmentAutoFill workFormAutoFill : workAttachmentFormAutoFillStageConfig)
+			{
+				Long oldAutoFillId = workFormAutoFill.getWorkAttachmentAutoFillId();
+				Long newWorkSpecId  = workSpecsCopied.get(workFormAutoFill.getWorkSpecId());
+				workFormAutoFill.setFormSpecUniqueId(formSpecUniqueIdsMap.get(workFormAutoFill.getFormSpecUniqueId()));
+				workFormAutoFill.setWorkSpecId(newWorkSpecId);
+				if(!Api.isEmptyString(workFormAutoFill.getFormSpecUniqueId()))
+				{
+					effortDao.createWorkAttachementAutoFillFormConfig(workFormAutoFill, webUser.getEmpId());
+					workAttachmentFormAutoFillIdsMap.put(oldAutoFillId,workFormAutoFill.getWorkAttachmentAutoFillId());
+				}
+				
+			}
+			List<WorkAttachmentFormAutoFillField> workAttachmentFormAutoFillFieldMapping = workSpecContainer.getWorkAttachmentFormAutoFillFieldMapping();
+			List<WorkAttachmentFormAutoFillField> workAttachmentFormAutoFillFieldMappingList = new ArrayList<WorkAttachmentFormAutoFillField>();
+			
+			for(WorkAttachmentFormAutoFillField workFormAutoFillField : workAttachmentFormAutoFillFieldMapping)
+			{
+				if (workAttachmentFormAutoFillIdsMap.get(workFormAutoFillField.getWorkAttachmentAutoFillId()) != null) {
+					workFormAutoFillField.setWorkAttachmentAutoFillId(
+							workAttachmentFormAutoFillIdsMap.get(workFormAutoFillField.getWorkAttachmentAutoFillId()));
+				} else {
+					workFormAutoFillField.setWorkAttachmentAutoFillId(-1l);
+				}
+
+				if (workFormAutoFillField.getSourceSpecId() != null) {
+					workFormAutoFillField
+							.setSourceSpecId(workActionSpecsCopied.get(workFormAutoFillField.getSourceSpecId()));
+				}
+				if (!Api.isEmptyString(workFormAutoFillField.getWorkFieldSpecUniqueId())) {
+					if(formFieldSpecUniqueIdsMap.get(workFormAutoFillField.getWorkFieldSpecUniqueId())!=null) {
+						workFormAutoFillField.setWorkFieldSpecUniqueId(
+								formFieldSpecUniqueIdsMap.get(workFormAutoFillField.getWorkFieldSpecUniqueId()));
+					}else {
+						workFormAutoFillField.setWorkFieldSpecUniqueId(workFormAutoFillField.getWorkFieldSpecUniqueId());
+					}
+				}
+				if (!Api.isEmptyString(workFormAutoFillField.getSourceSpecUniqueId())) {
+					workFormAutoFillField.setSourceSpecUniqueId(
+							formSpecUniqueIdsMap.get(workFormAutoFillField.getSourceSpecUniqueId()));
+				}
+				if (workFormAutoFillField.getFieldType() == 2) {
+					workFormAutoFillField.setFieldSpecUniqueId(
+							formSectionFieldSpecUniqueIdsMap.get(workFormAutoFillField.getFieldSpecUniqueId()));
+				} else if(workFormAutoFillField.getFieldType() == 1){
+					workFormAutoFillField.setFieldSpecUniqueId(
+							formFieldSpecUniqueIdsMap.get(workFormAutoFillField.getFieldSpecUniqueId()));
+				}
+				if (workFormAutoFillField.getSourceType() != null && workFormAutoFillField.getSourceType() == 1) {
+					Long newWorkSpecId  = workSpecsCopied.get(workFormAutoFillField.getSourceSpecId());
+					workFormAutoFillField.setSourceSpecId(newWorkSpecId);
+				}
+
+				if (workFormAutoFillField.getWorkAttachmentAutoFillId() > 0) {
+					workAttachmentFormAutoFillFieldMappingList.add(workFormAutoFillField);
+				}
+
+			}
+			
+			effortDao.insertWorkAttachmentAutoFillFormFields(workAttachmentFormAutoFillFieldMappingList);
+			
+			Map<Long, Long> attachmentFormAutoFillSectionConfigurationIdsMap = new HashMap<Long,Long>();
+			
+			List<AttachmnetFormAutoFillSectionConfiguration> attachmentFormAutoFillSectionConfigurations = workSpecContainer.getAttachmentFormAutoFillSectionConfiguration();
+			List<WorkAttachmentAutoFillSectionFieldsConfiguration> attachmentFormAutoFillSectionFieldsConfigurations = workSpecContainer.getAttachmentFormAutoFillSectionFieldsConfiguration();
+			
+			if (attachmentFormAutoFillSectionConfigurations != null && attachmentFormAutoFillSectionConfigurations.size() > 0) {
+				for(AttachmnetFormAutoFillSectionConfiguration attachmentFormAutoFillSectionConfiguration : attachmentFormAutoFillSectionConfigurations)
+				{
+					long oldFormAutoFillSectionConfigurationId = attachmentFormAutoFillSectionConfiguration.getAttachmnetFormAutoFillSectionConfigurationId();
+					attachmentFormAutoFillSectionConfiguration.setSectionSpecUniqueId(formSectionSpecUniqueIdsMap.get(attachmentFormAutoFillSectionConfiguration.getSectionSpecUniqueId()));
+					attachmentFormAutoFillSectionConfiguration.setSourceActionSpecId(workActionSpecsCopied.get(attachmentFormAutoFillSectionConfiguration.getSourceActionSpecId()));
+					attachmentFormAutoFillSectionConfiguration.setSourceSectionSpecUniqueId(formSectionSpecUniqueIdsMap.get(attachmentFormAutoFillSectionConfiguration.getSourceSectionSpecUniqueId()));
+					attachmentFormAutoFillSectionConfiguration.setWorkAttachmentAutoFillId(workAttachmentFormAutoFillIdsMap.get(attachmentFormAutoFillSectionConfiguration.getWorkAttachmentAutoFillId()));
+					if (!Api.isEmptyString(attachmentFormAutoFillSectionConfiguration.getSectionSpecUniqueId()) && !Api
+							.isEmptyString(attachmentFormAutoFillSectionConfiguration.getSourceSectionSpecUniqueId()) && attachmentFormAutoFillSectionConfiguration.getSourceActionSpecId() != null && attachmentFormAutoFillSectionConfiguration.getWorkAttachmentAutoFillId() != null) {
+						long sectionConfigId = effortDao.insertWorkAttachementAutoFillsectionSpecs(
+								attachmentFormAutoFillSectionConfiguration,
+								attachmentFormAutoFillSectionConfiguration.getWorkAttachmentAutoFillId());
+						attachmentFormAutoFillSectionConfigurationIdsMap.put(oldFormAutoFillSectionConfigurationId,
+								sectionConfigId);
+					}
+					
+					
+				}
+				
+				if(attachmentFormAutoFillSectionFieldsConfigurations != null && attachmentFormAutoFillSectionFieldsConfigurations.size() > 0)
+				{
+					List<WorkAttachmentAutoFillSectionFieldsConfiguration> attachmentFormAutoFillSectionFieldsConfigurationsList = new ArrayList<WorkAttachmentAutoFillSectionFieldsConfiguration>();
+					for(WorkAttachmentAutoFillSectionFieldsConfiguration obj : attachmentFormAutoFillSectionFieldsConfigurations)
+					{
+						obj.setFieldSpecUniqueId(formSectionFieldSpecUniqueIdsMap.get(obj.getFieldSpecUniqueId()));
+						obj.setSourceFieldSpecUniqueId(formSectionFieldSpecUniqueIdsMap.get(obj.getSourceFieldSpecUniqueId()));
+						obj.setAttachmnetFormAutoFillSectionConfigurationId(attachmentFormAutoFillSectionConfigurationIdsMap.get(obj.getAttachmnetFormAutoFillSectionConfigurationId()));
+						obj.setWorkAttachmentAutoFillId(workAttachmentFormAutoFillIdsMap.get(obj.getWorkAttachmentAutoFillId()));
+						if(!Api.isEmptyString(obj.getFieldSpecUniqueId()) && !Api.isEmptyString(obj.getSourceFieldSpecUniqueId()) && obj.getAttachmnetFormAutoFillSectionConfigurationId() != null && obj.getWorkAttachmentAutoFillId() != null)
+						{
+							attachmentFormAutoFillSectionFieldsConfigurationsList.add(obj);
+						}
+						
+					}
+					effortDao.insertWorkAttachementAutoFillFormSectionFields(attachmentFormAutoFillSectionFieldsConfigurationsList);
+				}
+				
+			}
+			
+			List<WorkFieldsUniqueConfigurations> fieldsUniqueConfigurations = workSpecContainer.getWorkFieldsUniqueConfigurations();
+					
+			if(fieldsUniqueConfigurations != null && fieldsUniqueConfigurations.size() > 0)
+			{
+				for(WorkFieldsUniqueConfigurations workFieldsUniqueConfigurations : fieldsUniqueConfigurations)
+				{
+					if(formFieldSpecUniqueIdsMap.get(workFieldsUniqueConfigurations.getFormFieldUniqueId()) != null)
+					{
+						workFieldsUniqueConfigurations.setFormFieldUniqueId(formFieldSpecUniqueIdsMap.get(workFieldsUniqueConfigurations.getFormFieldUniqueId()));
+					}
+					Long newWorkSpecId  = workSpecsCopied.get(workFieldsUniqueConfigurations.getWorkSpecId());
+					workFieldsUniqueConfigurations.setWorkSpecId(newWorkSpecId);
+				}
+				effortDao.insertWorkFieldUniqueConfigurationsForWorkSpec(webUser,fieldsUniqueConfigurations);
+				
+			}
+			
+			List<WorkReassignmentRules> workReassignmentRules = workSpecContainer.getWorkReassignmentRules();
+			
+			for(WorkReassignmentRules workReassignmentRule : workReassignmentRules) {
+				
+				Long newWorkSpecId  = workSpecsCopied.get(workReassignmentRule.getWorkSpecId());
+				Long workActionSpecId = workActionSpecsCopied.get(workReassignmentRule.getWorkActionSpecId());
+				
+				workReassignmentRule.setWorkSpecId(newWorkSpecId);
+				workReassignmentRule.setWorkActionSpecId(workActionSpecId);
+				
+				if(!Api.isEmptyString(workReassignmentRule.getReassignFormFieldUniqueId())) {
+					String newReassignFormFieldUniqueId = formFieldSpecUniqueIdsMap.get(workReassignmentRule.getReassignFormFieldUniqueId());
+					workReassignmentRule.setReassignFormFieldUniqueId(newReassignFormFieldUniqueId);
+				}
+				workReassignmentRule.setCreatedBy(webUser.getEmpId());
+				workReassignmentRule.setModifiedBy(webUser.getEmpId());
+			}
+			effortDao.insertWorkReassignmentRules(workReassignmentRules);
+			
+			List<WorkSpecAppLabel> workSpecAppLabels = workSpecContainer.getWorkSpecAppLabels();
+			
+			Iterator<WorkSpecAppLabel> workSpecAppLabelsIterator = workSpecAppLabels.iterator();
+			while (workSpecAppLabelsIterator.hasNext()) {
+				WorkSpecAppLabel workSpecAppLabel = (WorkSpecAppLabel) workSpecAppLabelsIterator.next();
+				Long newWorkSpecId  = workSpecsCopied.get(workSpecAppLabel.getWorkSpecId());
+				if(newWorkSpecId != null) {
+					workSpecAppLabel.setWorkSpecId(newWorkSpecId);
+				}else {
+					workSpecAppLabelsIterator.remove();
+					continue;
+				}
+				workSpecAppLabel.setCompanyId(webUser.getCompanyId());
+				workSpecAppLabel.setCreatedBy(webUser.getEmpId());
+				workSpecAppLabel.setModifiedBy(webUser.getEmpId());
+			}
+			effortDao.insertLabelsForMobileApp(workSpecAppLabels);
+			
+			Map<Long,Long> workUnassignmentCriteriaIdsMap = new HashMap<Long,Long>();
+			
+			List<WorkUnassignmentCriterias> workUnassignmentCriterias = workSpecContainer.getWorkUnassignmentCriterias();
+			for(WorkUnassignmentCriterias workUnassignmentCriteria : workUnassignmentCriterias) {
+				Long newWorkSpecId  = workSpecsCopied.get(workUnassignmentCriteria.getWorkSpecId());
+				Long oldWorkUnassignmentCriteriaId = workUnassignmentCriteria.getWorkUnassignmentCriteriaId();
+				workUnassignmentCriteria.setWorkSpecId(newWorkSpecId);
+				
+				Long workActionSpecId = workActionSpecsCopied.get(workUnassignmentCriteria.getWorkActionSpecId());
+				workUnassignmentCriteria.setWorkActionSpecId(workActionSpecId);
+				
+				if(!Api.isEmptyString(workUnassignmentCriteria.getFormSpecUniqueId())) {
+					String newFormSpecUniqueId = formSpecUniqueIdsMap.get(workUnassignmentCriteria.getFormSpecUniqueId());
+					workUnassignmentCriteria.setFormSpecUniqueId(newFormSpecUniqueId);
+				}
+				
+				workUnassignmentCriteria.setCompanyId(Long.parseLong(webUser.getCompanyId()+""));
+				workUnassignmentCriteria.setCreatedBy(webUser.getEmpId());
+				workUnassignmentCriteria.setModifiedBy(webUser.getEmpId());
+				effortDao.insertWorkUnassignmentCriterias(workUnassignmentCriteria);
+				workUnassignmentCriteriaIdsMap.put(oldWorkUnassignmentCriteriaId, workUnassignmentCriteria.getWorkUnassignmentCriteriaId());
+			}
+			
+			List<WorkAssignmentCriteriaConditions> workAssignmentCriteriaConditions = workSpecContainer.getWorkAssignmentCriteriaConditions();
+			for(WorkAssignmentCriteriaConditions workAssignmentCriteriaCondition : workAssignmentCriteriaConditions) {
+				
+				workAssignmentCriteriaCondition.setWorkUnassignmentCriteriaId(workUnassignmentCriteriaIdsMap.get(workAssignmentCriteriaCondition.getWorkUnassignmentCriteriaId()));
+				if(!Api.isEmptyString(workAssignmentCriteriaCondition.getFieldSpecUniqueId())){
+					workAssignmentCriteriaCondition.setFieldSpecUniqueId(formFieldSpecUniqueIdsMap.get(workAssignmentCriteriaCondition.getFieldSpecUniqueId()));
+				}
+				
+			}
+			effortDao.insertWorkAssignmentCriteriaConditions(workAssignmentCriteriaConditions);
+			
+			Map<Long,Long> externalActionConfigurationsIdsMap = new HashMap<Long,Long>();
+			
+			List<ExternalActionConfiguration> externalActionConfigurations = workSpecContainer.getExternalActionConfigurations();
+			
+			for(ExternalActionConfiguration externalActionConfiguration : externalActionConfigurations) {
+				Long newWorkSpecId  = workSpecsCopied.get(externalActionConfiguration.getWorkSpecId());
+				Long oldExternalActionConfigurationId = externalActionConfiguration.getExternalActionConfigurationId();
+				externalActionConfiguration.setWorkSpecId(newWorkSpecId);
+				
+				Long workActionSpecId = workActionSpecsCopied.get(externalActionConfiguration.getWorkActionSpecId());
+				externalActionConfiguration.setWorkActionSpecId(workActionSpecId);
+				effortDao.insertIntoExternalActionConfiguration(externalActionConfiguration,webUser);
+				externalActionConfigurationsIdsMap.put(oldExternalActionConfigurationId, externalActionConfiguration.getExternalActionConfigurationId());
+			}
+			
+			List<FormToWorkAutoFillSectionConfiguration> formToWorkAutoFillSectionConfigurations = workSpecContainer.getFormToWorkAutoFillSectionConfiguration();
+			List<FormToWorkAutoFillSectionFieldsConfiguration> formToWorkAutoFillSectionFieldsConfiguration = workSpecContainer.getFormToWorkAutoFillSectionFieldsConfiguration();
+			
+			
+			Map<Long, Long> formToWorkAutoFillSectionConfigurationIdsMap = new HashMap<Long,Long>();
+			
+			
+			if (formToWorkAutoFillSectionConfigurations != null && formToWorkAutoFillSectionConfigurations.size() > 0) {
+				for(FormToWorkAutoFillSectionConfiguration formToWorkAutoFillSectionConfiguration : formToWorkAutoFillSectionConfigurations)
+				{
+					long oldFormAutoFillSectionConfigurationId = formToWorkAutoFillSectionConfiguration.getFormToWorkAutoFillSectionConfigurationId();
+					formToWorkAutoFillSectionConfiguration.setSectionSpecUniqueId(formSectionSpecUniqueIdsMap.get(formToWorkAutoFillSectionConfiguration.getSectionSpecUniqueId()));
+					formToWorkAutoFillSectionConfiguration.setSourceActionSpecId(workActionSpecsCopied.get(formToWorkAutoFillSectionConfiguration.getSourceActionSpecId()));
+					formToWorkAutoFillSectionConfiguration.setSourceSectionSpecUniqueId(formSectionSpecUniqueIdsMap.get(formToWorkAutoFillSectionConfiguration.getSourceSectionSpecUniqueId()));
+					formToWorkAutoFillSectionConfiguration.setFormToWorkAutoFillId(formToWorkAutoFillIds.get(formToWorkAutoFillSectionConfiguration.getFormToWorkAutoFillId()));
+					if (!Api.isEmptyString(formToWorkAutoFillSectionConfiguration.getSectionSpecUniqueId()) && !Api
+							.isEmptyString(formToWorkAutoFillSectionConfiguration.getSourceSectionSpecUniqueId()) && formToWorkAutoFillSectionConfiguration.getSourceActionSpecId() != null && formToWorkAutoFillSectionConfiguration.getFormToWorkAutoFillId() != null) {
+						long sectionConfigId = effortDao.insertFormToWorkAutoFillsectionSpecs(
+								formToWorkAutoFillSectionConfiguration);
+						formToWorkAutoFillSectionConfigurationIdsMap.put(oldFormAutoFillSectionConfigurationId,
+								sectionConfigId);
+					}
+					
+					
+				}
+				
+				if(formToWorkAutoFillSectionFieldsConfiguration != null && formToWorkAutoFillSectionFieldsConfiguration.size() > 0)
+				{
+					List<FormToWorkAutoFillSectionFieldsConfiguration> attachmentFormAutoFillSectionFieldsConfigurationsList = new ArrayList<FormToWorkAutoFillSectionFieldsConfiguration>();
+					for(FormToWorkAutoFillSectionFieldsConfiguration obj : formToWorkAutoFillSectionFieldsConfiguration)
+					{
+						obj.setFieldSpecUniqueId(formSectionFieldSpecUniqueIdsMap.get(obj.getFieldSpecUniqueId()));
+						obj.setSourceFieldSpecUniqueId(formSectionFieldSpecUniqueIdsMap.get(obj.getSourceFieldSpecUniqueId()));
+						obj.setFormToWorkAutoFillSectionConfigurationId(formToWorkAutoFillSectionConfigurationIdsMap.get(obj.getFormToWorkAutoFillSectionConfigurationId()));
+						obj.setFormToWorkAutoFillId(workAttachmentFormAutoFillIdsMap.get(obj.getFormToWorkAutoFillId()));
+						if(!Api.isEmptyString(obj.getFieldSpecUniqueId()) && !Api.isEmptyString(obj.getSourceFieldSpecUniqueId()) && obj.getFormToWorkAutoFillSectionConfigurationId() != null && obj.getFormToWorkAutoFillId() != null)
+						{
+							attachmentFormAutoFillSectionFieldsConfigurationsList.add(obj);
+						}
+						
+					}
+					effortDao.insertFormToWorkAutoFillFormSectionFields(attachmentFormAutoFillSectionFieldsConfigurationsList);
+				}
+				
+			}
+			
+			List<WorkActionFormVisibility> workActionFormVisibility = workSpecContainer.getWorkActionFormVisibility();
+			
+			for(WorkActionFormVisibility workActionFormVisibilityObj : workActionFormVisibility) {
+				
+				Long newWorkSpecId  = workSpecsCopied.get(workActionFormVisibilityObj.getWorkSpecId());
+				workActionFormVisibilityObj.setWorkSpecId(newWorkSpecId);
+				
+				Long workActionSpecId = workActionSpecsCopied.get(workActionFormVisibilityObj.getActionSpecId());
+				workActionFormVisibilityObj.setActionSpecId(workActionSpecId);
+				workActionFormVisibilityObj.setCompanyId(Long.parseLong(webUser.getCompanyId()+""));
+			}
+			effortDao.insertIntoWorkActionFormVisibility(workActionFormVisibility);
+			
+			// 
+			List<WorkSpecFormSpecMap> workSpecFormSpecMaps = workSpecContainer.getWorkSpecFormSpecMaps();
+			for(WorkSpecFormSpecMap workSpecFormSpecMap : workSpecFormSpecMaps) {
+				workSpecFormSpecMap.setFormSpecUniqueId(formSpecUniqueIdsMap.get(workSpecFormSpecMap.getFormSpecUniqueId()));
+				Long newWorkSpecId  = workSpecsCopied.get(workSpecFormSpecMap.getWorkSpecId());
+				workSpecFormSpecMap.setWorkSpecId(newWorkSpecId);
+			}
+			effortDao.insertFormSpecUniqueIdsForWorkSpec(workSpecFormSpecMaps);
+		
+	}
+
+	private void resolveNextActionSpecs(List<NextActionSpec> nextActionSpecs, Map<Long, Long> workActionSpecsCopied,
+			Map<Long, Long> workSpecsCopied) {
+		try {
+			
+			Iterator<NextActionSpec> formPageSpecsIterator = nextActionSpecs.iterator();
+			while (formPageSpecsIterator.hasNext()) {
+				NextActionSpec nextActionSpec = (NextActionSpec) formPageSpecsIterator.next();
+				Long newWorkSpecId = workSpecsCopied.get(nextActionSpec.getWorkSpecId());
+				if(newWorkSpecId != null) {
+					nextActionSpec.setWorkSpecId(newWorkSpecId);
+				}else {
+					formPageSpecsIterator.remove();
+					continue;
+				}
+				
+				Long newWorkActionSpecId = workActionSpecsCopied.get(nextActionSpec.getActionSpecId());
+				if(newWorkActionSpecId != null) {
+					nextActionSpec.setActionSpecId(newWorkActionSpecId);
+				}else {
+					formPageSpecsIterator.remove();
+					continue;
+				}
+				
+				Long newNextActionSpecId = workActionSpecsCopied.get(nextActionSpec.getNextActionSpecId());
+				if(newNextActionSpecId != null) {
+					nextActionSpec.setNextActionSpecId(newNextActionSpecId);
+				}else {
+					formPageSpecsIterator.remove();
+					continue;
+				}
+			}
+			
+		}catch(Exception e) {
+		}
+		
+	}
+
+	public void copyCustomEntitySpecsFromSqlite(Map<String, String> customEntitySpecIdsMap,
+			FormSpecContainer formSpecContainer, WebUser webUser) {
+		List<CustomEntitySpec> customEntitySpecs = formSpecContainer.getCustomEntitySpecs();
+		
+		for(CustomEntitySpec customEntitySpec : customEntitySpecs) {
+			Long oldCustomEntitySpecId = customEntitySpec.getCustomEntitySpecId();
+			customEntitySpec.setCreatedBy(webUser.getEmpId());
+			customEntitySpec.setModifiedBy(webUser.getEmpId());
+			
+			customEntitySpec.setSkeletonCustomEntitySpecId(customEntitySpec.getCustomEntitySpecId());
+			customEntitySpec.setCompanyId(webUser.getCompanyId());
+			effortDao.insertCustomEntitySpecs(customEntitySpec);
+			customEntitySpecIdsMap.put(oldCustomEntitySpecId+"", customEntitySpec.getCustomEntitySpecId()+"");
+		}
+		
+		
+	}
+
+	public void updateCustomEntityFormSpecs(FormSpecContainer formSpecContainer,
+			Map<String, String> formSpecUniqueIdsMap) {
+		
+		List<CustomEntitySpec> customEntitySpecs = formSpecContainer.getCustomEntitySpecs();
+		
+		for(CustomEntitySpec customEntitySpec : customEntitySpecs) {
+			String newFormSpecUniqueId = formSpecUniqueIdsMap.get(customEntitySpec.getFormSpecUniqueId());
+			effortDao.updateCustomEntityFormSpec(newFormSpecUniqueId,customEntitySpec.getCustomEntitySpecId());
+		}
+		
+	}
+	
+	@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Throwable.class)
+	public void fetchDataAndInsertIntoDB(FormSpecContainer formSpecContainer,
+			WorkSpecContainer workSpecContainer,Integer companyId, String cloneEntityData) throws Exception {
+		Map<Long, Long> formSpecIdsMap = new HashMap<Long, Long>();
+		Map<String, String> formSpecUniqueIdsMap = new HashMap<String, String>();
+		Map<Long, Long> visitStatesMap = new HashMap<Long, Long>();
+		Map<String, String> formFieldSpecUniqueIdsMap = new HashMap<String, String>();
+		Map<String, String> formSectionFieldSpecUniqueIdsMap = new HashMap<String, String>();
+		Map<Long, Long> formFieldSpecsIdMap = new HashMap<Long, Long>();
+		Map<Long, Long> formSectionFieldSpecsIdMap = new HashMap<Long, Long>();
+		Map<Long, Long> entityFieldSpecsIdMap = new HashMap<Long, Long>();
+		Map<Long, Long> entitySpecsIdMap = new HashMap<Long, Long>();
+		Map<Long, EntitySpec> entitySpecMap = new HashMap<Long, EntitySpec>();
+		Map<Long, Long> formSectionSpecsIdMap = new HashMap<Long, Long>();
+		Map<String, String> formSectionSpecUniqueIdsMap = new HashMap<String, String>();
+		Map<String, String> innerformSpecUniqueIdsMap = new HashMap<String, String>();
+		Map<String, String> customEntitySpecIdsMap = new HashMap<String, String>();
+		Map<Long, CustomEntitySpec> customEntitySpecsMap = new HashMap<Long, CustomEntitySpec>();
+		
+		Map<Long, Long> entitySectionSpecsIdMap = new HashMap<Long, Long>();
+		Map<Long, Long> entitySectionFieldSpecsIdMap = new HashMap<Long, Long>();
+		
+		Map<Long, Long> workSpecsCopied = new HashMap<Long, Long>();
+
+		WebUser webUser = new WebUser();
+		long rootEmpId = effortDao.getRootEmployeeId(companyId);
+		Employee employee =effortDao.getEmployeeBasicDetailsAndTimeZoneByEmpId(rootEmpId+"");
+		webUser.setEmpId(employee.getEmpId());
+		webUser.setTzo(employee.getTimezoneOffset());
+		webUser.setCompanyId(employee.getCompanyId());
+		LOGGER.info(" fetchDataAndInsertIntoDB Cloning Starts ... ");
+		copyEntitySpecsFromSqlite(entitySpecsIdMap,entityFieldSpecsIdMap,entitySectionSpecsIdMap,entitySectionFieldSpecsIdMap,formSpecContainer,webUser);
+		LOGGER.info(" fetchDataAndInsertIntoDB copyEntitySpecsFromSqlite clone done ... ");
+		copyCustomEntitySpecsFromSqlite(customEntitySpecIdsMap, formSpecContainer, webUser);
+		LOGGER.info(" fetchDataAndInsertIntoDB copyCustomEntitySpecsFromSqlite clone done ... ");
+		copyTemplatesFromSkeletonNew(webUser, formSpecContainer, entitySpecsIdMap, entitySpecMap, formSpecIdsMap,
+				formSpecUniqueIdsMap, formFieldSpecUniqueIdsMap, formSectionFieldSpecUniqueIdsMap, formFieldSpecsIdMap,
+				formSectionFieldSpecsIdMap, entityFieldSpecsIdMap, true, true, formSectionSpecUniqueIdsMap,
+				formSectionSpecsIdMap, customEntitySpecIdsMap, customEntitySpecsMap, innerformSpecUniqueIdsMap, true);
+		LOGGER.info(" fetchDataAndInsertIntoDB copyTemplatesFromSkeletonNew clone done ... ");
+		updateCustomEntityFormSpecs(formSpecContainer, formSpecUniqueIdsMap);
+		copyWorkSpecTemplate(webUser, workSpecContainer, entitySpecsIdMap, entitySpecMap, formSpecIdsMap,
+				formSpecUniqueIdsMap, formFieldSpecUniqueIdsMap, formSectionFieldSpecUniqueIdsMap, formFieldSpecsIdMap,
+				formSectionFieldSpecsIdMap, entityFieldSpecsIdMap, formSectionSpecUniqueIdsMap, formSectionSpecsIdMap,
+				customEntitySpecIdsMap, customEntitySpecsMap, innerformSpecUniqueIdsMap);
+		 
+		LOGGER.info(" fetchDataAndInsertIntoDB copyWorkSpecTemplate clone done ... ");
+			
+		
+	}
 	
 	
 

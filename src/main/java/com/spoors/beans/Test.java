@@ -16,7 +16,7 @@ import com.spoors.util.Api;
 
 public class Test {
 
-    public static void main(String[] args) {
+    public void main(String[] args) {
         // Path to the SQLite database file (can be .sqlite, .db, etc.)
         String url = "jdbc:sqlite:/home/spoors/Desktop/SqliteExport/5ee800cb-18f2-428a-b38c-7cf3f94adab0.sqlite";
 

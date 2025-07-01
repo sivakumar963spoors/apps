@@ -80,6 +80,21 @@ public class FormSpecContainer {
 	List<FieldValidation> fieldValidations;
 	
 	
+	private List<EntitySpec> entitySpecs;
+	private List<EntityFieldSpec> entityFields;
+	
+	private List<EntitySectionSpec> entitySections;
+	private List<EntitySectionFieldSpec> entitySectionFields;
+	private List<CustomEntitySpec> customEntitySpecs;
+	
+	
+	private List<Entity> entities;
+	
+	
+	private List<EntityField> entityFieldsData;
+	private List<EntitySectionField> entitySectionFieldsData;
+	
+	
 //	private List<FormFieldType> fieldTypes;
 	
 	public FormSpecContainer() {
@@ -108,7 +123,20 @@ public class FormSpecContainer {
 		this.fieldsExtra = new ArrayList<FormFieldSpecsExtra>();
 		this.sectionFieldsExtra = new ArrayList<FormSectionFieldSpecsExtra>();
 		this.remainderFieldsMap = new ArrayList<RemainderFieldsMap>();
+		this.customEntitySpecs = new ArrayList<CustomEntitySpec>();
+		this.entities= new ArrayList<Entity>();
+		this.entityFieldsData = new ArrayList<EntityField>();
+		this.entitySectionFieldsData = new ArrayList<EntitySectionField>();
+		this.fieldValidations = new ArrayList<FieldValidation>();
 //		this.fieldTypes = new ArrayList<FormFieldType>();
+	}
+
+	public List<CustomEntitySpec> getCustomEntitySpecs() {
+		return customEntitySpecs;
+	}
+
+	public void setCustomEntitySpecs(List<CustomEntitySpec> customEntitySpecs) {
+		this.customEntitySpecs = customEntitySpecs;
 	}
 
 	public Map<Long, Boolean> getFormSpecsVisibilityMap() {
@@ -503,6 +531,62 @@ public class FormSpecContainer {
 	public void setAutoGenereteSequenceSpecConfiguarations(
 			List<AutoGenereteSequenceSpecConfiguaration> autoGenereteSequenceSpecConfiguarations) {
 		this.autoGenereteSequenceSpecConfiguarations = autoGenereteSequenceSpecConfiguarations;
+	}
+
+	public List<EntitySpec> getEntitySpecs() {
+		return entitySpecs;
+	}
+
+	public void setEntitySpecs(List<EntitySpec> entitySpecs) {
+		this.entitySpecs = entitySpecs;
+	}
+
+	public List<EntityFieldSpec> getEntityFields() {
+		return entityFields;
+	}
+
+	public void setEntityFields(List<EntityFieldSpec> entityFields) {
+		this.entityFields = entityFields;
+	}
+
+	public List<EntitySectionSpec> getEntitySections() {
+		return entitySections;
+	}
+
+	public void setEntitySections(List<EntitySectionSpec> entitySections) {
+		this.entitySections = entitySections;
+	}
+
+	public List<EntitySectionFieldSpec> getEntitySectionFields() {
+		return entitySectionFields;
+	}
+
+	public void setEntitySectionFields(List<EntitySectionFieldSpec> entitySectionFields) {
+		this.entitySectionFields = entitySectionFields;
+	}
+
+	public List<Entity> getEntities() {
+		return entities;
+	}
+
+	public void setEntities(List<Entity> entities) {
+		this.entities = entities;
+	}
+
+	public List<EntityField> getEntityFieldsData() {
+		return entityFieldsData;
+	}
+
+	public void setEntityFieldsData(List<EntityField> entityFieldsData) {
+		this.entityFieldsData = entityFieldsData;
+	}
+
+	public List<EntitySectionField> getEntitySectionFieldsData() {
+		return entitySectionFieldsData;
+	}
+
+	public void setEntitySectionFieldsData(List<EntitySectionField> entitySectionFieldsData) {
+		this.entitySectionFieldsData = entitySectionFieldsData;
 	}
 	
 	

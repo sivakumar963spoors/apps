@@ -687,5 +687,23 @@ public static String removeTrailingZeroFromDateTime(String datetimeXsd) {
 
 		return list;
 	}
+	public static boolean isNumber(String number){
+		try {
+			Double.parseDouble(number);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	
+	public static boolean isNumber(Object number){
+		try {
+			Double.parseDouble(number.toString());
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+	
 	
 }

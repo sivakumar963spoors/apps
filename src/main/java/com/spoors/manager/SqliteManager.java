@@ -1,16 +1,28 @@
 package com.spoors.manager;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.tmatesoft.sqljet.core.SqlJetException;
 import org.tmatesoft.sqljet.core.SqlJetTransactionMode;
 import org.tmatesoft.sqljet.core.table.ISqlJetTable;
@@ -20,13 +32,23 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spoors.beans.Constants;
 import com.spoors.beans.CustomEntityFilteringCritiria;
+import com.spoors.beans.CustomEntitySpec;
 import com.spoors.beans.CustomerAutoFilteringCritiria;
 import com.spoors.beans.CustomerFilteringCritiria;
 import com.spoors.beans.DataSourceRequestHeader;
 import com.spoors.beans.DataSourceRequestParam;
 import com.spoors.beans.DataSourceResponseMapping;
+import com.spoors.beans.Employee;
 import com.spoors.beans.EmployeeFilteringCritiria;
+import com.spoors.beans.Entity;
+import com.spoors.beans.EntityField;
+import com.spoors.beans.EntityFieldSpec;
+import com.spoors.beans.EntitySectionField;
+import com.spoors.beans.EntitySectionFieldSpec;
+import com.spoors.beans.EntitySectionSpec;
+import com.spoors.beans.EntitySpec;
 import com.spoors.beans.FieldValidationCritiria;
 import com.spoors.beans.FormCleanUpRule;
 import com.spoors.beans.FormFieldGroupSpec;
@@ -52,6 +74,7 @@ import com.spoors.beans.OfflineListUpdateConfiguration;
 import com.spoors.beans.RemainderFieldsMap;
 import com.spoors.beans.StockFormConfiguration;
 import com.spoors.beans.VisibilityDependencyCriteria;
+import com.spoors.beans.WebUser;
 import com.spoors.beans.WorkFormFieldMap;
 import com.spoors.beans.WorkSpecFormSpecFollowUp;
 import com.spoors.beans.workSpecs.ActionableEmployeeGroupSpecs;
@@ -95,23 +118,39 @@ import com.spoors.beans.workSpecs.WorkSpecListLevelVisibilityConfiguration;
 import com.spoors.beans.workSpecs.WorkSpecPermission;
 import com.spoors.beans.workSpecs.WorkToSubTaskAutoFillConfiguration;
 import com.spoors.beans.workSpecs.WorkUnassignmentCriterias;
+import com.spoors.controller.ApiController;
+import com.spoors.dao.EffortDao;
 import com.spoors.setting.MobileSqls;
 import com.spoors.util.Api;
 
+import ch.qos.logback.classic.Logger;
+
 @Service
 public class SqliteManager {
+	
+	private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(SqliteManager.class);
+	
+	@Autowired
+	public ServiceManager serviceManager;
+	
+	@Autowired
+	public EffortDao effortDao;
+	
+	@Autowired
+	public Constants constants;
 
-	public void saveFormSpecDataToSqlite(FormSpecContainer formSpecContainer, List<WorkSpecContainer> workSpecContainerList) {
+	public String saveFormSpecDataToSqlite(FormSpecContainer formSpecContainer, List<WorkSpecContainer> workSpecContainerList, HttpServletResponse servletResponse) {
 		
 			try {
-				saveToSqlite(formSpecContainer,workSpecContainerList);
+				return saveToSqlite(formSpecContainer,workSpecContainerList,servletResponse);
 			} catch (SqlJetException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			return null;
 	}
 
-	private void saveToSqlite(FormSpecContainer formSpecContainer,List<WorkSpecContainer> workSpecContainerList) throws SqlJetException {
+	private String saveToSqlite(FormSpecContainer formSpecContainer,List<WorkSpecContainer> workSpecContainerList, HttpServletResponse response) throws SqlJetException {
 
 		String sqliteName = "exportSqlite"+System.currentTimeMillis();
 		FormSpec formSpecObj = formSpecContainer.getFormSpecs().get(0);
@@ -119,7 +158,7 @@ public class SqliteManager {
 
 		String sqliteFileName = sqliteName+ ".sqlite"; /// syncSqlitePath.substring(syncSqlitePath.lastIndexOf("/")+1);
 
-		String sqliteFilePath = "/home/spoors/Desktop/SqliteExport/" + sqliteFileName;
+		String sqliteFilePath = constants.getMediaStoragePath()+"/SqliteExport/" + sqliteFileName;
 
 		SqlJetDb db = null;
 		try {
@@ -552,9 +591,110 @@ public class SqliteManager {
  					formSpecCustomEntityFilteringCriteriaAutoIncrementId++;
  				}
  			}
+ 			
+ 		 	currentTime = System.currentTimeMillis();
+ 		 	List<EntitySpec> entitySpecList =  formSpecContainer.getEntitySpecs();
+ 		 	if(entitySpecList != null){
+ 		 		jsonTable = db.getTable("entities_specs_entity_specs");
+ 		 		int entitySpecListAutoIncrementId = 1;
+ 		 		for (EntitySpec entitySpec : entitySpecList ) {
+ 		 			jsonTable.insert(Api.toJson(entitySpec),0,entitySpecListAutoIncrementId);
+ 		 			entitySpecListAutoIncrementId++;
+ 		 		}
+ 		 	}
+ 		 	
+ 		 	List<EntityFieldSpec> entityFieldSpecList =  formSpecContainer.getEntityFields();
+ 		 	if(entityFieldSpecList != null){
+ 		 				jsonTable = db.getTable("entities_specs_fields");
+ 		 				int entityFieldSpecListAutoIncrementId = 1;
+ 		 				for (EntityFieldSpec entityFieldSpec : entityFieldSpecList ) {
+ 		 					jsonTable.insert(Api.toJson(entityFieldSpec),0,entityFieldSpecListAutoIncrementId);
+ 		 					entityFieldSpecListAutoIncrementId++;
+ 		 				}
+ 		 	}
+ 		 	
+ 		 	List<EntitySectionSpec> entitySectionSpecList =  formSpecContainer.getEntitySections();
+ 			if(entitySectionSpecList != null){
+ 				jsonTable = db.getTable("entities_specs_sections_specs");
+ 				int entitySpecSectionSpecAutoIncrementId = 1;
+ 				for (EntitySectionSpec entitySectionSpec : entitySectionSpecList ) {
+ 					jsonTable.insert(Api.toJson(entitySectionSpec),0,entitySpecSectionSpecAutoIncrementId);
+ 					entitySpecSectionSpecAutoIncrementId++;
+ 				}
+ 			}
+ 		 	
+ 		 	List<EntitySectionFieldSpec> entitySectionFieldSpecList =  formSpecContainer.getEntitySectionFields();
+ 			if(entitySectionFieldSpecList != null){
+ 				jsonTable = db.getTable("entities_specs_sections_fields");
+ 				int entitySpecSectionFieldAutoIncrementId = 1;
+ 				for (EntitySectionFieldSpec entitySectionFieldSpec : entitySectionFieldSpecList ) {
+ 					jsonTable.insert(Api.toJson(entitySectionFieldSpec),0,entitySpecSectionFieldAutoIncrementId);
+ 					entitySpecSectionFieldAutoIncrementId++;
+ 				}
+ 			}
+ 			
+ 			List<CustomEntitySpec> customEntitySpecs = formSpecContainer.getCustomEntitySpecs();
+ 			if(customEntitySpecs != null){
+ 				jsonTable = db.getTable("custom_entity_spec");
+ 				int customEntitySpecAutoIncrementId = 1;
+ 				for( CustomEntitySpec customEntitySpec : customEntitySpecs){
+ 					jsonTable.insert(Api.toJson(customEntitySpec),0,customEntitySpecAutoIncrementId);
+ 					customEntitySpecAutoIncrementId++;
+ 				}
+ 			}
+ 			
+ 			currentTime = System.currentTimeMillis();
+ 			List<Entity> entityAddedList =  formSpecContainer.getEntities();
+ 			if(entityAddedList  != null){
+ 				jsonTable = db.getTable("entities_data_added");
+ 				int entityDataAddedAutoIncrementId = 1;
+ 				for (Entity entityAdded: entityAddedList ) {
+ 					jsonTable.insert(Api.toJson(entityAdded),0,entityDataAddedAutoIncrementId);
+ 					entityDataAddedAutoIncrementId++;
+ 				}
+ 			}
+ 			
+ 			currentTime = System.currentTimeMillis();
+ 			List<EntityField> entityFieldList =  formSpecContainer.getEntityFieldsData();
+ 			if(entityFieldList != null){
+ 				jsonTable = db.getTable("entities_data_fields");
+ 				int entityFieldAutoIncrementId=1;
+ 				for (EntityField entityField : entityFieldList ) {
+ 					jsonTable.insert(entityField.getEntityId(),Api.toJson(entityField),0,entityFieldAutoIncrementId);
+ 					entityFieldAutoIncrementId++;
+ 				}
+ 			}
+ 			
+ 		    // For Entity Section Spec
+ 			List<EntitySectionField> entitySectionFieldList =  formSpecContainer.getEntitySectionFieldsData();
+ 			if(entitySectionFieldList != null){
+ 				jsonTable = db.getTable("entities_data_section_fields");
+ 				int entityDataSectionFieldAutoIncrementId = 1;
+ 				for (EntitySectionField entitySectionField : entitySectionFieldList ) {
+ 					jsonTable.insert(entitySectionField.getEntityId(),Api.toJson(entitySectionField),0,entityDataSectionFieldAutoIncrementId);
+ 					entityDataSectionFieldAutoIncrementId++;
+ 				}
+ 			}
 
 			db.commit();
 			db.close();
+			
+			response.setHeader("Content-Disposition", "attachment; filename=\"" +sqliteFileName + "\";");
+			
+			OutputStream out = response.getOutputStream();
+			InputStream is = new FileInputStream(dbFile);
+			
+			long fileLenght = dbFile.length();
+			if(fileLenght > ((2*1024*1024*1024)-1000)){
+				IOUtils.copyLarge(is, out);
+			} else {
+				IOUtils.copy(is, out);
+			}
+			out.flush();
+			out.close();
+			is.close();
+
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -562,6 +702,7 @@ public class SqliteManager {
 				db.close();
 
 		}
+		return sqliteName;
 
 	}
 
@@ -1084,7 +1225,6 @@ public class SqliteManager {
 		db.createTable(MobileSqls.FORM_SECTION_FIELD_SPECS_EXTRA);
 		db.createTable(MobileSqls.FORMS_SPECS_CUSTOM_ENTITY_FILTERING_CRITIRIAS);
 		
-		
 		db.createTable(MobileSqls.WORKS_SPECS_WORK_SPECS);
 		db.createTable(MobileSqls.WORKS_SPECS_NEXT_WORK_SPECS);
 		db.createTable(MobileSqls.WORKS_SPECS_NEXT_ACTION_SPECS);
@@ -1134,9 +1274,20 @@ public class SqliteManager {
 		db.createTable(MobileSqls.WORK_ACTION_EXCALATION_EMPIDS);
 		db.createTable(MobileSqls.WORK_SPEC_CUSTOM_DASHBOARD_CONFIGURATIONS);
 		
+		db.createTable(MobileSqls.ENTITIES_SPECS_FIELDS);
+		db.createTable(MobileSqls.ENTITIES_SPECS_ENTITY_SPECS);
+		db.createTable(MobileSqls.ENTITIES_SPECS_SECTIONS_SPECS);
+		db.createTable(MobileSqls.ENTITIES_SPECS_SECTIONS_FIELDS);
+		
+		db.createTable(MobileSqls.CUSTOM_ENTITY_SPEC);
+		
+		db.createTable(MobileSqls.ENTITIES_DATA_ADDED);
+		db.createTable(MobileSqls.ENTITIES_DATA_FIELDS);
+		db.createTable(MobileSqls.ENTITIES_DATA_SECTION_FIELDS);
+		
 		
 	}catch(Exception e) {
-		
+		e.printStackTrace();
 	}
 	}
 
@@ -1308,7 +1459,7 @@ public class SqliteManager {
 	        return items;
 	    }
 	 
-		public void importDataFromSqlite(String sqliteName, Integer companyId) {
+		public void importDataFromSqlite(String sqliteName, Integer companyId, String cloneEntityData) {
 			FormSpecContainer formSpecContainer = new FormSpecContainer();
 			WorkSpecContainer workSpecContainer = new WorkSpecContainer();
 			try {
@@ -1434,10 +1585,39 @@ public class SqliteManager {
 	             List<CustomEntityFilteringCritiria> customEntityFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_custom_entity_filtering_criterias",CustomEntityFilteringCritiria.class, stmt);
 	             formSpecContainer.setCustomEntityFilteringCritirias(customEntityFilteringCritiriaList);
 	             
+	             // here...
+	             
+	             List<EntitySpec> entitySpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_entity_specs",EntitySpec.class, stmt);
+	             formSpecContainer.setEntitySpecs(entitySpecList);
+
+	             List<EntityFieldSpec> entityFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_fields",EntityFieldSpec.class, stmt);
+	             formSpecContainer.setEntityFields(entityFieldSpecList);
+	  		 	
+	             List<EntitySectionSpec> entitySectionSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_sections_specs",EntitySectionSpec.class, stmt);
+	             formSpecContainer.setEntitySections(entitySectionSpecList);
+	  		 	
+	             List<EntitySectionFieldSpec> entitySectionFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_sections_fields",EntitySectionFieldSpec.class, stmt);
+	             formSpecContainer.setEntitySectionFields(entitySectionFieldSpecList);
 	             
 	             
+	             List<CustomEntitySpec> customEntitySpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM custom_entity_spec",CustomEntitySpec.class, stmt);
+	             formSpecContainer.setCustomEntitySpecs(customEntitySpecs);
+	             
+	             // here...
+	             
+	             List<Entity> entityAddedList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_added",Entity.class, stmt);
+	             formSpecContainer.setEntities(entityAddedList);
+	             
+	  			
+	             List<EntityField> entityFieldList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_fields",EntityField.class, stmt);
+	             formSpecContainer.setEntityFieldsData(entityFieldList);
+	             
+	  			
+	             List<EntitySectionField> entitySectionFieldList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_section_fields",EntitySectionField.class, stmt);
+	             formSpecContainer.setEntitySectionFieldsData(entitySectionFieldList);
+	             
+	  		 	
 	             // workspecs 
-	             
 
 	 			List<WorkSpec> workSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_specs",WorkSpec.class, stmt);
 	 			workSpecContainer.setWorkSpecs(workSpecs);
@@ -1574,18 +1754,18 @@ public class SqliteManager {
 	 			workSpecContainer.setWorkSpecCustomDashboardConfigurations(workSpecCustomDashboardConfigurations);
 	 			
 	 			
-	 			fetchDataAndInsertIntoDB(formSpecContainer,workSpecContainer);
-	             
+	 			serviceManager.fetchDataAndInsertIntoDB(formSpecContainer,workSpecContainer,companyId,cloneEntityData);
+	 			
+	 			LOGGER.info(" importDataFromSqlite done ... successfully ");
 				
 			}catch(Exception e) {
-				
+				e.printStackTrace();
+				LOGGER.info(" importDataFromSqlite Exception Occurred.. ");
 			}
 			
 		}
 
-		private void fetchDataAndInsertIntoDB(FormSpecContainer formSpecContainer,
-				WorkSpecContainer workSpecContainer) {
-			
-		}
+		
+		
 
 }

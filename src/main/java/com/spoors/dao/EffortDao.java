@@ -36,8 +36,13 @@ import com.spoors.beans.DataSourceRequestParam;
 import com.spoors.beans.DataSourceResponseMapping;
 import com.spoors.beans.Employee;
 import com.spoors.beans.EmployeeFilteringCritiria;
+import com.spoors.beans.Entity;
+import com.spoors.beans.EntityField;
 import com.spoors.beans.EntityFieldSpec;
 import com.spoors.beans.EntityFieldSpecValidValue;
+import com.spoors.beans.EntitySectionField;
+import com.spoors.beans.EntitySectionFieldSpec;
+import com.spoors.beans.EntitySectionSpec;
 import com.spoors.beans.EntitySpec;
 import com.spoors.beans.FieldSpecFilter;
 import com.spoors.beans.FieldValidation;
@@ -71,7 +76,14 @@ import com.spoors.beans.WorkFormFieldMap;
 import com.spoors.beans.WorkSpecFormSpecFollowUp;
 import com.spoors.beans.workSpecs.ActionableEmployeeGroupSpecs;
 import com.spoors.beans.workSpecs.AddingSubTaskEmployeeConfiguration;
+import com.spoors.beans.workSpecs.AttachmnetFormAutoFillSectionConfiguration;
 import com.spoors.beans.workSpecs.ExternalActionConfiguration;
+import com.spoors.beans.workSpecs.FormAutoFillSectionConfiguration;
+import com.spoors.beans.workSpecs.FormAutoFillSectionFieldsConfiguration;
+import com.spoors.beans.workSpecs.FormToWorkAutoFill;
+import com.spoors.beans.workSpecs.FormToWorkAutoFillField;
+import com.spoors.beans.workSpecs.FormToWorkAutoFillSectionConfiguration;
+import com.spoors.beans.workSpecs.FormToWorkAutoFillSectionFieldsConfiguration;
 import com.spoors.beans.workSpecs.HideAddSubTaskConfiguration;
 import com.spoors.beans.workSpecs.NextActionSpec;
 import com.spoors.beans.workSpecs.NextWorkSpec;
@@ -85,7 +97,12 @@ import com.spoors.beans.workSpecs.WorkActionSpecVisibilityCondition;
 import com.spoors.beans.workSpecs.WorkActionVisibilityConfiguration;
 import com.spoors.beans.workSpecs.WorkActionVisibilitySpecs;
 import com.spoors.beans.workSpecs.WorkAssignmentCriteriaConditions;
+import com.spoors.beans.workSpecs.WorkAttachmentAutoFill;
+import com.spoors.beans.workSpecs.WorkAttachmentAutoFillSectionFieldsConfiguration;
+import com.spoors.beans.workSpecs.WorkAttachmentFormAutoFillField;
 import com.spoors.beans.workSpecs.WorkFieldsUniqueConfigurations;
+import com.spoors.beans.workSpecs.WorkFormAutoFill;
+import com.spoors.beans.workSpecs.WorkFormAutoFillField;
 import com.spoors.beans.workSpecs.WorkProcessSubTaskSpec;
 import com.spoors.beans.workSpecs.WorkReassignmentRules;
 import com.spoors.beans.workSpecs.WorkSpec;
@@ -2597,7 +2614,7 @@ public class EffortDao {
 			
 			String sql = Sqls.SELECT_OPEN_WORK_FIELDS_UNIQUE_CONFIGURATIONS_FOR_SYNC.replace(":workSpecIds",workSpecIds);
 			
-			WorkFieldsUniqueConfigurations = jdbcTemplate.query(sql,new Object[] {companyId,syncDate}, new int[] {Types.INTEGER,Types.INTEGER},
+			WorkFieldsUniqueConfigurations = jdbcTemplate.query(sql,new Object[] {companyId,syncDate}, new int[] {Types.INTEGER,Types.VARCHAR},
 					new BeanPropertyRowMapper<WorkFieldsUniqueConfigurations>(WorkFieldsUniqueConfigurations.class));
 		
 		}
@@ -2877,5 +2894,1539 @@ public class EffortDao {
 
 		return formSpecPermissions;
 	}
+
+	public List<EntitySpec> getEntitySpecsIn(String ids) {
+		if (!Api.isEmptyString(ids)) {
+			try {
+				String sql = Sqls.SELECT_ENTITY_SPECS_IN.replace(":ids", ids);
+				List<EntitySpec> entitySpecs = jdbcTemplate.query(sql, new BeanPropertyRowMapper<EntitySpec>(EntitySpec.class));
+				return entitySpecs;
+			} catch (Exception e) {
+				return new ArrayList<EntitySpec>();
+			}
+		} else {
+			return new ArrayList<EntitySpec>();
+		}
+	}
+
+		public List<EntitySectionFieldSpec> getEntitySectionFieldSpecs(String ids) {
+			if (!Api.isEmptyString(ids)) {
+				try {
+					String sql = Sqls.SELECT_ENTITY_SECTION_FIELDS_BY_ENTITY_SPEC.replace(":ids", ids);
+					return jdbcTemplate.query(sql, new BeanPropertyRowMapper<EntitySectionFieldSpec>(EntitySectionFieldSpec.class));
+				} catch (Exception e) {
+					return new ArrayList<EntitySectionFieldSpec>();
+				}
+			}
+			return new ArrayList<EntitySectionFieldSpec>();
+		}
+	 
+		public List<EntitySectionSpec> getEntitySectionSpecForIn(String ids) {
+			if (!Api.isEmptyString(ids)) {
+				try {
+				List<EntitySectionSpec> entitySectionSpecs = jdbcTemplate.query(
+						Sqls.SELECT_ENTITY_SECTION_SPECS_IN.replace(":ids", ids),
+						new BeanPropertyRowMapper<EntitySectionSpec>(
+								EntitySectionSpec.class));
+
+				return entitySectionSpecs;
+				}catch(Exception e) {
+					
+				}
+			}
+
+			return new ArrayList<EntitySectionSpec>();
+		}
+		public long insertEntitySectionSpec(final EntitySectionSpec entitySectionSpec,
+				final long entitySpecId, final long companyId) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_ENTITY_SECTION_SPEC,
+							Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, entitySpecId);
+					ps.setLong(2, companyId);
+					ps.setString(3, entitySectionSpec.getSectionTitle());
+					ps.setInt(4, entitySectionSpec.getMinEntrys());
+					ps.setInt(5, entitySectionSpec.getMaxEntrys());
+					ps.setInt(6, entitySectionSpec.getDisplayOrder());
+					
+					ps.setString(7, entitySectionSpec.getExpression());
+					ps.setString(8, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(9, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+
+					if (entitySectionSpec.getInitialEntitySectionSpecId() == null) {
+						ps.setNull(10, Types.BIGINT);
+					} else {
+						ps.setLong(10,
+								entitySectionSpec.getInitialEntitySectionSpecId());
+					}
+					if (entitySectionSpec.getSkeletonEntitySectionSpecId() == null) {
+						ps.setNull(11, Types.BIGINT);
+					} else {
+						ps.setLong(11,
+								entitySectionSpec.getSkeletonEntitySectionSpecId());
+					}
+					ps.setBoolean(12, entitySectionSpec.isInstanceNumbering());
+					ps.setBoolean(13, entitySectionSpec.isAutoCreateSectionInstance());
+					ps.setString(14,
+							entitySectionSpec.getAutoCreateFieldTypeExtra());
+					ps.setString(15,entitySectionSpec.getGroupByCategories());
+					ps.setBoolean(16, entitySectionSpec.isManualSelection());
+					
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			entitySectionSpec.setSectionSpecId(id);
+
+			return id;
+		}
+		
+		public long insertEntitySectionFieldSpec(
+				final EntitySectionFieldSpec entitySectionFieldSpec,
+				final long entitySpecId, final long sectionSpecId) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_ENTITY_SECTION_FIELD_SPEC,
+							Statement.RETURN_GENERATED_KEYS);
+	/*				ps.setString(1, Api.isEmptyString(entitySectionFieldSpec
+							.getUniqueId()) ? UUID.randomUUID().toString()
+							: formSectionFieldSpec.getUniqueId());*/
+					boolean b = entitySectionFieldSpec.isRequired();
+					ps.setLong(1, entitySpecId);
+					ps.setLong(2, sectionSpecId);
+					ps.setString(3, entitySectionFieldSpec.getFieldLabel());
+					ps.setInt(4, entitySectionFieldSpec.getFieldType());
+					ps.setString(5, entitySectionFieldSpec.getFieldTypeExtra());
+					ps.setBoolean(6, entitySectionFieldSpec.isComputedField());
+					ps.setBoolean(7, entitySectionFieldSpec.isBarcodeField());
+					ps.setString(8, entitySectionFieldSpec.getFormula());
+					ps.setBoolean(9, entitySectionFieldSpec.isRequired());
+					ps.setInt(10, entitySectionFieldSpec.getDisplayOrder());
+					ps.setString(11, entitySectionFieldSpec.getExpression());
+					ps.setBoolean(12, entitySectionFieldSpec.isIdentifier());
+					ps.setString(13, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(14, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setBoolean(15, entitySectionFieldSpec.isDefaultField());
+
+					if (entitySectionFieldSpec.getInitialEntitySectionFieldSpecId() != null)
+						ps.setLong(16, entitySectionFieldSpec
+								.getInitialEntitySectionFieldSpecId());
+					else
+						ps.setNull(16, Types.BIGINT);
+
+					if (entitySectionFieldSpec.getSkeletonEntitySectionFieldSpecId() != null)
+						ps.setLong(17, entitySectionFieldSpec
+								.getSkeletonEntitySectionFieldSpecId());
+					else
+						ps.setNull(17, Types.BIGINT);
+					
+					ps.setInt(18, entitySectionFieldSpec.getIsRemoteField());
+					ps.setString(19, entitySectionFieldSpec.getFieldTypeExtraForm());
+					if (entitySectionFieldSpec.getMediaPickCondition() == null) {
+						ps.setNull(20, Types.TINYINT);
+					} else {
+						ps.setInt(20, entitySectionFieldSpec.getMediaPickCondition());
+					}
+					ps.setInt(21, entitySectionFieldSpec.getLocationPickCondition());
+					
+					ps.setString(22, entitySectionFieldSpec.getExternalLabel()==null ? "":entitySectionFieldSpec.getExternalLabel());
+					
+					if (entitySectionFieldSpec.getValidationExpr() == null) {
+						ps.setNull(23, Types.VARCHAR);
+					} else {
+						ps.setString(23, entitySectionFieldSpec.getValidationExpr());
+					}
+					
+					if (entitySectionFieldSpec.getValidationErrorMsg() == null) {
+						ps.setNull(24, Types.VARCHAR);
+					} else {
+						ps.setString(24, entitySectionFieldSpec.getValidationErrorMsg());
+					}
+					ps.setString(25, entitySectionFieldSpec.getFieldTypeExtraCustomEntity());
+					
+
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			entitySectionFieldSpec.setSectionFieldSpecId(id);
+
+			return id;
+		}
+		
+		public long insertEntitySectionFieldSpecValidValue(
+				final long sectionFieldSpecId, final String value) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_ENTITY_SECTION_FIELD_VALID_VALUES,
+							Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, sectionFieldSpecId);
+					ps.setString(2, value);
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+
+			return id;
+		}
+		public void insertFormPageSpec(
+				final List<FormPageSpec> formPageSpecs) {
+
+			jdbcTemplate.batchUpdate(Sqls.INSERT_FORM_PAGE_SPEC,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							FormPageSpec formPageSpec = formPageSpecs
+									.get(i);
+							
+							ps.setInt(1, formPageSpec.getPageId());
+							ps.setLong(2, formPageSpec.getFormSpecId());
+							ps.setString(3, formPageSpec.getPageTitle());
+							ps.setString(4, Api.getDateTimeInUTC(new Date(System
+									.currentTimeMillis())));
+							ps.setString(5, Api.getDateTimeInUTC(new Date(System
+									.currentTimeMillis())));
+							ps.setInt(6, formPageSpec.getPageOrder());
+						}
+
+						@Override
+						public int getBatchSize() {
+							return formPageSpecs.size();
+						}
+					});
+
+		}
+		
+		public void insertFormFieldGroupSpec(
+				final List<FormFieldGroupSpec> formFieldGroupSpecs, final long companyId) {
+
+			jdbcTemplate.batchUpdate(Sqls.INSERT_FORM_FIELD_GROUP_SPECS,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							FormFieldGroupSpec formFieldGroupSpec = formFieldGroupSpecs
+									.get(i);
+							
+							ps.setLong(1, formFieldGroupSpec.getFormSpecId());
+							ps.setLong(2, companyId);
+							ps.setString(3, formFieldGroupSpec.getGroupTitle());
+							ps.setString(4, formFieldGroupSpec.getPrintTemplate());
+							ps.setInt(5, formFieldGroupSpec.getDisplayOrder());
+							ps.setInt(6, formFieldGroupSpec.getPageId());
+							ps.setString(7, formFieldGroupSpec.getExpression());
+							ps.setString(8, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+							ps.setString(9, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+
+						}
+
+						@Override
+						public int getBatchSize() {
+							return formFieldGroupSpecs.size();
+						}
+					});
+
+		}
+		public long insertIntoWorkSpecs(final WorkSpec workSpec,
+				final long companyId, final long by, final String uniqueId) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection
+							.prepareStatement(Sqls.INSERT_WORK_SPECS,
+									Statement.RETURN_GENERATED_KEYS);
+
+					
+					ps.setString(1, workSpec.getWorkSpecTitle());
+					ps.setString(2, workSpec.getWorkSpecDescription());
+					ps.setString(3, uniqueId);
+					ps.setLong(4, by);
+					ps.setLong(5, by);
+					ps.setString(6, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(7, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setLong(8, companyId);
+					ps.setLong(9, workSpec.getIsSystemDefined());
+					ps.setLong(10, workSpec.getPurpose());
+
+					if (workSpec.getCopiedFrom() != null)
+						ps.setLong(11, workSpec.getCopiedFrom());
+					else
+						ps.setNull(11, Types.VARCHAR);
+
+					if (workSpec.getSkeletonWorkSpecId() != null)
+						ps.setLong(12, workSpec.getSkeletonWorkSpecId());
+					else
+						ps.setNull(12, Types.VARCHAR);
+
+					ps.setInt(13, workSpec.getProductId());
+					ps.setBoolean(14, workSpec.isWorkTreeStructureEnabled());
+					ps.setBoolean(15, workSpec.isWorkActionFlowMandatory());
+					ps.setBoolean(16, workSpec.isWorkProcessFlowRequired());
+					ps.setString(17, workSpec.getMobileLayout());
+					ps.setBoolean(18, workSpec.isRemoveBlankLines());
+					ps.setBoolean(19, workSpec.isCaseManagement());
+					ps.setBoolean(20, workSpec.isPerformWorkAtWorkLocation());
+					if(workSpec.getWorkActivityGeoLocationDeviationAllowedRadius() != null) {
+					ps.setLong(21, workSpec.getWorkActivityGeoLocationDeviationAllowedRadius());
+					}else {
+						ps.setNull(21, Types.VARCHAR);
+					}
+					ps.setBoolean(22, workSpec.isEnableWorkCheckIn());
+					ps.setBoolean(23, workSpec.isEnableCheckInFormSubmission());
+					if(workSpec.getCheckInFormSpecUniqueId() != null)
+					{
+						ps.setString(24, workSpec.getCheckInFormSpecUniqueId());
+					}else {
+						ps.setNull(24, Types.VARCHAR);
+					}
+					ps.setBoolean(25, workSpec.isForceWorkCheckInCheckOut());
+					ps.setBoolean(26, workSpec.isEnforceWorkCheckIn());
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			workSpec.setWorkSpecId(id);
+			return id;
+
+		}
+		public long insertIntoWorkActionSpecs(final WorkActionSpec workActionSpecs,
+				final long actionId, final long by) {
+
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+
+					PreparedStatement ps = connection.prepareStatement(Sqls.INSERT_WORK_ACTIONS_SPECS,
+							Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, actionId);
+					ps.setString(2, workActionSpecs.getActionName());
+					ps.setString(3, workActionSpecs.getActionDesccription());
+					if (workActionSpecs.getFormSpecUniqueId() != null
+							&& !Api.isEmptyString(workActionSpecs.getFormSpecUniqueId()))
+						ps.setString(4, workActionSpecs.getFormSpecUniqueId());
+					else
+						ps.setNull(4, Types.VARCHAR);
+
+					ps.setLong(5, by);
+					ps.setLong(6, by);
+					ps.setString(7, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+					ps.setString(8, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+					ps.setBoolean(9, false);
+					ps.setBoolean(10, workActionSpecs.getIsStartAction());
+					ps.setBoolean(11, workActionSpecs.getIsEndAction());
+
+					if (workActionSpecs.getFormReUse() != null)
+						ps.setInt(12, workActionSpecs.getFormReUse());
+					else
+						ps.setInt(12, WorkActionSpec.FORM_RE_USE_OPEN_NEW_FORM);
+					ps.setBoolean(13, workActionSpecs.getWorkFlowApplicable());
+					if (workActionSpecs.getWorkActionActionableType() != null
+							&& workActionSpecs.getWorkActionActionableType() == WorkActionSpec.ACTION_TYPE_SYSTEM)
+						ps.setBoolean(14, true);
+					else
+						ps.setBoolean(14, false);
+					if (workActionSpecs.getWorkActionGroupId() == null)
+						ps.setNull(15, Types.BIGINT);
+					else
+						ps.setLong(15, workActionSpecs.getWorkActionGroupId());
+
+					if (workActionSpecs.getWorkActionActionableType() != null)
+						ps.setInt(16, workActionSpecs.getWorkActionActionableType());
+					else
+						ps.setInt(16, WorkActionSpec.ACTION_TYPE_USER);
+					ps.setBoolean(17, workActionSpecs.isEnableOnlineApiForm());
+					ps.setBoolean(18, workActionSpecs.isRestrictRepetition());
+					if (workActionSpecs.getActionTat() != null) {
+						ps.setLong(19, workActionSpecs.getActionTat());
+					} else
+						ps.setLong(19, 0);
+					ps.setBoolean(20, workActionSpecs.isCaseManagementAction());
+					ps.setBoolean(21, workActionSpecs.isWorkCheckInRequiredForActivity());
+					/*
+					 * commented below and kept default value false has this not not required as of
+					 * now in future if needed comment the default and enable value reffer from bean
+					 */
+					
+					//ps.setBoolean(22, workActionSpecs.isGeoLocationCheckRequiredForActivity());
+					ps.setBoolean(22, false);
+					if (workActionSpecs.getSequenceOrder() == null)
+						ps.setNull(23, Types.BIGINT);
+					else
+						ps.setLong(23, workActionSpecs.getSequenceOrder());
+
+
+					return ps;
+				}
+			}, keyHolder);
+			long id = keyHolder.getKey().longValue();
+			workActionSpecs.setWorkActionSpecId(id);
+			return id;
+
+		}
+		public long insertNextActionSpec(final NextActionSpec nextActionSpec) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_NEXTACTIONSPEC,
+							Statement.RETURN_GENERATED_KEYS);
+					if (nextActionSpec.getActionSpecId() != null)
+						ps.setLong(1, nextActionSpec.getActionSpecId());
+					else
+						ps.setNull(1, Types.BIGINT);
+
+					if (nextActionSpec.getNextActionSpecId() != null)
+						ps.setLong(2, nextActionSpec.getNextActionSpecId());
+					else
+						ps.setNull(2, Types.BIGINT);
+
+					/*
+					 * if(nextActionSpec.getIsStartAction() != null)
+					 * ps.setBoolean(3, nextActionSpec.getIsStartAction()); else
+					 * ps.setBoolean(3, false);
+					 * 
+					 * if(nextActionSpec.getIsEndAction() != null) ps.setBoolean(4,
+					 * nextActionSpec.getIsEndAction()); else ps.setBoolean(4,
+					 * false);
+					 */
+
+					ps.setString(3, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(4, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+
+					if (nextActionSpec.getNextActionSpecId() != null)
+						ps.setLong(5, nextActionSpec.getWorkSpecId());
+					else
+						ps.setNull(5, Types.BIGINT);
+					
+					ps.setInt(6, nextActionSpec.getRepetitionType());
+					
+					ps.setString(7, nextActionSpec.getRuleName());
+
+					return ps;
+				}
+			}, keyHolder);
+
+			Long id = keyHolder.getKey().longValue();
+			nextActionSpec.setNextActionSpecId(id);
+
+			return id;
+		}
+		public long insertWorkActionSpecCondition(
+				final WorkActionSpecConditions workActionSpecConditions,
+				final Long workSpecId) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_WORK_ACTION_SPEC_CONDITION,
+							Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, workActionSpecConditions.getActionSpecId());
+					ps.setLong(2, workActionSpecConditions.getNextActionSpecId());
+					ps.setLong(3, workActionSpecConditions.getFieldType());
+					ps.setString(4,
+							workActionSpecConditions.getTargetFieldExpression());
+					ps.setString(5, workActionSpecConditions.getValue());
+					ps.setInt(6, workActionSpecConditions.getFieldDataType());
+					ps.setInt(7, workActionSpecConditions.getCondition());
+					/* ps.setInt(8, workActionSpecConditions.getVisibilityType()); */
+					ps.setInt(8, workActionSpecConditions.getConjunction());
+					ps.setLong(9, workSpecId);
+					ps.setInt(10, workActionSpecConditions.getType());
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			workActionSpecConditions.setId(id);
+
+			return id;
+		}
+		public void insertWorkActionSpecVisibilityCondition(
+				final List<WorkActionSpecVisibilityCondition> workActionSpecVisibilityConditionList) {
+			
+			jdbcTemplate.batchUpdate(
+					Sqls.INSERT_INTO_WORKACTIONSPECVISIBILITYCONDITION,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							WorkActionSpecVisibilityCondition workActionSpecVisibilityCondition = workActionSpecVisibilityConditionList
+									.get(i);
+							ps.setLong(1,
+									workActionSpecVisibilityCondition.getWorkActionSpecId());
+							
+							if(workActionSpecVisibilityCondition.getFieldType() == 3)
+							{
+								ps.setNull(2, Types.BIGINT);
+								if(workActionSpecVisibilityCondition.getWorkSpecId()!=null)
+									ps.setLong(3,workActionSpecVisibilityCondition.getWorkSpecId());
+								else
+									ps.setNull(3, Types.BIGINT);
+								ps.setNull(4, Types.BIGINT);
+							}
+							else if(workActionSpecVisibilityCondition.getFieldType() == 4)
+							{
+								ps.setNull(2, Types.BIGINT);
+								ps.setNull(3, Types.BIGINT);
+								if(workActionSpecVisibilityCondition.getWorkSpecId()!=null)
+									ps.setLong(4,workActionSpecVisibilityCondition.getWorkSpecId());
+								else
+									ps.setNull(4, Types.BIGINT);
+							}
+							else
+							{
+								if(workActionSpecVisibilityCondition.getWorkSpecId()!=null)
+									ps.setLong(2,workActionSpecVisibilityCondition.getWorkSpecId());
+								else
+									ps.setNull(2, Types.BIGINT);
+								ps.setNull(3, Types.BIGINT);
+								ps.setNull(4, Types.BIGINT);
+							}
+							
+							
+							ps.setInt(5,
+									Integer.parseInt(workActionSpecVisibilityCondition.getFieldType()+""));
+							ps.setString(6, workActionSpecVisibilityCondition
+									.getTargetFieldExpression());
+							ps.setString(7,
+									workActionSpecVisibilityCondition.getValueIds());
+							ps.setString(8, workActionSpecVisibilityCondition.getValue());
+							if(workActionSpecVisibilityCondition.getFieldDataType()!=null)
+							ps.setInt(9,
+									Integer.parseInt(workActionSpecVisibilityCondition.getFieldDataType()+""));
+							else
+							ps.setNull(9, Types.INTEGER);	
+							ps.setInt(10,
+									Integer.parseInt(workActionSpecVisibilityCondition.getCondition()+""));
+							ps.setInt(11,Integer.parseInt( workActionSpecVisibilityCondition
+									.getVisibilityType()+""));
+							ps.setInt(12,
+									Integer.parseInt(workActionSpecVisibilityCondition.getConjunction()+""));
+							ps.setString(13, Api.getDateTimeInUTC(new Date(System
+									.currentTimeMillis())));
+							ps.setString(14, Api.getDateTimeInUTC(new Date(System
+									.currentTimeMillis())));
+							
+							if(workActionSpecVisibilityCondition.getOperator2()!=null && Api.isNumber(workActionSpecVisibilityCondition.getOperator2()))
+								ps.setInt(15,workActionSpecVisibilityCondition.getOperator2());
+								else
+								ps.setNull(15, Types.INTEGER);	
+							if(workActionSpecVisibilityCondition.getValue2()!=null)
+								ps.setString(16,workActionSpecVisibilityCondition.getValue2());
+								else
+								ps.setNull(16, Types.VARCHAR);	
+							if(workActionSpecVisibilityCondition.getErrorMessage()!=null)
+								ps.setString(17,workActionSpecVisibilityCondition.getErrorMessage());
+								else
+								ps.setNull(17, Types.VARCHAR);	
+							if(workActionSpecVisibilityCondition.getAdvancedDateCriteria()!=null)
+								ps.setInt(18,workActionSpecVisibilityCondition.getAdvancedDateCriteria());
+							else
+								ps.setInt(18, 0);	
+							if(workActionSpecVisibilityCondition.getFieldCondtionSourceActionSpecId()!=null)
+								ps.setLong(19,workActionSpecVisibilityCondition.getFieldCondtionSourceActionSpecId());
+								else
+								ps.setNull(19, Types.BIGINT);
+							ps.setBoolean(20, workActionSpecVisibilityCondition.isConsiderDraftForm());
+							
+						}
+							@Override
+							public int getBatchSize() {
+							return workActionSpecVisibilityConditionList.size();
+							
+						}
+					});
+		}
+		
+		public void insertWorkActionSpecEndCondition(
+				final List<WorkActionSpecEndCondition> workActionSpecEndConditionList) 
+		{
+			
+			jdbcTemplate.batchUpdate(
+					Sqls.INSERT_INTO_WORK_ACTION_SPEC_END_CONDITION,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							WorkActionSpecEndCondition workActionSpecEndCondition = workActionSpecEndConditionList
+									.get(i);
+							ps.setLong(1,
+									workActionSpecEndCondition.getWorkActionSpecId());
+							ps.setLong(2,workActionSpecEndCondition.getWorkSpecId());
+							ps.setInt(3,workActionSpecEndCondition.getFieldType());
+							ps.setString(4, workActionSpecEndCondition
+									.getTargetFieldExpression());
+							
+							if(!Api.isEmptyString(workActionSpecEndCondition.getValue()))
+							{
+								ps.setString(5, workActionSpecEndCondition.getValue());
+							}
+							else
+							{
+								ps.setNull(5, Types.VARCHAR);
+							}
+							if(workActionSpecEndCondition.getIsSectionField()!=null)
+								ps.setInt(6,workActionSpecEndCondition.getIsSectionField());
+							else
+								ps.setNull(6, Types.INTEGER);	
+							ps.setInt(7,workActionSpecEndCondition.getCondition());
+							ps.setInt(8,workActionSpecEndCondition.getConditionType());
+							ps.setInt(9, workActionSpecEndCondition.getConjunction());
+							ps.setString(10, Api.getDateTimeInUTC(new Date(System
+									.currentTimeMillis())));
+							ps.setString(11, Api.getDateTimeInUTC(new Date(System
+									.currentTimeMillis())));
+						}
+							@Override
+							public int getBatchSize() {
+							return workActionSpecEndConditionList.size();
+							
+						}
+					});
+		}
 	
+		public long insertOrUpdateWorkActionVisibilityConfiguration(final List<WorkActionVisibilityConfiguration> workActionVisibilityConfigurationList)
+		{
+			jdbcTemplate.batchUpdate(
+					Sqls.INSERT_OR_WORK_ACTION_VISIBILITY_CONFIGURATION,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException 
+						{
+							
+							WorkActionVisibilityConfiguration workActionVisibilityConfiguration = workActionVisibilityConfigurationList.get(i);
+							ps.setInt(1,workActionVisibilityConfiguration.getCompanyId());
+							ps.setLong(2,workActionVisibilityConfiguration.getWorkSpecId());
+							ps.setLong(3, workActionVisibilityConfiguration.getWorkActionSpecId());
+							ps.setLong(4, workActionVisibilityConfiguration.getCreatedBy());
+							ps.setLong(5, workActionVisibilityConfiguration.getModifiedBy());
+							ps.setString(6, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+							ps.setString(7, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+							ps.setString(8, workActionVisibilityConfiguration.getWorkFieldEmpExpression());
+							ps.setBoolean(9, workActionVisibilityConfiguration.isWeb());
+							ps.setBoolean(10, workActionVisibilityConfiguration.isMobile());
+						}
+							@Override
+							public int getBatchSize() {
+							return workActionVisibilityConfigurationList.size();
+							
+						}
+					});
+			return workActionVisibilityConfigurationList.size();
+		}
+		public long createWorkAutoFillFormConfig(final WorkFormAutoFill workFormAutoFill,
+				final long by) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_INTO_WORK_FORM_AUTO_FILL,
+							Statement.RETURN_GENERATED_KEYS);
+					ps.setString(1, workFormAutoFill.getFormSpecUniqueId());
+					ps.setBoolean(2, workFormAutoFill.isEnable());
+					ps.setString(3, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(4, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setLong(5, by);
+					ps.setLong(6, workFormAutoFill.getWorkActionSpecId());
+					ps.setBoolean(7, workFormAutoFill.isSectionAutoFill());
+
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			workFormAutoFill.setWorkFormAutoFillId(id);
+	        return id;
+		}
+		
+		public void insertWorkAutoFillFormFields(
+				final List<WorkFormAutoFillField> workFormAutoFillFieldList) {
+			jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_WORK_FORM_AUTO_FILL_FIELDS,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							WorkFormAutoFillField workFormAutoFillField = workFormAutoFillFieldList
+									.get(i);
+
+							ps.setLong(1, workFormAutoFillField.getWorkFormAutoFillId());
+							ps.setInt(2, workFormAutoFillField.getFieldType());
+							ps.setString(3,
+									workFormAutoFillField.getFieldSpecUniqueId());
+							ps.setString(4, workFormAutoFillField.getWorkFieldSpecUniqueId());
+							
+							//added on 6-may-2015 by ameer for pickAnother value feature
+							ps.setInt(5, workFormAutoFillField.getPickAnother());
+							ps.setInt(6, workFormAutoFillField.getSourceType());
+							if(Api.isEmptyString(workFormAutoFillField.getSourceSpecUniqueId())){
+								ps.setNull(7, Types.VARCHAR);
+							}else{
+								ps.setString(7, workFormAutoFillField.getSourceSpecUniqueId());
+							}
+							if (workFormAutoFillField.getSourceSpecId() != null) {
+								ps.setLong(8, workFormAutoFillField.getSourceSpecId());
+							} else {
+								ps.setNull(8, Types.BIGINT);
+							}
+							
+						}
+
+						@Override
+						public int getBatchSize() {
+							// TODO Auto-generated method stub
+							return workFormAutoFillFieldList.size();
+						}
+					});
+		}
+		public long insertWorkAutoFillsectionSpecs(FormAutoFillSectionConfiguration formAutoFillSectionConfiguration, Long workFormAutofillId) {
+
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			jdbcTemplate.update(new PreparedStatementCreator() {
+				@Override
+				public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(Sqls.INSERT_INTO_WORK_FORM_AUTO_FILL_SECTION,
+							Statement.RETURN_GENERATED_KEYS);
+
+					ps.setLong(1, workFormAutofillId);
+					ps.setString(2, formAutoFillSectionConfiguration.getSectionSpecUniqueId());
+					ps.setLong(3, formAutoFillSectionConfiguration.getSourceActionSpecId());
+					ps.setString(4, formAutoFillSectionConfiguration.getSourceSectionSpecUniqueId());
+					ps.setBoolean(5, formAutoFillSectionConfiguration.isDeleteSectionInstance());
+					ps.setBoolean(6, formAutoFillSectionConfiguration.isAddSectionInstance());
+
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			formAutoFillSectionConfiguration.setFormAutoFillSectionConfigurationId(id);
+			return id;
+
+		}
+		public void insertIntoFormAutoFillSectionFieldConfigurations(
+				List<FormAutoFillSectionFieldsConfiguration> formAutoFillSectionFieldsConfiguration) {
+
+			jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_WORK_FORM_AUTO_FILL_SECTION_FILEDS_CONFIGURATION,
+					new BatchPreparedStatementSetter() {
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							
+							FormAutoFillSectionFieldsConfiguration obj = formAutoFillSectionFieldsConfiguration.get(i);
+							ps.setLong(1, obj.getFormAutoFillSectionConfigurationId());
+							ps.setLong(2, obj.getWorkFormAutoFillId());
+							ps.setString(3,obj.getFieldSpecUniqueId());
+							ps.setString(4, obj.getSourceFieldSpecUniqueId());
+							ps.setInt(5,obj.getPickAnother());
+						}
+		
+						@Override
+						public int getBatchSize() {
+							return formAutoFillSectionFieldsConfiguration.size();
+						}
+						
+			});
+			
+		}
+		public void createFormToWorkAutoFillFormConfig(final FormToWorkAutoFill formToWorkAutoFill,
+				final long by) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_INTO_FORM_TO_WORK_AUTO_FILL,
+							Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, formToWorkAutoFill.getWorkSpecId());
+					ps.setLong(2, formToWorkAutoFill.getWorkActionSpecId());
+					ps.setString(3, formToWorkAutoFill.getWorkActionFormSpecUniqueId());
+					ps.setBoolean(4, formToWorkAutoFill.isEnable());
+					ps.setString(5, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(6, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setLong(7, by);
+					ps.setLong(8, by);
+					ps.setBoolean(9, formToWorkAutoFill.isSectionAutoFill());
+
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			formToWorkAutoFill.setFormToWorkAutoFillId(id);
+
+		}
+		public void insertFormToWorkAutoFillFormFields(
+				final List<FormToWorkAutoFillField> formToWorkAutoFillFieldList) {
+			jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_FORM_TO_WORK_AUTO_FILL_FIELDS,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							FormToWorkAutoFillField formToWorkAutoFillField = formToWorkAutoFillFieldList
+									.get(i);
+
+							ps.setLong(1, formToWorkAutoFillField.getFormToWorkAutoFillId());
+							ps.setString(2,formToWorkAutoFillField.getWorkFieldSpecUniqueId());
+							ps.setString(3,formToWorkAutoFillField.getFormFieldSpecUniqueId());
+							ps.setInt(4, formToWorkAutoFillField.getFieldType());
+							ps.setBoolean(5, formToWorkAutoFillField.isAllowNull());
+							
+						}
+
+						@Override
+						public int getBatchSize() {
+							// TODO Auto-generated method stub
+							return formToWorkAutoFillFieldList.size();
+						}
+					});
+		}
+		public void createWorkAttachementAutoFillFormConfig(final WorkAttachmentAutoFill workAttachmentAutoFill,
+				final long by) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_INTO_WORK_ATTACHEMENT_FORM_AUTO_FILL,
+							Statement.RETURN_GENERATED_KEYS);
+					ps.setString(1, workAttachmentAutoFill.getFormSpecUniqueId());
+					ps.setBoolean(2, workAttachmentAutoFill.isEnable());
+					ps.setString(3, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(4, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setLong(5, by);
+					ps.setLong(6, workAttachmentAutoFill.getWorkSpecId());
+					ps.setBoolean(7, workAttachmentAutoFill.isAttachmentSectionAutoFill());
+
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			workAttachmentAutoFill.setWorkAttachmentAutoFillId(id);
+
+		}
+		
+		public void insertWorkAttachmentAutoFillFormFields(
+				final List<WorkAttachmentFormAutoFillField> workAttachmentFormAutoFillFieldList) {
+			jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_WORK_ATTACHEMENT_FORM_AUTO_FILL_FIELDS,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							WorkAttachmentFormAutoFillField workAttachementFormAutoFillField = workAttachmentFormAutoFillFieldList
+									.get(i);
+
+							ps.setLong(1, workAttachementFormAutoFillField.getWorkAttachmentAutoFillId());
+							ps.setInt(2, workAttachementFormAutoFillField.getFieldType());
+							ps.setString(3,
+									workAttachementFormAutoFillField.getFieldSpecUniqueId());
+							ps.setString(4, workAttachementFormAutoFillField.getWorkFieldSpecUniqueId());
+							
+							//added on 6-may-2015 by ameer for pickAnother value feature
+							ps.setInt(5, workAttachementFormAutoFillField.getPickAnother());
+							ps.setInt(6, workAttachementFormAutoFillField.getSourceType());
+							if(Api.isEmptyString(workAttachementFormAutoFillField.getSourceSpecUniqueId())){
+								ps.setNull(7, Types.VARCHAR);
+							}else{
+								ps.setString(7, workAttachementFormAutoFillField.getSourceSpecUniqueId());
+							}
+							ps.setLong(8, workAttachementFormAutoFillField.getSourceSpecId());
+							
+						}
+
+						@Override
+						public int getBatchSize() {
+							// TODO Auto-generated method stub
+							return workAttachmentFormAutoFillFieldList.size();
+						}
+					});
+		}
+		public long insertWorkAttachementAutoFillsectionSpecs(AttachmnetFormAutoFillSectionConfiguration attachmnetFormAutoFillSectionConfiguration, Long workAttachmentAutoFillId) {
+
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			jdbcTemplate.update(new PreparedStatementCreator() {
+				@Override
+				public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(Sqls.INSERT_INTO_WORK_ATTACHMENT_FORM_AUTO_FILL_SECTION,
+							Statement.RETURN_GENERATED_KEYS);
+
+					ps.setLong(1, workAttachmentAutoFillId);
+					ps.setString(2, attachmnetFormAutoFillSectionConfiguration.getSectionSpecUniqueId());
+					ps.setLong(3, attachmnetFormAutoFillSectionConfiguration.getSourceActionSpecId());
+					ps.setString(4, attachmnetFormAutoFillSectionConfiguration.getSourceSectionSpecUniqueId());
+
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			attachmnetFormAutoFillSectionConfiguration.setAttachmnetFormAutoFillSectionConfigurationId(id);
+			return id;
+
+		}
+		
+		public void insertWorkAttachementAutoFillFormSectionFields(
+				final List<WorkAttachmentAutoFillSectionFieldsConfiguration> workAttachmentAutoFillSectionFieldsConfiguration) {
+			
+			jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_WORK_ATTACHMENT_AUTO_FILL_SECTION_FIELDS,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							WorkAttachmentAutoFillSectionFieldsConfiguration workFormAutoFillField = workAttachmentAutoFillSectionFieldsConfiguration
+									.get(i);
+							ps.setLong(1, workFormAutoFillField.getAttachmnetFormAutoFillSectionConfigurationId());
+							ps.setLong(2, workFormAutoFillField.getWorkAttachmentAutoFillId());
+							
+							ps.setString(3,
+									workFormAutoFillField.getFieldSpecUniqueId());
+							if(Api.isEmptyString(workFormAutoFillField.getSourceFieldSpecUniqueId())){
+								ps.setNull(4, Types.VARCHAR);
+							}else{
+								ps.setString(4, workFormAutoFillField.getSourceFieldSpecUniqueId());
+							}
+							if(!Api.isEmptyString(workFormAutoFillField.getPickAnother()+""))
+								ps.setInt(5, workFormAutoFillField.getPickAnother());
+							else
+								ps.setInt(5, 0);
+							
+						}
+
+						@Override
+						public int getBatchSize() {
+							// TODO Auto-generated method stub
+							return workAttachmentAutoFillSectionFieldsConfiguration.size();
+						}
+			});
+		}
+		public void insertWorkFieldUniqueConfigurationsForWorkSpec(final WebUser webUser,
+				final List<WorkFieldsUniqueConfigurations> fieldsUniqueConfigurations) {
+
+			jdbcTemplate.batchUpdate(Sqls.INSERT_WORK_FIELD_UNIQUE_CONFIGURATIONS_FOR_WORK_SPEC,
+					new BatchPreparedStatementSetter() {
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							WorkFieldsUniqueConfigurations WorkFieldsUnique = fieldsUniqueConfigurations.get(i);
+							ps.setLong(1,WorkFieldsUnique.getWorkSpecId());
+							ps.setString(2,WorkFieldsUnique.getFormFieldUniqueId());
+							if(WorkFieldsUnique.getUniqueCheck()!=null)
+								ps.setInt(3,WorkFieldsUnique.getUniqueCheck());
+							else
+								ps.setInt(3,0);
+							ps.setLong(4,webUser.getCompanyId());
+							ps.setLong(5,webUser.getEmpId());
+							ps.setString(6, Api.getDateTimeInUTC(new Date(System				
+									.currentTimeMillis())));
+						}
+						@Override
+						public int getBatchSize() {
+							// TODO Auto-generated method stub
+							return fieldsUniqueConfigurations.size();
+						}
+
+					});
+
+			
+		}
+		public void insertWorkReassignmentRules(
+				final List<WorkReassignmentRules> workReassignmentRulesList) {
+			
+			jdbcTemplate.batchUpdate(
+					Sqls.INSERT_INTO_WORK_RE_ASSIGNMENT_RULES,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							WorkReassignmentRules workReassignmentRules = workReassignmentRulesList
+									.get(i);
+							ps.setLong(1,workReassignmentRules.getWorkSpecId());
+							ps.setLong(2,workReassignmentRules.getWorkActionSpecId());
+							ps.setBoolean(3,workReassignmentRules.isEnableWorkReassignment());
+							ps.setString(4,workReassignmentRules.getReassignFormFieldUniqueId());
+							ps.setString(5,workReassignmentRules.getConditionRule());
+							if(!Api.isEmptyString(workReassignmentRules.getConjunction()))
+								ps.setString(6,workReassignmentRules.getConjunction());
+							else
+								ps.setNull(6,Types.VARCHAR);
+							if(!Api.isEmptyString(workReassignmentRules.getTargetFieldExpression()))
+								ps.setString(7,workReassignmentRules.getTargetFieldExpression());
+							else
+								ps.setNull(7,Types.VARCHAR);
+							if(!Api.isEmptyString(workReassignmentRules.getValue()))
+								ps.setString(8,workReassignmentRules.getValue());
+							else
+								ps.setNull(8,Types.VARCHAR);
+							if(workReassignmentRules.getFieldDataType() != null)
+								ps.setInt(9,workReassignmentRules.getFieldDataType());
+							else
+								ps.setInt(9,Types.INTEGER);
+							if(!Api.isEmptyString(workReassignmentRules.getCondition()))
+								ps.setString(10,workReassignmentRules.getCondition());
+							else
+								ps.setNull(10,Types.VARCHAR);
+							ps.setLong(11,workReassignmentRules.getCreatedBy());
+							ps.setLong(12,workReassignmentRules.getModifiedBy());
+							ps.setString(13, Api.getDateTimeInUTC(new Date(System
+									.currentTimeMillis())));
+							ps.setString(14, Api.getDateTimeInUTC(new Date(System
+									.currentTimeMillis())));
+							
+						}
+							@Override
+							public int getBatchSize() {
+							return workReassignmentRulesList.size();
+							
+						}
+					});
+		}
+
+		public int insertLabelsForMobileApp(final List<WorkSpecAppLabel> workSpecAppLabels) {
+			
+			jdbcTemplate.batchUpdate(Sqls.INSERT_WORK_SPEC_APP_LABELS_FOR_COMPANY,
+					new BatchPreparedStatementSetter() {
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							
+							WorkSpecAppLabel workSpecAppLabel = workSpecAppLabels.get(i);
+						    ps.setString(1, workSpecAppLabel.getItemId());
+							ps.setString(2,workSpecAppLabel.getLabelName());
+							ps.setString(3, workSpecAppLabel.getCustomeLabelName());
+							ps.setInt(4, workSpecAppLabel.getDisplayOrder());
+							ps.setInt(5, workSpecAppLabel.getItemType());
+							ps.setBoolean(6, workSpecAppLabel.isVisible());
+							ps.setLong(7, workSpecAppLabel.getCompanyId());
+							ps.setLong(8, workSpecAppLabel.getWorkSpecId());
+							ps.setLong(9, workSpecAppLabel.getCreatedBy());
+							ps.setLong(10, workSpecAppLabel.getModifiedBy());
+							ps.setString(11, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+							ps.setString(12, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+							
+						}
+
+						@Override
+						public int getBatchSize() {
+							return workSpecAppLabels.size();
+						}
+
+					});
+			return workSpecAppLabels.size();
+		}
+		
+		public long insertWorkUnassignmentCriterias(final WorkUnassignmentCriterias workUnassignmentCriterias) {
+			
+			Long id = 0l;
+			try{
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			jdbcTemplate.update(new PreparedStatementCreator() {
+				
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					
+					PreparedStatement ps = connection.prepareStatement
+							(Sqls.INSERT_WORK_UNASSIGNMENT_CRITERIAS,Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, workUnassignmentCriterias.getWorkSpecId());
+					ps.setLong(2, workUnassignmentCriterias.getWorkActionSpecId());
+					ps.setString(3, workUnassignmentCriterias.getFormSpecUniqueId());
+					ps.setLong(4, workUnassignmentCriterias.getCompanyId());
+					ps.setInt(5, workUnassignmentCriterias.getConjunction());
+					ps.setLong(6, workUnassignmentCriterias.getCreatedBy());
+					ps.setLong(7, workUnassignmentCriterias.getModifiedBy());
+					ps.setString(8, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+					ps.setString(9, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+					return ps;
+				}
+				
+			}, keyHolder);
+			
+			id = keyHolder.getKey().longValue();
+			workUnassignmentCriterias.setWorkUnassignmentCriteriaId(id);
+			return id;
+			}//try
+			catch(Exception e){
+				return id;
+			}
+		}
+		public int[] insertWorkAssignmentCriteriaConditions(final List<WorkAssignmentCriteriaConditions> workAssignmentCriteriaConditions) {
+			
+			return jdbcTemplate.batchUpdate(Sqls.INSERT_WORK_ASSIGNMENT_CRITERIA_CONDITIONS,
+					new BatchPreparedStatementSetter() {
+						@Override
+						public void setValues(PreparedStatement ps, int i) throws SQLException {
+							WorkAssignmentCriteriaConditions workAssignmentCriteriaCondition = workAssignmentCriteriaConditions.get(i);
+							ps.setLong(1, workAssignmentCriteriaCondition.getWorkUnassignmentCriteriaId());
+							ps.setString(2, workAssignmentCriteriaCondition.getFieldSpecUniqueId());
+							ps.setString(3, workAssignmentCriteriaCondition.getFieldExpression());
+							ps.setBoolean(4, workAssignmentCriteriaCondition.isSection());
+							if(workAssignmentCriteriaCondition.getFieldDataType() == null)
+								ps.setNull(5,Types.LONGNVARCHAR);
+							else
+								ps.setLong(5, workAssignmentCriteriaCondition.getFieldDataType());
+							
+							ps.setInt(6, workAssignmentCriteriaCondition.getCondition());
+							
+							if(workAssignmentCriteriaCondition.getConditionValue() == null)
+								ps.setString(7, "0");
+							else
+								ps.setString(7, workAssignmentCriteriaCondition.getConditionValue());
+							
+							if(workAssignmentCriteriaCondition.getCriteriaType() == 0)
+								ps.setInt(8, workAssignmentCriteriaCondition.CRITERIA_TYPE_ACTION_FORM_FIELDS);
+							else
+								ps.setInt(8, workAssignmentCriteriaCondition.getCriteriaType());
+								
+							if(workAssignmentCriteriaCondition.getActionCount() == null)
+								ps.setLong(9, 0);
+							else {
+								ps.setLong(9, workAssignmentCriteriaCondition.getActionCount());
+							}
+						}
+		
+						@Override
+						public int getBatchSize() {
+							return workAssignmentCriteriaConditions.size();
+						}
+					});
+		}
+		public Long insertIntoExternalActionConfiguration(ExternalActionConfiguration externalActionConfiguration,
+				WebUser webUser) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			jdbcTemplate.update(new PreparedStatementCreator() {
+				@Override
+				public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(Sqls.INSERT_INTO_EXTERNAL_ACTION_CONFIGURATION,
+							Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, externalActionConfiguration.getWorkSpecId());
+					ps.setLong(2, externalActionConfiguration.getWorkActionSpecId());
+					//ps.setLong(3, webUser.getCompanyId());
+					ps.setBoolean(3, externalActionConfiguration.isCanPerformActionByCustomer());
+					ps.setInt(4, externalActionConfiguration.getExpiryTimeLimit());
+					ps.setBoolean(5, externalActionConfiguration.getCanRegenerateNewLink());
+					ps.setLong(6, webUser.getEmpId());
+					ps.setLong(7, webUser.getEmpId());
+					ps.setString(8, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+					ps.setString(9, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+					ps.setLong(10, webUser.getCompanyId());
+					ps.setBoolean(11, externalActionConfiguration.getEnableAutomaticEmailTrigger());
+					ps.setString(12, externalActionConfiguration.getMessageBody());
+					ps.setBoolean(13, externalActionConfiguration.isCanOnlyPerformByExternalUser());
+					ps.setBoolean(14, externalActionConfiguration.isSendRemainderNotification());
+					ps.setInt(15, externalActionConfiguration.getReminderCount());
+					ps.setInt(16, externalActionConfiguration.getReminderFrequency());
+					ps.setString(17, externalActionConfiguration.getRemainderNotificationMessageBody());
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			externalActionConfiguration.setExternalActionConfigurationId(id);
+			return id;
+		}
+		public long insertFormToWorkAutoFillsectionSpecs(
+				FormToWorkAutoFillSectionConfiguration formToWorkAutoFillSectionConfiguration) {
+
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			jdbcTemplate.update(new PreparedStatementCreator() {
+				@Override
+				public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(Sqls.INSERT_INTO_FORM_TO_WORK_AUTO_FILL_SECTION,
+							Statement.RETURN_GENERATED_KEYS);
+
+					ps.setLong(1, formToWorkAutoFillSectionConfiguration.getFormToWorkAutoFillId());
+					ps.setString(2, formToWorkAutoFillSectionConfiguration.getSectionSpecUniqueId());
+					ps.setLong(3, formToWorkAutoFillSectionConfiguration.getSourceActionSpecId());
+					ps.setString(4, formToWorkAutoFillSectionConfiguration.getSourceSectionSpecUniqueId());
+
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			formToWorkAutoFillSectionConfiguration.setFormToWorkAutoFillSectionConfigurationId(id);
+			return id;
+
+		}
+		public void insertFormToWorkAutoFillFormSectionFields(
+				final List<FormToWorkAutoFillSectionFieldsConfiguration> FormToWorkAutoFillFieldList) {
+
+			jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_FORM_TO_WORK_AUTO_FILL_SECTION_FIELDS,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i) throws SQLException {
+							FormToWorkAutoFillSectionFieldsConfiguration FormToWorkAutoFillField = FormToWorkAutoFillFieldList
+									.get(i);
+							ps.setLong(1, FormToWorkAutoFillField.getFormToWorkAutoFillSectionConfigurationId());
+							ps.setLong(2, FormToWorkAutoFillField.getFormToWorkAutoFillId());
+
+							ps.setString(3, FormToWorkAutoFillField.getFieldSpecUniqueId());
+							if (Api.isEmptyString(FormToWorkAutoFillField.getSourceFieldSpecUniqueId())) {
+								ps.setNull(4, Types.VARCHAR);
+							} else {
+								ps.setString(4, FormToWorkAutoFillField.getSourceFieldSpecUniqueId());
+							}
+							if (!Api.isEmptyString(FormToWorkAutoFillField.getPickAnother() + ""))
+								ps.setInt(5, FormToWorkAutoFillField.getPickAnother());
+							else
+								ps.setInt(5, 0);
+
+						}
+
+						@Override
+						public int getBatchSize() {
+							// TODO Auto-generated method stub
+							return FormToWorkAutoFillFieldList.size();
+						}
+					});
+		}
+
+		public void insertIntoWorkActionFormVisibility(List<WorkActionFormVisibility> workActionFormVisibility) {
+			jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_WORK_ACTION_FORM_VISIBILITY,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i) throws SQLException {
+							WorkActionFormVisibility workActionObj = workActionFormVisibility
+									.get(i);
+							ps.setLong(1, workActionObj.getWorkSpecId());
+							ps.setLong(2, workActionObj.getCompanyId());
+							ps.setLong(3, workActionObj.getActionSpecId());
+							ps.setString(4,Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+							ps.setString(5, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+
+						}
+
+						@Override
+						public int getBatchSize() {
+							// TODO Auto-generated method stub
+							return workActionFormVisibility.size();
+						}
+					});
+			
+		}
+		public int[] insertFormSpecUniqueIdsForWorkSpec(
+				final List<WorkSpecFormSpecMap> workSpecFormSpecMaps) {
+			return jdbcTemplate.batchUpdate(
+					Sqls.INSERT_FORMSPECUNIQUEIDS_FOR_WORKSPEC,
+					new BatchPreparedStatementSetter() {
+
+						@Override
+						public void setValues(PreparedStatement ps, int i)
+								throws SQLException {
+							WorkSpecFormSpecMap workSpecFormSpecMap = workSpecFormSpecMaps
+									.get(i);
+							ps.setString(1, workSpecFormSpecMap.getWorkSpecId()+"");
+							ps.setString(2, workSpecFormSpecMap.getFormSpecUniqueId());
+						}
+
+						@Override
+						public int getBatchSize() {
+							return workSpecFormSpecMaps.size();
+						}
+					});
+		}
+		public List<CustomEntitySpec> getCustomEntitySpecsByIds(String customEntitySpecIds) {
+			List<CustomEntitySpec> customEntitySpecs = new ArrayList<CustomEntitySpec>();
+			try
+			{
+				String sql = Sqls.SELECT_CUSTOM_ENTITY_SPECS_BY_IDS.replace(":customEntitySpecIds", customEntitySpecIds);
+				customEntitySpecs = jdbcTemplate.query(sql,new Object[] {},
+						new BeanPropertyRowMapper<CustomEntitySpec>(CustomEntitySpec.class));
+			}
+			catch(Exception e)
+			{
+			}
+			return customEntitySpecs;
+		}
+		public long insertCustomEntitySpecs(final CustomEntitySpec customEntitySpec) {
+			
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection
+							.prepareStatement(Sqls.INSERT_CUSTOM_ENTITY_SPECS,
+									Statement.RETURN_GENERATED_KEYS);
+
+					ps.setString(1, customEntitySpec.getTitle());
+					ps.setString(2, customEntitySpec.getDescription());
+					ps.setString(3, customEntitySpec.getFormSpecUniqueId());
+					ps.setLong(4, customEntitySpec.getCreatedBy());
+					ps.setLong(5, customEntitySpec.getModifiedBy());
+					ps.setString(6, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(7, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setLong(8, customEntitySpec.getCompanyId());
+					ps.setLong(9, customEntitySpec.getIsSystemDefined());
+					ps.setLong(10, customEntitySpec.getPurpose());
+
+					if (customEntitySpec.getCopiedFrom() != null)
+						ps.setLong(11, customEntitySpec.getCopiedFrom());
+					else
+						ps.setNull(11, Types.VARCHAR);
+
+					if (customEntitySpec.getCopiedFrom() != null)
+						ps.setLong(11, customEntitySpec.getCopiedFrom());
+					else
+						ps.setNull(11, Types.VARCHAR);
+
+					if (customEntitySpec.getSkeletonCustomEntitySpecId() != null)
+						ps.setLong(12, customEntitySpec.getSkeletonCustomEntitySpecId());
+					else
+						ps.setNull(12, Types.VARCHAR);
+
+					ps.setBoolean(13, customEntitySpec.isEnableCustomEntityCheckIn());
+					ps.setBoolean(14, customEntitySpec.isDayPlanAllowd());
+					ps.setBoolean(15, customEntitySpec.isEnableOnlineSearchForUniqueness());
+					
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			customEntitySpec.setCustomEntitySpecId(id);
+			return id;
+
+		}
+
+		public void updateCustomEntityFormSpec(String newFormSpecUniqueId, Long customEntitySpecId) {
+			try {
+				jdbcTemplate.update(Sqls.UPDATE_CUSTOM_ENTITY_FORM_SPEC, new Object[] { newFormSpecUniqueId,
+						Api.getDateTimeInUTC(new Date(System.currentTimeMillis())), customEntitySpecId });
+			} catch (Exception e) {
+
+			}
+		}
+
+		public List<Entity> getEntitiesByEntitySpecIds(String entitySpecIds) {
+			List<Entity> entities = new ArrayList<Entity>();
+			try {
+				String sql = Sqls.SELECT_ENTITIES_BY_ENTITY_SPEC_IDS.replace(":entitySpecIds", entitySpecIds);
+				entities = jdbcTemplate.query(sql, new Object[] {}, new BeanPropertyRowMapper<Entity>(Entity.class));
+			} catch (Exception e) {
+			}
+			return entities;
+		}
+		
+		public List<EntityField> getEntityFieldByEntityIn(List<Entity> entities) {
+
+			String ids = "";
+			ids = Api.toCSV(entities, "entityId", CsvOptions.NONE);
+
+			return getEntityFieldByEntityIn(ids);
+		}
+
+		public List<EntityField> getEntityFieldByEntityIn(String entityIds) {
+			if (!Api.isEmptyString(entityIds)) {
+				String sql = Sqls.SELECT_ENTITY_FIELD_BY_ENTITY_IN.replace(":ids",
+						entityIds);
+				List<EntityField> entityFields = jdbcTemplate.query(sql,
+						new Object[] {}, new BeanPropertyRowMapper<EntityField>(
+								EntityField.class));
+				return entityFields;
+			} else {
+				return new ArrayList<EntityField>();
+			}
+		}
+		public List<EntitySectionField> getEntitySectionFieldsByEntityIn(List<Entity> entities) {
+			
+			String ids = Api.toCSV(entities, "entityId", CsvOptions.NONE);
+
+			return getEntitySectionFieldsByEntityIn(ids);
+		}
+
+		public List<EntitySectionField> getEntitySectionFieldsByEntityIn(String entityIds) {
+			
+			if(!Api.isEmptyString(entityIds))
+			{
+				try {
+					String sql = Sqls.SELECT_ENTITY_SECTION_FIELD_BY_ENTITY_IN.replace(":ids",
+							entityIds);
+					List<EntitySectionField> entitySectionFields = jdbcTemplate.query(sql,
+							new Object[] {}, new BeanPropertyRowMapper<EntitySectionField>(
+									EntitySectionField.class));
+					return entitySectionFields;
+				} catch(Exception e) {
+					e.printStackTrace();
+					return new ArrayList<EntitySectionField>();
+				}
+			}
+			else
+			{
+				return new ArrayList<EntitySectionField>();
+			}
+			
+		}
+
+		public EntitySpec getEntitySpecBySkeletonSpecId(long entitySpecId, Integer companyId) {
+			EntitySpec entitySpec = null;
+			 try {
+					String sql = Sqls.SELECT_ENTITY_SPEC_BY_SKELETON_SPEC_ID;
+				 entitySpec = jdbcTemplate.queryForObject(sql,new Object[] {companyId,entitySpecId},new int[] {Types.INTEGER,Types.BIGINT},new BeanPropertyRowMapper<EntitySpec>(EntitySpec.class));
+			 }catch(Exception e) {
+				 e.printStackTrace();
+			 }
+			return entitySpec;
+		}
+		public long insertEntity(final Entity entity, final long companyId,
+				final Long by, final String code) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_ENTITY, Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, companyId);
+					ps.setLong(2, entity.getEntitySpecId());
+					ps.setInt(3, entity.getEntityStatus());
+					if (by == null) {
+						ps.setNull(4, Types.BIGINT);
+					} else {
+						ps.setLong(4, by);
+					}
+					if (by == null) {
+						ps.setNull(5, Types.BIGINT);
+					} else {
+						ps.setLong(5, by);
+					}
+
+					ps.setString(6, entity.getClientSideId());
+					ps.setString(7, code);
+					if (Api.isEmptyString(entity.getExternalId())) {
+						ps.setNull(8, Types.VARCHAR);
+					} else {
+						ps.setString(8, entity.getExternalId());
+					}
+					if (Api.isEmptyString(entity.getApiUserId())) {
+						ps.setNull(9, Types.VARCHAR);
+					} else {
+						ps.setString(9, entity.getApiUserId());
+					}
+					ps.setString(10, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(11, Api.getDateTimeInUTC(new Date(System
+							.currentTimeMillis())));
+					ps.setString(12, Api.makeNullIfEmpty(entity.getChecksum()));
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			entity.setEntityId(id);
+
+			return id;
+		}
+		
+		public long insertEntityField(final EntityField entityField) {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_ENTITY_FIELD, Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, entityField.getEntityId());
+					ps.setLong(2, entityField.getEntitySpecId());
+					ps.setLong(3, entityField.getEntityFieldSpecId());
+					ps.setString(4, entityField.getFieldValue());
+					ps.setString(5,  Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+					ps.setString(6,  Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+					ps.setString(7, entityField.getFieldLabel());
+					ps.setInt(8, entityField.getFieldType());
+					ps.setInt(9, entityField.getDisplayOrder());
+					ps.setInt(10, entityField.getIdentifier());
+					ps.setString(11, entityField.getDisplayValue());
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			entityField.setFieldId(id);
+			return id;
+		}
+
 }
