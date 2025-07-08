@@ -65,6 +65,7 @@ import com.spoors.beans.FormSpecDataSource;
 import com.spoors.beans.FormSpecPermission;
 import com.spoors.beans.JobFormMapBean;
 import com.spoors.beans.ListFilteringCritiria;
+import com.spoors.beans.Media;
 import com.spoors.beans.OfflineCustomEntityUpdateConfiguration;
 import com.spoors.beans.OfflineListUpdateConfiguration;
 import com.spoors.beans.PaymentMapping;
@@ -4428,5 +4429,48 @@ public class EffortDao {
 			entityField.setFieldId(id);
 			return id;
 		}
+		public long saveMedia(final Media media){
+		    KeyHolder keyHolder = new GeneratedKeyHolder();
+		    
+		    jdbcTemplate.update(new PreparedStatementCreator() {
+
+//		        @Override
+		        public PreparedStatement createPreparedStatement(
+		                Connection connection) throws SQLException {
+		            PreparedStatement ps = connection.prepareStatement(Sqls.INSERT_MEDIA, Statement.RETURN_GENERATED_KEYS);
+		            ps.setLong(1, media.getCompanyId());
+		            ps.setLong(2, media.getEmpId());
+		            ps.setString(3, media.getMimeType());
+		            ps.setString(4, media.getLocalPath());
+		            ps.setString(5, media.getFileName());
+		            ps.setString(6, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+		            ps.setString(7, Api.getDateTimeInUTC(new Date(System.currentTimeMillis())));
+		            
+		            if(media.getConfig() == null){
+		                ps.setInt(8, 0);
+		            }else{
+		                ps.setInt(8, media.getConfig());
+		            }
+		            
+		            if(Api.isEmptyString(media.getExternalMediaId())){
+		                ps.setNull(9, Types.VARCHAR);
+		            }else{
+		                ps.setString(9, media.getExternalMediaId());
+		            }
+		            return ps;
+		        }
+		    }, keyHolder);
+		    
+		    long mediaId = keyHolder.getKey().longValue();
+		    media.setId(mediaId);
+		    
+		    return mediaId;
+		}
+		
+		public Media getMedia(String id){
+	        Media media = jdbcTemplate.queryForObject(Sqls.SELECT_MEDIA, new Object[]{id}, new BeanPropertyRowMapper<Media>(Media.class));
+	        return media;
+	    }
+
 
 }

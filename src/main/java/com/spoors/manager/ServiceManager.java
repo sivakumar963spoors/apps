@@ -61,6 +61,7 @@ import com.spoors.beans.FormSpecDataSource;
 import com.spoors.beans.FormSpecPermission;
 import com.spoors.beans.JobFormMapBean;
 import com.spoors.beans.ListFilteringCritiria;
+import com.spoors.beans.Media;
 import com.spoors.beans.OfflineCustomEntityUpdateConfiguration;
 import com.spoors.beans.OfflineListUpdateConfiguration;
 import com.spoors.beans.PaymentMapping;
@@ -3921,6 +3922,11 @@ public class ServiceManager
 			
 		
 	}
+	
+	public Media getMedia(String mediaId){
+        return  effortDao.getMedia(mediaId);
+    }
+
 	
 	
 

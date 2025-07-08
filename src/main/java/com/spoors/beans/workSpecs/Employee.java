@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.spoors.beans.FormField;
 import com.spoors.beans.FormSectionField;
@@ -169,7 +169,7 @@ public class Employee implements Serializable{
 		private String lastKnownLocation;
 		private String lastKnownLocationTime;
 		// added Employee Photo variables
-			private transient CommonsMultipartFile file = null;
+			private transient MultipartFile file = null;
 			private Long empMediaId=0l;
 			
 		private Long empGroupId;
@@ -890,12 +890,12 @@ public class Employee implements Serializable{
 	}
 
 	@JsonIgnore
-	public CommonsMultipartFile getFile() {
+	public MultipartFile getFile() {
 		return file;
 	}
 	
 	@JsonIgnore
-	public void setFile(CommonsMultipartFile file) {
+	public void setFile(MultipartFile file) {
 		this.file = file;
 	}
 

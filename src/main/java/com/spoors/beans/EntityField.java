@@ -2,7 +2,7 @@ package com.spoors.beans;
 
 import java.io.Serializable;
 
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,7 +24,7 @@ public class EntityField implements Serializable{
 	
 	private String error;
 	
-	private transient CommonsMultipartFile file = null;
+	private transient MultipartFile file = null;
 	private Integer identifier;
 	private String fieldLabel;
     private Integer fieldType;
@@ -137,11 +137,11 @@ public class EntityField implements Serializable{
 		this.error = error;
 	}
 	@JsonIgnore
-	public CommonsMultipartFile getFile() {
+	public MultipartFile getFile() {
 		return file;
 	}
 	@JsonIgnore
-	public void setFile(CommonsMultipartFile file) {
+	public void setFile(MultipartFile file) {
 		this.file = file;
 	}
 	

@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spoors.beans.FormSpecContainer;
+import com.spoors.beans.Media;
 import com.spoors.beans.workSpecs.WorkActionSpec;
 import com.spoors.beans.workSpecs.WorkSpec;
 import com.spoors.beans.workSpecs.WorkSpecContainer;
@@ -32,6 +31,8 @@ import com.spoors.manager.SqliteManager;
 import com.spoors.util.Api;
 
 import ch.qos.logback.classic.Logger;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 
 @RestController
@@ -127,9 +128,28 @@ public class ApiController {
 	        
 	        serviceManager.exportEntityAndCustomEntitySpecs(formSpecContainer,exportData);
 	        
-	        String sqliteName = sqliteManager.saveFormSpecDataToSqlite(formSpecContainer,workSpecContainerList,servletResponse);
+	        String mediaId = sqliteManager.saveFormSpecDataToSqlite(formSpecContainer,workSpecContainerList,servletResponse);
 	        
-	        response.put("sqliteName", sqliteName);
+	        response.put("mediaId", mediaId);
+	        response.put("Status", "Success");
+	        
+		}catch(Exception e) {
+			 LOGGER.info("Got Exception in getApplicationForExport : "+e);
+			 LOGGER.error("Got Exception in getApplicationForExport : "+e);
+			 e.printStackTrace();
+		}
+		
+		String responseString = Api.getJsonFromGivenObject(response);
+        return new ResponseEntity<>(responseString, HttpStatus.OK);
+    }
+	
+	@PostMapping("/export/test")
+    public ResponseEntity<String> getApplicationForExportTest(@RequestBody String jsonString,HttpSession httpSession,
+			HttpServletResponse servletResponse) {
+       String logtext = "applicationSpecsExport";
+       LOGGER.info(logtext);
+		Map<String,Object> response = new HashMap<>();
+		try {	        response.put("sqliteName", "test");
 	        response.put("Status", "Success");
 	        
 		}catch(Exception e) {
@@ -196,6 +216,32 @@ public class ApiController {
 			 e.printStackTrace();
 		}
 		String responseString = Api.getJsonFromGivenObject(response);
+        return new ResponseEntity<>(responseString, HttpStatus.OK);
+    }
+	
+	@PostMapping("/import/byMediaId")
+    public ResponseEntity<String> getImportApplicationByMediaId(@RequestBody String jsonString) {
+       String logtext = "getImportApplicationBySqliteName";
+        Map<String,Object> response = new HashMap<>();
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode jsonNode = objectMapper.readTree(jsonString);
+            Integer companyId = jsonNode.get("companyId").asInt();
+            String mediaId = jsonNode.get("mediaId").asText();
+            String cloneEntityData = "";
+            if(jsonNode.has("cloneEntityData") && jsonNode.get("cloneEntityData") != null) {
+                cloneEntityData = jsonNode.get("cloneEntityData").asText();
+            }
+            Media media = serviceManager.getMedia(mediaId);
+            sqliteManager.importDataFromSqlite(media.getLocalPath(),companyId,cloneEntityData);
+            response.put("StatusMessage", " Import Successfull ");
+            response.put("Status", "Success");
+        }catch(Exception e) {
+             LOGGER.info("Got Exception in getApplicationForExport : "+e);
+             LOGGER.error("Got Exception in getApplicationForExport : "+e);
+             e.printStackTrace();
+        }
+        String responseString = Api.getJsonFromGivenObject(response);
         return new ResponseEntity<>(responseString, HttpStatus.OK);
     }
 	

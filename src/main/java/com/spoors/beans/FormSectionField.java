@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -62,9 +62,9 @@ public class FormSectionField implements Serializable {
 	private boolean ignoreValidation;
 
 	// @Transient
-	private transient CommonsMultipartFile file = null;
+	private transient MultipartFile file = null;
 	
-	private transient List<CommonsMultipartFile> files = null;
+	private transient List<MultipartFile> files = null;
 
 	// public long getSectionFieldId() {
 	// return sectionFieldId;
@@ -194,12 +194,12 @@ public class FormSectionField implements Serializable {
 	}
 
 	@JsonIgnore
-	public CommonsMultipartFile getFile() {
+	public MultipartFile getFile() {
 		return file;
 	}
 
 	@JsonIgnore
-	public void setFile(CommonsMultipartFile file) {
+	public void setFile(MultipartFile file) {
 		this.file = file;
 	}
 
@@ -367,11 +367,11 @@ public class FormSectionField implements Serializable {
 		this.otpStatus = otpStatus;
 	}
 	@JsonIgnore
-	public List<CommonsMultipartFile> getFiles() {
+	public List<MultipartFile> getFiles() {
 		return files;
 	}
 	@JsonIgnore
-	public void setFiles(List<CommonsMultipartFile> files) {
+	public void setFiles(List<MultipartFile> files) {
 		this.files = files;
 	}
 	public boolean isAdditionalFieldsInfo() {

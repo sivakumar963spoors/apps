@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.slf4j.LoggerFactory;
@@ -69,6 +68,7 @@ import com.spoors.beans.FormSpecDataSource;
 import com.spoors.beans.FormSpecPermission;
 import com.spoors.beans.JobFormMapBean;
 import com.spoors.beans.ListFilteringCritiria;
+import com.spoors.beans.Media;
 import com.spoors.beans.OfflineCustomEntityUpdateConfiguration;
 import com.spoors.beans.OfflineListUpdateConfiguration;
 import com.spoors.beans.RemainderFieldsMap;
@@ -124,6 +124,7 @@ import com.spoors.setting.MobileSqls;
 import com.spoors.util.Api;
 
 import ch.qos.logback.classic.Logger;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Service
 public class SqliteManager {
@@ -152,7 +153,8 @@ public class SqliteManager {
 
 	private String saveToSqlite(FormSpecContainer formSpecContainer,List<WorkSpecContainer> workSpecContainerList, HttpServletResponse response) throws SqlJetException {
 
-		String sqliteName = "exportSqlite"+System.currentTimeMillis();
+		Media media = new Media();
+		String sqliteName = "exportSqlite_"+System.currentTimeMillis();
 		FormSpec formSpecObj = formSpecContainer.getFormSpecs().get(0);
 		Long currentTime = System.currentTimeMillis();
 
@@ -679,7 +681,15 @@ public class SqliteManager {
 			db.commit();
 			db.close();
 			
-			response.setHeader("Content-Disposition", "attachment; filename=\"" +sqliteFileName + "\";");
+			media.setCompanyId(formSpecObj.getCompanyId());
+            media.setEmpId(formSpecObj.getCreatedBy());
+            media.setMimeType("application/x-sqlite3");
+            media.setLocalPath("/SqliteExport/" + sqliteFileName);
+            media.setFileName(sqliteFileName);
+
+            effortDao.saveMedia(media);
+			
+			/*response.setHeader("Content-Disposition", "attachment; filename=\"" +sqliteFileName + "\";");
 			
 			OutputStream out = response.getOutputStream();
 			InputStream is = new FileInputStream(dbFile);
@@ -692,7 +702,7 @@ public class SqliteManager {
 			}
 			out.flush();
 			out.close();
-			is.close();
+			is.close();*/
 
 			
 		} catch (Exception e) {
@@ -702,7 +712,7 @@ public class SqliteManager {
 				db.close();
 
 		}
-		return sqliteName;
+		return media.getId()+"";
 
 	}
 
@@ -1463,7 +1473,7 @@ public class SqliteManager {
 			FormSpecContainer formSpecContainer = new FormSpecContainer();
 			WorkSpecContainer workSpecContainer = new WorkSpecContainer();
 			try {
-				String url = "jdbc:sqlite:/home/spoors/Desktop/SqliteExport/"+sqliteName+".sqlite";
+				String url = "jdbc:sqlite:"+constants.getMediaStoragePath()+sqliteName;
 				 Class.forName("org.sqlite.JDBC");
 				 Connection conn = DriverManager.getConnection(url);
 	             Statement stmt = conn.createStatement();

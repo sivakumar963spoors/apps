@@ -311,5 +311,9 @@ public class Sqls {
 	public static final String INSERT_ENTITY = "INSERT INTO `Entities` (`companyId`, `entitySpecId`, `entityStatus`, `filledBy`, `modifiedBy`, `clientSideId`, `clientCode`, `externalId`, `apiUserId`, `createdTime`, `modifiedTime`,`checksum`) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);";
 	
 	public static final String INSERT_ENTITY_FIELD="INSERT  INTO  `EntityFields`  (`entityId`, `entitySpecId`, `entityFieldSpecId`, `fieldValue`, `createdTime`,`modifiedTime`,`fieldLabel`,`fieldType`,`displayOrder`,`identifier`,`displayValue`) VALUES (?,?,?,?,?,?,?,?,?,?,?);";
+	
+	public static final String INSERT_MEDIA = "INSERT INTO Medias(companyId, empId, mimeType, localPath, fileName, createdTime, modifiedTime,config, externalMediaId) VALUES (?,?,?,?,?,?,?,?,?)";
+	
+	public static final String SELECT_MEDIA = "SELECT id, companyId, empId, mimeType, localPath, fileName, createdTime, modifiedTime, externalMediaId FROM Medias WHERE id = ?";
 
 }

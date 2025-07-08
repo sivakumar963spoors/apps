@@ -2,7 +2,7 @@ package com.spoors.beans;
 
 import java.util.List;
 
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -238,7 +238,7 @@ public class FormFieldSpec extends FormFieldSpecMaster {
 
 	private Integer status;
 
-	private transient CommonsMultipartFile staticFieldFile = null;
+	private transient MultipartFile staticFieldFile = null;
 	
 	private String staticFieldMediaId;
 	
@@ -246,7 +246,7 @@ public class FormFieldSpec extends FormFieldSpecMaster {
 	
 	private String staticFieldCheckboxError;
 	
-	private transient CommonsMultipartFile staticFieldThumbnailFile = null;
+	private transient MultipartFile staticFieldThumbnailFile = null;
 	
 	private String staticFieldThumbnailMediaId;
 	
@@ -1612,11 +1612,11 @@ public class FormFieldSpec extends FormFieldSpecMaster {
 		}
 	}
 	@JsonIgnore
-	public CommonsMultipartFile getStaticFieldFile() {
+	public MultipartFile getStaticFieldFile() {
 		return staticFieldFile;
 	}
 	@JsonIgnore
-	public void setStaticFieldFile(CommonsMultipartFile staticFieldFile) {
+	public void setStaticFieldFile(MultipartFile staticFieldFile) {
 		this.staticFieldFile = staticFieldFile;
 	}
 
@@ -1644,11 +1644,11 @@ public class FormFieldSpec extends FormFieldSpecMaster {
 		this.staticFieldCheckboxError = staticFieldCheckboxError;
 	}
 
-	public CommonsMultipartFile getStaticFieldThumbnailFile() {
+	public MultipartFile getStaticFieldThumbnailFile() {
 		return staticFieldThumbnailFile;
 	}
 
-	public void setStaticFieldThumbnailFile(CommonsMultipartFile staticFieldThumbnailFile) {
+	public void setStaticFieldThumbnailFile(MultipartFile staticFieldThumbnailFile) {
 		this.staticFieldThumbnailFile = staticFieldThumbnailFile;
 	}
 

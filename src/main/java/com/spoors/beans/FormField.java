@@ -3,7 +3,7 @@ package com.spoors.beans;
 import java.io.Serializable;
 import java.util.List;
 
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.spoors.util.Api;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -78,9 +78,9 @@ public class FormField implements Serializable,Cloneable {
 	private boolean ticketingField;
 
 	// @Transient
-	private transient CommonsMultipartFile file = null;
+	private transient MultipartFile file = null;
 	
-	private transient List<CommonsMultipartFile> files = null;
+	private transient List<MultipartFile> files = null;
 	
 	private boolean computedField;
 	private boolean locationUpdate;
@@ -209,12 +209,12 @@ public class FormField implements Serializable,Cloneable {
 	}
 
 	@JsonIgnore
-	public CommonsMultipartFile getFile() {
+	public MultipartFile getFile() {
 		return file;
 	}
 
 	@JsonIgnore
-	public void setFile(CommonsMultipartFile file) {
+	public void setFile(MultipartFile file) {
 		this.file = file;
 	}
 
@@ -479,11 +479,11 @@ public class FormField implements Serializable,Cloneable {
 		this.mandatoryCheck = mandatoryCheck;
 	}
 	@JsonIgnore
-	public List<CommonsMultipartFile> getFiles() {
+	public List<MultipartFile> getFiles() {
 		return files;
 	}
 	@JsonIgnore
-	public void setFiles(List<CommonsMultipartFile> files) {
+	public void setFiles(List<MultipartFile> files) {
 		this.files = files;
 	}
 	
