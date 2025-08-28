@@ -1,5 +1,10 @@
 package com.spoors.controller;
 
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +20,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -245,5 +252,52 @@ public class ApiController {
         return new ResponseEntity<>(responseString, HttpStatus.OK);
     }
 	
+	@PostMapping("/upload/app")
+	public ResponseEntity<?> handleUpload(@RequestParam(value = "companyId", required = true) Integer companyId,
+			@RequestParam(value = "cloneEntityData", required = true,defaultValue="false") String cloneEntityData,
+			@RequestParam("file") MultipartFile file) throws ClassNotFoundException {
+
+		LOGGER.info("handleUpload import starts...");
+
+		if (file.isEmpty()) {
+			return ResponseEntity.badRequest().body("Uploaded file is empty.");
+		}
+
+		// Save MultipartFile to a temporary file
+		File tempFile;
+		try {
+			tempFile = File.createTempFile("uploaded_", ".sqlite");
+			file.transferTo(tempFile);
+		} catch (IOException e) {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to save file.");
+		}
+
+		FormSpecContainer formSpecContainer = new FormSpecContainer();
+		WorkSpecContainer workSpecContainer = new WorkSpecContainer();
+		Class.forName("org.sqlite.JDBC");
+		// Read SQLite DB and list all tables
+		try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + tempFile.getAbsolutePath())) {
+			Statement stmt = conn.createStatement();
+
+			sqliteManager.fetchDataFromSqliteFile(formSpecContainer, workSpecContainer, stmt);
+
+			serviceManager.fetchDataAndInsertIntoDB(formSpecContainer, workSpecContainer, companyId, cloneEntityData);
+
+			LOGGER.info(" importDataFromSqlite done ... successfully ");
+
+			Map<String, Object> response = new HashMap<>();
+			response.put("StatusMessage", " Import Successfull ");
+			response.put("Status", "Success");
+			String responseString = Api.getJsonFromGivenObject(response);
+			LOGGER.info("handleUpload import Successfull");
+			return new ResponseEntity<>(responseString, HttpStatus.OK);
+
+		} catch (Exception e) {
+			LOGGER.info("Got Exception in handleUpload : " + e);
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to read SQLite file.");
+		}
+
+	}
+	
 }
-;

@@ -1479,289 +1479,7 @@ public class SqliteManager {
 	             Statement stmt = conn.createStatement();
 	             
 	             
-	             List<ListFilteringCritiria> listFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_list_filtering_criterias",ListFilteringCritiria.class, stmt);
-	             formSpecContainer.setListFilteringCriterias(listFilteringCritiriaList);
-	             
-	             List<RemainderFieldsMap> remainderFieldsMap = fetchDataFromSqliteAndMapToBean("SELECT * FROM remainder_fields_map",RemainderFieldsMap.class, stmt);
-	             formSpecContainer.setRemainderFieldsMap(remainderFieldsMap);
-	 			
-
-	             List<FormSpecPermission> formSpecPermissionList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_spec_permissions",FormSpecPermission.class, stmt);
-	             formSpecContainer.setFormSpecPermissions(formSpecPermissionList);
-	             
-	 			
-
-	             List<FormSpecConfigSaveOnOtpVerify> formSpecConfigSaveOnOtpVerifyList = fetchDataFromSqliteAndMapToBean("SELECT * FROM save_form_on_otp_verify",FormSpecConfigSaveOnOtpVerify.class, stmt);
-	             formSpecContainer.setSaveFormOnOtpVerify(formSpecConfigSaveOnOtpVerifyList);
-	             
-	             
-	             List<CustomerAutoFilteringCritiria> customerAutoFilteringCritiriasList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_customer_auto_filtering_criterias",CustomerAutoFilteringCritiria.class, stmt);
-	             formSpecContainer.setCustomerAutoFilteringCritirias(customerAutoFilteringCritiriasList);
-
-	 			
-
-	             List<CustomerFilteringCritiria> customerFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_customer_filtering_criterias",CustomerFilteringCritiria.class, stmt);
-	             formSpecContainer.setCustomerFilteringCriterias(customerFilteringCritiriaList);
-	             
-	             
-	             
-	             List<EmployeeFilteringCritiria> employeeFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_employee_filtering_criterias",EmployeeFilteringCritiria.class, stmt);
-	             formSpecContainer.setEmployeeFilteringCriterias(employeeFilteringCritiriaList);
-	             
-	 			
-
-	             List<FormFilteringCritiria> formFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_form_filtering_criterias",FormFilteringCritiria.class, stmt);
-	             formSpecContainer.setFormFilteringCriterias(formFilteringCritiriaList);
-	 			
-
-	             List<FieldValidationCritiria> fieldValidationCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_validation_critirias",FieldValidationCritiria.class, stmt);
-	             formSpecContainer.setFieldValidationCritirias(fieldValidationCritiriaList);
-	             
-	             List<StockFormConfiguration> stockFormConfigurationList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_stock_form_configurations",StockFormConfiguration.class, stmt);
-	             formSpecContainer.setStockFormConfigurations(stockFormConfigurationList);
-	 			
-
-	             List<OfflineListUpdateConfiguration> offlineListUpdateConfigurationList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_offline_list_update_configurations",OfflineListUpdateConfiguration.class, stmt);
-	             formSpecContainer.setOfflineListUpdateConfigurations(offlineListUpdateConfigurationList);
-	 			
-
-	             List<OfflineCustomEntityUpdateConfiguration> offlineCustomEntityUpdateConfigurationsList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_offline_customEntity_update_configurations",OfflineCustomEntityUpdateConfiguration.class, stmt);
-	             formSpecContainer.setOfflineCustomEntityUpdateConfigurations(offlineCustomEntityUpdateConfigurationsList);
-	             
-	             List<FormSpecDataSource> formSpecDataSourceList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_form_spec_data_source",FormSpecDataSource.class, stmt);
-	             formSpecContainer.setFormSpecDataSource(formSpecDataSourceList);
-	 			
-
-	             List<JobFormMapBean> jobFormMapBeanList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_job_form_field_spec_mapping",JobFormMapBean.class, stmt);
-	             formSpecContainer.setJobFormMapBeans(jobFormMapBeanList);
-	 			
-
-	             List<WorkSpecFormSpecFollowUp> workSpecFormSpecFollowUp = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_workspec_formspec_follow_up",WorkSpecFormSpecFollowUp.class, stmt);
-	             formSpecContainer.setWorkSpecFormSpecFollowUp(workSpecFormSpecFollowUp);
-	            
-	             List<WorkFormFieldMap> workFormFieldMaps = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_work_form_field_map",WorkFormFieldMap.class, stmt);
-	             formSpecContainer.setWorkFormFieldMap(workFormFieldMaps);
-	             
-	             List<DataSourceRequestParam> dataSourceRequestParamList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_data_source_request_params",DataSourceRequestParam.class, stmt);
-	             formSpecContainer.setDataSourceRequestParams(dataSourceRequestParamList);
-	             
-	             
-	             List<DataSourceRequestHeader> dataSourceRequestHeaderList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_data_source_request_headers",DataSourceRequestHeader.class, stmt);
-	             formSpecContainer.setDataSourceRequestHeaders(dataSourceRequestHeaderList);
-
-	 			
-	             List<DataSourceResponseMapping> dataSourceResponseMappingList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_data_source_response_mappings",DataSourceResponseMapping.class, stmt);
-	             formSpecContainer.setDataSourceResponseMappings(dataSourceResponseMappingList);
-
-	             List<FormFieldSpec> formFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_fields",FormFieldSpec.class, stmt);
-	             formSpecContainer.setFields(formFieldSpecList);
-
-	             List<FormSectionFieldSpec> formSectionFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_section_fields",FormSectionFieldSpec.class, stmt);
-	             formSpecContainer.setSectionFields(formSectionFieldSpecList);
-	             
-	             List<FormSpec> formSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_form_specs",FormSpec.class, stmt);
-	             formSpecContainer.setFormSpecs(formSpecList);
-
-	             List<FormPageSpec> formPageSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_page_specs",FormPageSpec.class, stmt);
-	             formSpecContainer.setPageSpecs(formPageSpecList);
-
-	             List<FormFieldSpecValidValue> formFieldSpecValidValueList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_valid_values",FormFieldSpecValidValue.class, stmt);
-	             formSpecContainer.setFieldValidValues(formFieldSpecValidValueList);
-
-	             List<FormSectionSpec> formSectionSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_sections",FormSectionSpec.class, stmt);
-	             formSpecContainer.setSections(formSectionSpecList);
-	             
-	             List<FormSectionFieldSpecValidValue> formSectionFieldSpecValidValueList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_section_field_valid_values",FormSectionFieldSpecValidValue.class, stmt);
-	             formSpecContainer.setSectionFieldValidValues(formSectionFieldSpecValidValueList);
-	             
-	             List<VisibilityDependencyCriteria> visibilityDependencyCriteriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_visibility_dependency_criterias",VisibilityDependencyCriteria.class, stmt);
-	             formSpecContainer.setVisibilityDependencyCriterias(visibilityDependencyCriteriaList);
-
-	             List<FormFieldsColorDependencyCriterias> formFieldsColorDependencyCriteriasList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_fields_Color_dependency_criterias",FormFieldsColorDependencyCriterias.class, stmt);
-	             formSpecContainer.setFormFieldsColorDependencyCriterias(formFieldsColorDependencyCriteriasList);
-
-	             List<FormCleanUpRule> formCleanUpRuleList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_clean_up_rules",FormCleanUpRule.class, stmt);
-	             formSpecContainer.setFormCleanUpRule(formCleanUpRuleList);
-
-	             List<FormFieldGroupSpec> formFieldGroupSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_field_group_specs",FormFieldGroupSpec.class, stmt);
-	             formSpecContainer.setFormFieldGroupSpecs(formFieldGroupSpecs);
-
-	             List<FormFieldSpecsExtra> formFieldSpecExtraList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_field_specs_extra",FormFieldSpecsExtra.class, stmt);
-	             formSpecContainer.setFieldsExtra(formFieldSpecExtraList);
-	 			
-	             List<FormSectionFieldSpecsExtra> formSectionFieldSpecExtraList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_section_field_specs_extra",FormSectionFieldSpecsExtra.class, stmt);
-	             formSpecContainer.setSectionFieldsExtra(formSectionFieldSpecExtraList);
-	  			
-	             List<CustomEntityFilteringCritiria> customEntityFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_custom_entity_filtering_criterias",CustomEntityFilteringCritiria.class, stmt);
-	             formSpecContainer.setCustomEntityFilteringCritirias(customEntityFilteringCritiriaList);
-	             
-	             // here...
-	             
-	             List<EntitySpec> entitySpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_entity_specs",EntitySpec.class, stmt);
-	             formSpecContainer.setEntitySpecs(entitySpecList);
-
-	             List<EntityFieldSpec> entityFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_fields",EntityFieldSpec.class, stmt);
-	             formSpecContainer.setEntityFields(entityFieldSpecList);
-	  		 	
-	             List<EntitySectionSpec> entitySectionSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_sections_specs",EntitySectionSpec.class, stmt);
-	             formSpecContainer.setEntitySections(entitySectionSpecList);
-	  		 	
-	             List<EntitySectionFieldSpec> entitySectionFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_sections_fields",EntitySectionFieldSpec.class, stmt);
-	             formSpecContainer.setEntitySectionFields(entitySectionFieldSpecList);
-	             
-	             
-	             List<CustomEntitySpec> customEntitySpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM custom_entity_spec",CustomEntitySpec.class, stmt);
-	             formSpecContainer.setCustomEntitySpecs(customEntitySpecs);
-	             
-	             // here...
-	             
-	             List<Entity> entityAddedList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_added",Entity.class, stmt);
-	             formSpecContainer.setEntities(entityAddedList);
-	             
-	  			
-	             List<EntityField> entityFieldList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_fields",EntityField.class, stmt);
-	             formSpecContainer.setEntityFieldsData(entityFieldList);
-	             
-	  			
-	             List<EntitySectionField> entitySectionFieldList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_section_fields",EntitySectionField.class, stmt);
-	             formSpecContainer.setEntitySectionFieldsData(entitySectionFieldList);
-	             
-	  		 	
-	             // workspecs 
-
-	 			List<WorkSpec> workSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_specs",WorkSpec.class, stmt);
-	 			workSpecContainer.setWorkSpecs(workSpecs);
-	 			
-	 			List<WorkSpecCustomerCallApi> workSpecCustomerCallApis = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_customer_call_apis",WorkSpecCustomerCallApi.class, stmt);
-	 			workSpecContainer.setWorkSpecCustomerCallApis(workSpecCustomerCallApis);
-	 			
-	 			List<NextWorkSpec> nextWorkSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_next_work_specs",NextWorkSpec.class, stmt);
-	 			workSpecContainer.setNextWorkSpecs(nextWorkSpecs);
-	 			
-	 			
-	 			List<NextActionSpec> nextActionSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_next_action_specs",NextActionSpec.class, stmt);
-	 			workSpecContainer.setNextActionSpecs(nextActionSpecs);
-	 			
-	 			
-	 			List<WorkActionSpec> workActionSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_action_specs",WorkActionSpec.class, stmt);
-	 			workSpecContainer.setWorkActionSpecs(workActionSpecs);
-	 			
-	 			
-	 			List<WorkSpecFormSpecMap> workSpecFormSpecMaps = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_spec_form_spec_maps",WorkSpecFormSpecMap.class, stmt);
-	 			workSpecContainer.setWorkSpecFormSpecMaps(workSpecFormSpecMaps);
-
-	 			
-	 			List<WorkActionSpecConditions> workActionSpecConditions = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_action_spec_conditions",WorkActionSpecConditions.class, stmt);
-	 			workSpecContainer.setWorkActionSpecConditions(workActionSpecConditions);
-
-	 			List<WorkActionSpecEndCondition> workActionSpecEndConditions = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_action_spec_conditions",WorkActionSpecEndCondition.class, stmt);
-	 			workSpecContainer.setWorkActionSpecEndConditions(workActionSpecEndConditions);
-	 			
-	 			List<WorkFormAutoFill> worksFormAutoFillStageConfig = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_form_auto_fill_action_config",WorkFormAutoFill.class, stmt);
-	 			workSpecContainer.setWorkFormAutoFillStageConfig(worksFormAutoFillStageConfig);
-	 			
-	 			List<WorkFormAutoFillField> workFormAutoFillFieldMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_form_auto_fill_field_mapping",WorkFormAutoFillField.class, stmt);
-	 			workSpecContainer.setWorkFormAutoFillFieldMapping(workFormAutoFillFieldMapping);
-
-	 			List<WorkAttachmentAutoFill> worksAttachmentFormAutoFillStageConfig = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_attchment_form_auto_fill_action_config",WorkAttachmentAutoFill.class, stmt);
-	 			workSpecContainer.setWorkAttachmentFormAutoFillStageConfig(worksAttachmentFormAutoFillStageConfig);
-
-	 			
-	 			List<WorkAttachmentFormAutoFillField> workAttachmentFormAutoFillFieldMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_attchment_form_auto_fill_field_mapping",WorkAttachmentFormAutoFillField.class, stmt);
-	 			workSpecContainer.setWorkAttachmentFormAutoFillFieldMapping(workAttachmentFormAutoFillFieldMapping);
-
-	 			List<WorkActionGroup> workActionGroups = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_specs_work_action_groups",WorkActionGroup.class, stmt);
-	 			workSpecContainer.setWorkActionGroups(workActionGroups);
-	 			
-	 			
-	 			List<FormToWorkAutoFill> formToWorkAutoFillStageConfig = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_form_to_work_auto_fill_action_config",FormToWorkAutoFill.class, stmt);
-	 			workSpecContainer.setFormToWorkAutoFillStageConfig(formToWorkAutoFillStageConfig);
-
-	 			List<FormToWorkAutoFillField> formToWorkAutoFillFieldMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_form_to_work_auto_fill_field_mapping",FormToWorkAutoFillField.class, stmt);
-	 			workSpecContainer.setFormToWorkAutoFillFieldMapping(formToWorkAutoFillFieldMapping);
-	 			
-	 			List<FormAutoFillSectionConfiguration> formAutoFillSectionConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_auto_fill_section_config",FormAutoFillSectionConfiguration.class, stmt);
-	 			workSpecContainer.setFormAutoFillSectionConfiguration(formAutoFillSectionConfigMapping);
-	 			
-	 			
-	 			List<FormAutoFillSectionFieldsConfiguration> formAutoFillSectionFieldsConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_auto_fill_section_fields_config",FormAutoFillSectionFieldsConfiguration.class, stmt);
-	 			workSpecContainer.setFormAutoFillSectionFieldsConfiguration(formAutoFillSectionFieldsConfigMapping);
-	 			
-	 			
-	 			List<AttachmnetFormAutoFillSectionConfiguration> attachmentFormAutoFillSectionConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM attachment_form_auto_fill_section_config",AttachmnetFormAutoFillSectionConfiguration.class, stmt);
-	 			workSpecContainer.setAttachmentFormAutoFillSectionConfiguration(attachmentFormAutoFillSectionConfigMapping);
-	 			
-	 			List<WorkAttachmentAutoFillSectionFieldsConfiguration> attachmentFormAutoFillSectionFieldsConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM attachment_form_auto_fill_section_fields_config",WorkAttachmentAutoFillSectionFieldsConfiguration.class, stmt);
-	 			workSpecContainer.setAttachmentFormAutoFillSectionFieldsConfiguration(attachmentFormAutoFillSectionFieldsConfigMapping);
-	 			
-	 			List<FormToWorkAutoFillSectionConfiguration> formToWorkAutoFillSectionConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_to_work_auto_fill_section_config",FormToWorkAutoFillSectionConfiguration.class, stmt);
-	 			workSpecContainer.setFormToWorkAutoFillSectionConfiguration(formToWorkAutoFillSectionConfigMapping);
-	 			
-	 			List<FormToWorkAutoFillSectionFieldsConfiguration> formToWorkAutoFillSectionFieldsConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_to_work_auto_fill_section_fields_config",FormToWorkAutoFillSectionFieldsConfiguration.class, stmt);
-	 			workSpecContainer.setFormToWorkAutoFillSectionFieldsConfiguration(formToWorkAutoFillSectionFieldsConfigMapping);
-	 			
-	 			List<WorkFieldsUniqueConfigurations> workFieldsUniqueConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_fields_unique_configurations",WorkFieldsUniqueConfigurations.class, stmt);
-	 			workSpecContainer.setWorkFieldsUniqueConfigurations(workFieldsUniqueConfigurations);
-	 			
-	 			List<WorkFieldsUniqueConfigurations> openWorkFieldsUniqueConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_open_work_fields_unique_configurations",WorkFieldsUniqueConfigurations.class, stmt);
-	 			workSpecContainer.setOpenWorkFieldsUniqueConfigurations(openWorkFieldsUniqueConfigurations);
-	 			
-	 			List<WorkReassignmentRules> workReassignmentRulesList = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_re_assignment_rules",WorkReassignmentRules.class, stmt);
-	 			workSpecContainer.setWorkReassignmentRules(workReassignmentRulesList);
-	 			
-	 			List<WorkSpecAppLabel> workSpecAppLabels = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_app_labels",WorkSpecAppLabel.class, stmt);
-	 			workSpecContainer.setWorkSpecAppLabels(workSpecAppLabels);
-	 			
-	 			List<WorkActionVisibilityConfiguration> workActionVisibilityConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_action_visibility_configuration",WorkActionVisibilityConfiguration.class, stmt);
-	 			workSpecContainer.setWorkActionVisibilityConfigurations(workActionVisibilityConfigurations);
-	 			
-	 			List<WorkProcessSubTaskSpec> workProcessSubTaskSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_process_sub_task_spec_configurations",WorkProcessSubTaskSpec.class, stmt);
-	 			workSpecContainer.setWorkProcessSubTaskSpecConfigurations(workProcessSubTaskSpecs);
-	  			
-	 			List<AddingSubTaskEmployeeConfiguration> workProcessSubTaskEmployeesConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_process_sub_task_employees_configurations",AddingSubTaskEmployeeConfiguration.class, stmt);
-	 			workSpecContainer.setWorkProcessSubTaskEmployeesConfigurations(workProcessSubTaskEmployeesConfigurations);
-	 			
-	 			List<WorkToSubTaskAutoFillConfiguration> workToSubTaskAutoFillConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_to_sub_task_auto_fill_configuration",WorkToSubTaskAutoFillConfiguration.class, stmt);
-	 			workSpecContainer.setWorkToSubTaskAutoFillConfigurations(workToSubTaskAutoFillConfigurations);
-	 			
-	 			List<HideAddSubTaskConfiguration> hideAddSubTaskConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM hide_add_sub_task_configurations",HideAddSubTaskConfiguration.class, stmt);
-	 			workSpecContainer.setHideAddSubTaskConfigurations(hideAddSubTaskConfigurations);
-	 			
-	 			List<WorkSpecPermission> workSpecPermissions = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_permissions",WorkSpecPermission.class, stmt);
-	 			workSpecContainer.setWorkSpecPermissions(workSpecPermissions);
-	  			
-	 			List<WorkUnassignmentCriterias> workUnassignmentCriterias = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_unassignment_criterias",WorkUnassignmentCriterias.class, stmt);
-	 			workSpecContainer.setWorkUnassignmentCriterias(workUnassignmentCriterias);
-	  			
-	 			List<WorkAssignmentCriteriaConditions> workAssignmentCriteriaConditions = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_assignment_criteria_conditions",WorkAssignmentCriteriaConditions.class, stmt);
-	 			workSpecContainer.setWorkAssignmentCriteriaConditions(workAssignmentCriteriaConditions);
-	  			
-	 			List<ExternalActionConfiguration> externalActionConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_action_spec_external_action_config",ExternalActionConfiguration.class, stmt);
-	 			workSpecContainer.setExternalActionConfigurations(externalActionConfigurations);
-	  			
-	 			List<WorkSpecListLevelVisibilityConfiguration> workSpecListLevelVisibilityConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_list_level_visibility_configurations",WorkSpecListLevelVisibilityConfiguration.class, stmt);
-	 			workSpecContainer.setWorkSpecListLevelVisibilityConfigurations(workSpecListLevelVisibilityConfigurations);
-	  			
-	  			
-	 			List<WorkActionFormVisibility> workActionFormVisibility = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_action_form_visibility",WorkActionFormVisibility.class, stmt);
-	 			workSpecContainer.setWorkActionFormVisibility(workActionFormVisibility);
-	 			
-	 			List<WorkSpecCustomDashboardMetric> workSpecCustomDashboardMetrics = fetchDataFromSqliteAndMapToBean("SELECT * FROM workSpec_custom_dashboard_metrics",WorkSpecCustomDashboardMetric.class, stmt);
-	 			workSpecContainer.setWorkSpecCustomDashboardMetrics(workSpecCustomDashboardMetrics);
-	 			
-	 			List<ActionableEmployeeGroupSpecs> actionableEmployeeGroupSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM actionable_employee_group_specs",ActionableEmployeeGroupSpecs.class, stmt);
-	 			workSpecContainer.setActionableEmployeeGroupSpecs(actionableEmployeeGroupSpecs);
-	 			
-	 			List<WorkActionNotificationEscalationMatrix> workActionNotificationEscalationMatrix = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_action_notification_escalation_matrix",WorkActionNotificationEscalationMatrix.class, stmt);
-	 			workSpecContainer.setWorkActionNotificationEscalationMatrix(workActionNotificationEscalationMatrix);
-	 			
-	 			
-	 			List<WorkActionExcalatedEmpIds> workActionExcalatedEmpIds = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_action_excalated_empIds",WorkActionExcalatedEmpIds.class, stmt);
-	 			workSpecContainer.setWorkActionExcalatedEmpIds(workActionExcalatedEmpIds);
-	 			
-	 			
-	 			List<WorkSpecCustomDashboardConfiguration> workSpecCustomDashboardConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_custom_dashboard_configurations",WorkSpecCustomDashboardConfiguration.class, stmt);
-	 			workSpecContainer.setWorkSpecCustomDashboardConfigurations(workSpecCustomDashboardConfigurations);
+	             fetchDataFromSqliteFile(formSpecContainer, workSpecContainer, stmt);
 	 			
 	 			
 	 			serviceManager.fetchDataAndInsertIntoDB(formSpecContainer,workSpecContainer,companyId,cloneEntityData);
@@ -1773,6 +1491,293 @@ public class SqliteManager {
 				LOGGER.info(" importDataFromSqlite Exception Occurred.. ");
 			}
 			
+		}
+
+		public void fetchDataFromSqliteFile(FormSpecContainer formSpecContainer, WorkSpecContainer workSpecContainer,
+				Statement stmt) {
+			List<ListFilteringCritiria> listFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_list_filtering_criterias",ListFilteringCritiria.class, stmt);
+			 formSpecContainer.setListFilteringCriterias(listFilteringCritiriaList);
+			 
+			 List<RemainderFieldsMap> remainderFieldsMap = fetchDataFromSqliteAndMapToBean("SELECT * FROM remainder_fields_map",RemainderFieldsMap.class, stmt);
+			 formSpecContainer.setRemainderFieldsMap(remainderFieldsMap);
+			
+
+			 List<FormSpecPermission> formSpecPermissionList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_spec_permissions",FormSpecPermission.class, stmt);
+			 formSpecContainer.setFormSpecPermissions(formSpecPermissionList);
+			 
+			
+
+			 List<FormSpecConfigSaveOnOtpVerify> formSpecConfigSaveOnOtpVerifyList = fetchDataFromSqliteAndMapToBean("SELECT * FROM save_form_on_otp_verify",FormSpecConfigSaveOnOtpVerify.class, stmt);
+			 formSpecContainer.setSaveFormOnOtpVerify(formSpecConfigSaveOnOtpVerifyList);
+			 
+			 
+			 List<CustomerAutoFilteringCritiria> customerAutoFilteringCritiriasList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_customer_auto_filtering_criterias",CustomerAutoFilteringCritiria.class, stmt);
+			 formSpecContainer.setCustomerAutoFilteringCritirias(customerAutoFilteringCritiriasList);
+
+			
+
+			 List<CustomerFilteringCritiria> customerFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_customer_filtering_criterias",CustomerFilteringCritiria.class, stmt);
+			 formSpecContainer.setCustomerFilteringCriterias(customerFilteringCritiriaList);
+			 
+			 
+			 
+			 List<EmployeeFilteringCritiria> employeeFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_employee_filtering_criterias",EmployeeFilteringCritiria.class, stmt);
+			 formSpecContainer.setEmployeeFilteringCriterias(employeeFilteringCritiriaList);
+			 
+			
+
+			 List<FormFilteringCritiria> formFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_form_filtering_criterias",FormFilteringCritiria.class, stmt);
+			 formSpecContainer.setFormFilteringCriterias(formFilteringCritiriaList);
+			
+
+			 List<FieldValidationCritiria> fieldValidationCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_validation_critirias",FieldValidationCritiria.class, stmt);
+			 formSpecContainer.setFieldValidationCritirias(fieldValidationCritiriaList);
+			 
+			 List<StockFormConfiguration> stockFormConfigurationList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_stock_form_configurations",StockFormConfiguration.class, stmt);
+			 formSpecContainer.setStockFormConfigurations(stockFormConfigurationList);
+			
+
+			 List<OfflineListUpdateConfiguration> offlineListUpdateConfigurationList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_offline_list_update_configurations",OfflineListUpdateConfiguration.class, stmt);
+			 formSpecContainer.setOfflineListUpdateConfigurations(offlineListUpdateConfigurationList);
+			
+
+			 List<OfflineCustomEntityUpdateConfiguration> offlineCustomEntityUpdateConfigurationsList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_offline_customEntity_update_configurations",OfflineCustomEntityUpdateConfiguration.class, stmt);
+			 formSpecContainer.setOfflineCustomEntityUpdateConfigurations(offlineCustomEntityUpdateConfigurationsList);
+			 
+			 List<FormSpecDataSource> formSpecDataSourceList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_form_spec_data_source",FormSpecDataSource.class, stmt);
+			 formSpecContainer.setFormSpecDataSource(formSpecDataSourceList);
+			
+
+			 List<JobFormMapBean> jobFormMapBeanList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_job_form_field_spec_mapping",JobFormMapBean.class, stmt);
+			 formSpecContainer.setJobFormMapBeans(jobFormMapBeanList);
+			
+
+			 List<WorkSpecFormSpecFollowUp> workSpecFormSpecFollowUp = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_workspec_formspec_follow_up",WorkSpecFormSpecFollowUp.class, stmt);
+			 formSpecContainer.setWorkSpecFormSpecFollowUp(workSpecFormSpecFollowUp);
+			
+			 List<WorkFormFieldMap> workFormFieldMaps = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_work_form_field_map",WorkFormFieldMap.class, stmt);
+			 formSpecContainer.setWorkFormFieldMap(workFormFieldMaps);
+			 
+			 List<DataSourceRequestParam> dataSourceRequestParamList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_data_source_request_params",DataSourceRequestParam.class, stmt);
+			 formSpecContainer.setDataSourceRequestParams(dataSourceRequestParamList);
+			 
+			 
+			 List<DataSourceRequestHeader> dataSourceRequestHeaderList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_data_source_request_headers",DataSourceRequestHeader.class, stmt);
+			 formSpecContainer.setDataSourceRequestHeaders(dataSourceRequestHeaderList);
+
+			
+			 List<DataSourceResponseMapping> dataSourceResponseMappingList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_data_source_response_mappings",DataSourceResponseMapping.class, stmt);
+			 formSpecContainer.setDataSourceResponseMappings(dataSourceResponseMappingList);
+
+			 List<FormFieldSpec> formFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_fields",FormFieldSpec.class, stmt);
+			 formSpecContainer.setFields(formFieldSpecList);
+
+			 List<FormSectionFieldSpec> formSectionFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_section_fields",FormSectionFieldSpec.class, stmt);
+			 formSpecContainer.setSectionFields(formSectionFieldSpecList);
+			 
+			 List<FormSpec> formSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_form_specs",FormSpec.class, stmt);
+			 formSpecContainer.setFormSpecs(formSpecList);
+
+			 List<FormPageSpec> formPageSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_page_specs",FormPageSpec.class, stmt);
+			 formSpecContainer.setPageSpecs(formPageSpecList);
+
+			 List<FormFieldSpecValidValue> formFieldSpecValidValueList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_valid_values",FormFieldSpecValidValue.class, stmt);
+			 formSpecContainer.setFieldValidValues(formFieldSpecValidValueList);
+
+			 List<FormSectionSpec> formSectionSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_sections",FormSectionSpec.class, stmt);
+			 formSpecContainer.setSections(formSectionSpecList);
+			 
+			 List<FormSectionFieldSpecValidValue> formSectionFieldSpecValidValueList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_section_field_valid_values",FormSectionFieldSpecValidValue.class, stmt);
+			 formSpecContainer.setSectionFieldValidValues(formSectionFieldSpecValidValueList);
+			 
+			 List<VisibilityDependencyCriteria> visibilityDependencyCriteriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_visibility_dependency_criterias",VisibilityDependencyCriteria.class, stmt);
+			 formSpecContainer.setVisibilityDependencyCriterias(visibilityDependencyCriteriaList);
+
+			 List<FormFieldsColorDependencyCriterias> formFieldsColorDependencyCriteriasList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_fields_Color_dependency_criterias",FormFieldsColorDependencyCriterias.class, stmt);
+			 formSpecContainer.setFormFieldsColorDependencyCriterias(formFieldsColorDependencyCriteriasList);
+
+			 List<FormCleanUpRule> formCleanUpRuleList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_clean_up_rules",FormCleanUpRule.class, stmt);
+			 formSpecContainer.setFormCleanUpRule(formCleanUpRuleList);
+
+			 List<FormFieldGroupSpec> formFieldGroupSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_field_group_specs",FormFieldGroupSpec.class, stmt);
+			 formSpecContainer.setFormFieldGroupSpecs(formFieldGroupSpecs);
+
+			 List<FormFieldSpecsExtra> formFieldSpecExtraList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_field_specs_extra",FormFieldSpecsExtra.class, stmt);
+			 formSpecContainer.setFieldsExtra(formFieldSpecExtraList);
+			
+			 List<FormSectionFieldSpecsExtra> formSectionFieldSpecExtraList = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_section_field_specs_extra",FormSectionFieldSpecsExtra.class, stmt);
+			 formSpecContainer.setSectionFieldsExtra(formSectionFieldSpecExtraList);
+			
+			 List<CustomEntityFilteringCritiria> customEntityFilteringCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_custom_entity_filtering_criterias",CustomEntityFilteringCritiria.class, stmt);
+			 formSpecContainer.setCustomEntityFilteringCritirias(customEntityFilteringCritiriaList);
+			 
+			 // here...
+			 
+			 List<EntitySpec> entitySpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_entity_specs",EntitySpec.class, stmt);
+			 formSpecContainer.setEntitySpecs(entitySpecList);
+
+			 List<EntityFieldSpec> entityFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_fields",EntityFieldSpec.class, stmt);
+			 formSpecContainer.setEntityFields(entityFieldSpecList);
+			
+			 List<EntitySectionSpec> entitySectionSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_sections_specs",EntitySectionSpec.class, stmt);
+			 formSpecContainer.setEntitySections(entitySectionSpecList);
+			
+			 List<EntitySectionFieldSpec> entitySectionFieldSpecList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_specs_sections_fields",EntitySectionFieldSpec.class, stmt);
+			 formSpecContainer.setEntitySectionFields(entitySectionFieldSpecList);
+			 
+			 
+			 List<CustomEntitySpec> customEntitySpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM custom_entity_spec",CustomEntitySpec.class, stmt);
+			 formSpecContainer.setCustomEntitySpecs(customEntitySpecs);
+			 
+			 // here...
+			 
+			 List<Entity> entityAddedList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_added",Entity.class, stmt);
+			 formSpecContainer.setEntities(entityAddedList);
+			 
+			
+			 List<EntityField> entityFieldList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_fields",EntityField.class, stmt);
+			 formSpecContainer.setEntityFieldsData(entityFieldList);
+			 
+			
+			 List<EntitySectionField> entitySectionFieldList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_section_fields",EntitySectionField.class, stmt);
+			 formSpecContainer.setEntitySectionFieldsData(entitySectionFieldList);
+			 
+			
+			 // workspecs 
+
+			List<WorkSpec> workSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_specs",WorkSpec.class, stmt);
+			workSpecContainer.setWorkSpecs(workSpecs);
+			
+			List<WorkSpecCustomerCallApi> workSpecCustomerCallApis = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_customer_call_apis",WorkSpecCustomerCallApi.class, stmt);
+			workSpecContainer.setWorkSpecCustomerCallApis(workSpecCustomerCallApis);
+			
+			List<NextWorkSpec> nextWorkSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_next_work_specs",NextWorkSpec.class, stmt);
+			workSpecContainer.setNextWorkSpecs(nextWorkSpecs);
+			
+			
+			List<NextActionSpec> nextActionSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_next_action_specs",NextActionSpec.class, stmt);
+			workSpecContainer.setNextActionSpecs(nextActionSpecs);
+			
+			
+			List<WorkActionSpec> workActionSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_action_specs",WorkActionSpec.class, stmt);
+			workSpecContainer.setWorkActionSpecs(workActionSpecs);
+			
+			
+			List<WorkSpecFormSpecMap> workSpecFormSpecMaps = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_spec_form_spec_maps",WorkSpecFormSpecMap.class, stmt);
+			workSpecContainer.setWorkSpecFormSpecMaps(workSpecFormSpecMaps);
+
+			
+			List<WorkActionSpecConditions> workActionSpecConditions = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_action_spec_conditions",WorkActionSpecConditions.class, stmt);
+			workSpecContainer.setWorkActionSpecConditions(workActionSpecConditions);
+
+			List<WorkActionSpecEndCondition> workActionSpecEndConditions = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_action_spec_conditions",WorkActionSpecEndCondition.class, stmt);
+			workSpecContainer.setWorkActionSpecEndConditions(workActionSpecEndConditions);
+			
+			List<WorkFormAutoFill> worksFormAutoFillStageConfig = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_form_auto_fill_action_config",WorkFormAutoFill.class, stmt);
+			workSpecContainer.setWorkFormAutoFillStageConfig(worksFormAutoFillStageConfig);
+			
+			List<WorkFormAutoFillField> workFormAutoFillFieldMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_form_auto_fill_field_mapping",WorkFormAutoFillField.class, stmt);
+			workSpecContainer.setWorkFormAutoFillFieldMapping(workFormAutoFillFieldMapping);
+
+			List<WorkAttachmentAutoFill> worksAttachmentFormAutoFillStageConfig = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_attchment_form_auto_fill_action_config",WorkAttachmentAutoFill.class, stmt);
+			workSpecContainer.setWorkAttachmentFormAutoFillStageConfig(worksAttachmentFormAutoFillStageConfig);
+
+			
+			List<WorkAttachmentFormAutoFillField> workAttachmentFormAutoFillFieldMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_attchment_form_auto_fill_field_mapping",WorkAttachmentFormAutoFillField.class, stmt);
+			workSpecContainer.setWorkAttachmentFormAutoFillFieldMapping(workAttachmentFormAutoFillFieldMapping);
+
+			List<WorkActionGroup> workActionGroups = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_specs_work_action_groups",WorkActionGroup.class, stmt);
+			workSpecContainer.setWorkActionGroups(workActionGroups);
+			
+			
+			List<FormToWorkAutoFill> formToWorkAutoFillStageConfig = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_form_to_work_auto_fill_action_config",FormToWorkAutoFill.class, stmt);
+			workSpecContainer.setFormToWorkAutoFillStageConfig(formToWorkAutoFillStageConfig);
+
+			List<FormToWorkAutoFillField> formToWorkAutoFillFieldMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_form_to_work_auto_fill_field_mapping",FormToWorkAutoFillField.class, stmt);
+			workSpecContainer.setFormToWorkAutoFillFieldMapping(formToWorkAutoFillFieldMapping);
+			
+			List<FormAutoFillSectionConfiguration> formAutoFillSectionConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_auto_fill_section_config",FormAutoFillSectionConfiguration.class, stmt);
+			workSpecContainer.setFormAutoFillSectionConfiguration(formAutoFillSectionConfigMapping);
+			
+			
+			List<FormAutoFillSectionFieldsConfiguration> formAutoFillSectionFieldsConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_auto_fill_section_fields_config",FormAutoFillSectionFieldsConfiguration.class, stmt);
+			workSpecContainer.setFormAutoFillSectionFieldsConfiguration(formAutoFillSectionFieldsConfigMapping);
+			
+			
+			List<AttachmnetFormAutoFillSectionConfiguration> attachmentFormAutoFillSectionConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM attachment_form_auto_fill_section_config",AttachmnetFormAutoFillSectionConfiguration.class, stmt);
+			workSpecContainer.setAttachmentFormAutoFillSectionConfiguration(attachmentFormAutoFillSectionConfigMapping);
+			
+			List<WorkAttachmentAutoFillSectionFieldsConfiguration> attachmentFormAutoFillSectionFieldsConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM attachment_form_auto_fill_section_fields_config",WorkAttachmentAutoFillSectionFieldsConfiguration.class, stmt);
+			workSpecContainer.setAttachmentFormAutoFillSectionFieldsConfiguration(attachmentFormAutoFillSectionFieldsConfigMapping);
+			
+			List<FormToWorkAutoFillSectionConfiguration> formToWorkAutoFillSectionConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_to_work_auto_fill_section_config",FormToWorkAutoFillSectionConfiguration.class, stmt);
+			workSpecContainer.setFormToWorkAutoFillSectionConfiguration(formToWorkAutoFillSectionConfigMapping);
+			
+			List<FormToWorkAutoFillSectionFieldsConfiguration> formToWorkAutoFillSectionFieldsConfigMapping = fetchDataFromSqliteAndMapToBean("SELECT * FROM form_to_work_auto_fill_section_fields_config",FormToWorkAutoFillSectionFieldsConfiguration.class, stmt);
+			workSpecContainer.setFormToWorkAutoFillSectionFieldsConfiguration(formToWorkAutoFillSectionFieldsConfigMapping);
+			
+			List<WorkFieldsUniqueConfigurations> workFieldsUniqueConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_fields_unique_configurations",WorkFieldsUniqueConfigurations.class, stmt);
+			workSpecContainer.setWorkFieldsUniqueConfigurations(workFieldsUniqueConfigurations);
+			
+			List<WorkFieldsUniqueConfigurations> openWorkFieldsUniqueConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_open_work_fields_unique_configurations",WorkFieldsUniqueConfigurations.class, stmt);
+			workSpecContainer.setOpenWorkFieldsUniqueConfigurations(openWorkFieldsUniqueConfigurations);
+			
+			List<WorkReassignmentRules> workReassignmentRulesList = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_re_assignment_rules",WorkReassignmentRules.class, stmt);
+			workSpecContainer.setWorkReassignmentRules(workReassignmentRulesList);
+			
+			List<WorkSpecAppLabel> workSpecAppLabels = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_app_labels",WorkSpecAppLabel.class, stmt);
+			workSpecContainer.setWorkSpecAppLabels(workSpecAppLabels);
+			
+			List<WorkActionVisibilityConfiguration> workActionVisibilityConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_action_visibility_configuration",WorkActionVisibilityConfiguration.class, stmt);
+			workSpecContainer.setWorkActionVisibilityConfigurations(workActionVisibilityConfigurations);
+			
+			List<WorkProcessSubTaskSpec> workProcessSubTaskSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_process_sub_task_spec_configurations",WorkProcessSubTaskSpec.class, stmt);
+			workSpecContainer.setWorkProcessSubTaskSpecConfigurations(workProcessSubTaskSpecs);
+			
+			List<AddingSubTaskEmployeeConfiguration> workProcessSubTaskEmployeesConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_process_sub_task_employees_configurations",AddingSubTaskEmployeeConfiguration.class, stmt);
+			workSpecContainer.setWorkProcessSubTaskEmployeesConfigurations(workProcessSubTaskEmployeesConfigurations);
+			
+			List<WorkToSubTaskAutoFillConfiguration> workToSubTaskAutoFillConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_to_sub_task_auto_fill_configuration",WorkToSubTaskAutoFillConfiguration.class, stmt);
+			workSpecContainer.setWorkToSubTaskAutoFillConfigurations(workToSubTaskAutoFillConfigurations);
+			
+			List<HideAddSubTaskConfiguration> hideAddSubTaskConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM hide_add_sub_task_configurations",HideAddSubTaskConfiguration.class, stmt);
+			workSpecContainer.setHideAddSubTaskConfigurations(hideAddSubTaskConfigurations);
+			
+			List<WorkSpecPermission> workSpecPermissions = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_permissions",WorkSpecPermission.class, stmt);
+			workSpecContainer.setWorkSpecPermissions(workSpecPermissions);
+			
+			List<WorkUnassignmentCriterias> workUnassignmentCriterias = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_unassignment_criterias",WorkUnassignmentCriterias.class, stmt);
+			workSpecContainer.setWorkUnassignmentCriterias(workUnassignmentCriterias);
+			
+			List<WorkAssignmentCriteriaConditions> workAssignmentCriteriaConditions = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_assignment_criteria_conditions",WorkAssignmentCriteriaConditions.class, stmt);
+			workSpecContainer.setWorkAssignmentCriteriaConditions(workAssignmentCriteriaConditions);
+			
+			List<ExternalActionConfiguration> externalActionConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_action_spec_external_action_config",ExternalActionConfiguration.class, stmt);
+			workSpecContainer.setExternalActionConfigurations(externalActionConfigurations);
+			
+			List<WorkSpecListLevelVisibilityConfiguration> workSpecListLevelVisibilityConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_list_level_visibility_configurations",WorkSpecListLevelVisibilityConfiguration.class, stmt);
+			workSpecContainer.setWorkSpecListLevelVisibilityConfigurations(workSpecListLevelVisibilityConfigurations);
+			
+			
+			List<WorkActionFormVisibility> workActionFormVisibility = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_action_form_visibility",WorkActionFormVisibility.class, stmt);
+			workSpecContainer.setWorkActionFormVisibility(workActionFormVisibility);
+			
+			List<WorkSpecCustomDashboardMetric> workSpecCustomDashboardMetrics = fetchDataFromSqliteAndMapToBean("SELECT * FROM workSpec_custom_dashboard_metrics",WorkSpecCustomDashboardMetric.class, stmt);
+			workSpecContainer.setWorkSpecCustomDashboardMetrics(workSpecCustomDashboardMetrics);
+			
+			List<ActionableEmployeeGroupSpecs> actionableEmployeeGroupSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM actionable_employee_group_specs",ActionableEmployeeGroupSpecs.class, stmt);
+			workSpecContainer.setActionableEmployeeGroupSpecs(actionableEmployeeGroupSpecs);
+			
+			List<WorkActionNotificationEscalationMatrix> workActionNotificationEscalationMatrix = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_action_notification_escalation_matrix",WorkActionNotificationEscalationMatrix.class, stmt);
+			workSpecContainer.setWorkActionNotificationEscalationMatrix(workActionNotificationEscalationMatrix);
+			
+			
+			List<WorkActionExcalatedEmpIds> workActionExcalatedEmpIds = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_action_excalated_empIds",WorkActionExcalatedEmpIds.class, stmt);
+			workSpecContainer.setWorkActionExcalatedEmpIds(workActionExcalatedEmpIds);
+			
+			
+			List<WorkSpecCustomDashboardConfiguration> workSpecCustomDashboardConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_custom_dashboard_configurations",WorkSpecCustomDashboardConfiguration.class, stmt);
+			workSpecContainer.setWorkSpecCustomDashboardConfigurations(workSpecCustomDashboardConfigurations);
 		}
 
 		
