@@ -205,34 +205,32 @@ public class ServiceManager
 				}
 				
 				
-				formSpecContainer.setFormSpecs(formSpecs);
-				formSpecContainer.setPageSpecs(pageSpecs);
-				formSpecContainer.setFields(fieldSpecs);
-				formSpecContainer.setFieldsExtra(fieldSpecsExtra);
-				formSpecContainer.setFieldValidValues(fieldSpecValidValues);
-				formSpecContainer.setSections(sectionSpecs);
-				formSpecContainer.setSectionFields(sectionFieldSpecs);
-				formSpecContainer.setSectionFieldsExtra(sectionFieldSpecsExtra);
-				formSpecContainer.setSectionFieldValidValues(sectionFieldSpecValidValues);
-				formSpecContainer.setFormFieldGroupSpecs(formFieldGroupSpecs);
-				formSpecContainer.setVisibilityDependencyCriterias(visibilityDependencyCriterias);
-				formSpecContainer.setFormFieldsColorDependencyCriterias(formFieldsColorDependencyCriterias);
-				formSpecContainer.setFormCleanUpRule(formCleanUpRule);
-				formSpecContainer.setListFilteringCriterias(lisFilteringCritirias);
-				formSpecContainer.setRemainderFieldsMap(remainderFieldsMap);
-				formSpecContainer.setCustomerAutoFilteringCritirias(customerAutoFilteringCritirias);
-				formSpecContainer.setCustomerFilteringCriterias(customerFilteringCritirias);
-				formSpecContainer.setEmployeeFilteringCriterias(employeeFilteringCritirias);
-				formSpecContainer.setFieldValidationCritirias(fieldValidationCritirias);
-				formSpecContainer.setFormFilteringCriterias(formFilteringCritirias);
-				formSpecContainer.setCustomEntityFilteringCritirias(customEntityFilteringCritirias);
-				formSpecContainer.setStockFormConfigurations(stockFormConfigurations);
-				formSpecContainer.setOfflineListUpdateConfigurations(offlineListUpdateConfiguration);
-				formSpecContainer.setOfflineCustomEntityUpdateConfigurations(offlineCustomEntityUpdateConfiguration);
-				formSpecContainer.setFormFieldSpecFilters(formFieldSpecFilters);
-				formSpecContainer.setFormSectionFieldSpecFilters(formSectionFieldSpecFilters);
-				formSpecContainer.setPaymentMappings(paymentMappings);
-				formSpecContainer.setFormSpecDataSource(formSpecDataSource);
+				formSpecContainer.getFormSpecs().addAll(formSpecs);
+				formSpecContainer.getPageSpecs().addAll(pageSpecs);
+				formSpecContainer.getFields().addAll(fieldSpecs);
+				formSpecContainer.getFieldsExtra().addAll(fieldSpecsExtra);
+				formSpecContainer.getFieldValidValues().addAll(fieldSpecValidValues);
+				formSpecContainer.getSections().addAll(sectionSpecs);
+				formSpecContainer.getSectionFields().addAll(sectionFieldSpecs);
+				formSpecContainer.getSectionFieldsExtra().addAll(sectionFieldSpecsExtra);
+				formSpecContainer.getSectionFieldValidValues().addAll(sectionFieldSpecValidValues);
+				formSpecContainer.getFormFieldGroupSpecs().addAll(formFieldGroupSpecs);
+				formSpecContainer.getVisibilityDependencyCriterias().addAll(visibilityDependencyCriterias);
+				formSpecContainer.getFormFieldsColorDependencyCriterias().addAll(formFieldsColorDependencyCriterias);//
+				formSpecContainer.getListFilteringCriterias().addAll(lisFilteringCritirias);
+				formSpecContainer.getRemainderFieldsMap().addAll(remainderFieldsMap);
+				formSpecContainer.getCustomerAutoFilteringCritirias().addAll(customerAutoFilteringCritirias);
+				formSpecContainer.getCustomerFilteringCriterias().addAll(customerFilteringCritirias);
+				formSpecContainer.getEmployeeFilteringCriterias().addAll(employeeFilteringCritirias);
+				formSpecContainer.getFieldValidationCritirias().addAll(fieldValidationCritirias);
+				formSpecContainer.getFormFilteringCriterias().addAll(formFilteringCritirias);
+				formSpecContainer.getCustomEntityFilteringCritirias().addAll(customEntityFilteringCritirias);
+				formSpecContainer.getStockFormConfigurations().addAll(stockFormConfigurations);
+				formSpecContainer.getOfflineListUpdateConfigurations().addAll(offlineListUpdateConfiguration);
+				formSpecContainer.getOfflineCustomEntityUpdateConfigurations().addAll(offlineCustomEntityUpdateConfiguration);
+				formSpecContainer.getFormFieldSpecFilters().addAll(formFieldSpecFilters);
+				formSpecContainer.getFormSectionFieldSpecFilters().addAll(formSectionFieldSpecFilters);
+				formSpecContainer.getPaymentMappings().addAll(paymentMappings);
 				
 				String formSpecDataSourceIds = "-1";
 				if(formSpecDataSource != null && !formSpecDataSource.isEmpty()){
@@ -3155,17 +3153,36 @@ public class ServiceManager
 		// 
 		Map<Long,Long> entityIdsMap = new HashMap<Long,Long>();
 		
-		for(Entity entity : entities) {
-			if(entitySpecsMap.get(entity.getEntitySpecId()) == null){
-				Long oldEntityId = entity.getEntityId();
-				long entitySpecId = entitySpecsIdMap.get(entity
-						.getEntitySpecId());
-				entity.setEntitySpecId(entitySpecId);
-				entity.setClientSideId(null);
-				long entityId = effortDao.insertEntity(entity,webUser.getCompanyId(),webUser.getEmpId(),null);
-				entityIdsMap.put(oldEntityId, entityId);
-			}
+		/*for(Entity entity : entities) {
+		if(entitySpecsMap.get(entity.getEntitySpecId()) == null){
+			Long oldEntityId = entity.getEntityId();
+			
+			Long entitySpecId = entitySpecsIdMap.get(entity
+					.getEntitySpecId());
+			entity.setEntitySpecId(entitySpecId);
+			entity.setClientSideId(null);
+			long entityId = effortDao.insertEntity(entity,webUser.getCompanyId(),webUser.getEmpId(),null);
+			entityIdsMap.put(oldEntityId, entityId);
 		}
+	}*/
+	for (Entity entity : entities) {
+	    if (entitySpecsMap.get(entity.getEntitySpecId()) == null) {
+	        Long oldEntityId = entity.getEntityId();
+	        Long entitySpecId = entitySpecsIdMap.get(entity.getEntitySpecId());
+	        if (entitySpecId == null) {
+	            LOGGER.warn("Skipping entity because entitySpecId mapping is null -> entity.getEntitySpecId(): {}, map keys: {}",
+	                        entity.getEntitySpecId(), entitySpecsIdMap.keySet());
+	            continue;
+	        }
+	        entity.setEntitySpecId(entitySpecId);
+	        entity.setClientSideId(null);
+
+	        long entityId = effortDao.insertEntity(
+	            entity, webUser.getCompanyId(), webUser.getEmpId(), null
+	        );
+	        entityIdsMap.put(oldEntityId, entityId);
+	    }
+	}
 		
 		for(EntityField entityField : entityFields) {
 			if(entityIdsMap.get(entityField.getEntityId()) != null){

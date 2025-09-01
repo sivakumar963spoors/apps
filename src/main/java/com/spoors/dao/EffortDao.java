@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -201,11 +202,17 @@ public class EffortDao {
 	}
 
 	public List<FormCleanUpRule> getFormDataCleanUpRulesForFormSpecId(String formSpecIds) {
-		String sql = Sqls.SELECT_FORM_CLEAN_UP_RULES_BY_FORM_SPEC_ID.replace(":formSpecIds", formSpecIds);;
-		return jdbcTemplate.query(sql,new BeanPropertyRowMapper<FormCleanUpRule>(FormCleanUpRule.class));
+	    if (formSpecIds == null || formSpecIds.trim().isEmpty()) {
+	        return Collections.emptyList();
+	    }
+	    String sql = Sqls.SELECT_FORM_CLEAN_UP_RULES_BY_FORM_SPEC_ID.replace(":formSpecIds", formSpecIds);
+	    return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(FormCleanUpRule.class));
 	}
 
 	public List<FormFieldsColorDependencyCriterias> getFormFieldsColorDependencyCriteriasByFormSpecId(String formSpecIds) {
+		if (formSpecIds == null || formSpecIds.trim().isEmpty()) {
+	        return Collections.emptyList();
+	    }
 		String sql = Sqls.SELECT_FORM_FIELDS_COLOR_DEPENDENCY_CRITERIAS.replace(":formSpecIds", formSpecIds);
 		List<FormFieldsColorDependencyCriterias> colorDependencies = jdbcTemplate.query(sql,
 				new BeanPropertyRowMapper<FormFieldsColorDependencyCriterias>(FormFieldsColorDependencyCriterias.class));
@@ -226,6 +233,10 @@ public class EffortDao {
 	}
 
 	public List<FormFieldGroupSpec> getFormFieldGroupSpecForIn(String formSpecIds) {
+	    if (formSpecIds == null || formSpecIds.trim().isEmpty()) {
+	        return Collections.emptyList(); 
+	    }
+
 		String sql = Sqls.SELECT_FORM_FIELD_GROUP_SPECS_IN.replace(":ids", formSpecIds);
 		List<FormFieldGroupSpec> formFieldGroupSpecs = jdbcTemplate.query(sql,
 				new BeanPropertyRowMapper<FormFieldGroupSpec>(FormFieldGroupSpec.class));
@@ -465,6 +476,9 @@ public class EffortDao {
 	}
 
 	public List<FieldSpecFilter> getFieldSpecFiltersFormFormSpecIds(String formSpecIds, int formfieldType) {
+		if (formSpecIds == null || formSpecIds.trim().isEmpty()) {
+	        return Collections.emptyList(); // safe exit
+	    }
 		String sql = "";
 		if (formfieldType == FieldSpecFilter.FIELD_IS_FORMFIELD) {
 			sql = Sqls.SELECT_FORM_FIELD_SPEC_FILTERS_FORMSPECIDS.replace(":formSpecIds", formSpecIds);
@@ -477,6 +491,9 @@ public class EffortDao {
 	}
 
 	public List<PaymentMapping> getPaymentMappingByFormSpec(String uniqueIds) {
+		   if (uniqueIds == null || uniqueIds.trim().isEmpty()) {
+		        return Collections.emptyList();
+		    }
 		List<PaymentMapping> paymentMappings=new ArrayList<PaymentMapping>();
 		String sql = Sqls.SELECT_PAYMENT_MAPPINGS_BY_FORMSPEC.replace(":formSpecUniqueIds", uniqueIds);
 		

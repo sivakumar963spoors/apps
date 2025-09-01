@@ -101,14 +101,15 @@ public class FormSpecContainer {
 		this.formSpecs = new ArrayList<FormSpec>();
 		this.fields = new ArrayList<FormFieldSpec>();
 		this.fieldValidValues = new ArrayList<FormFieldSpecValidValue>();
-		
+		this.pageSpecs = new ArrayList<FormPageSpec>();
 		this.sections = new ArrayList<FormSectionSpec>();
 		this.sectionFields = new ArrayList<FormSectionFieldSpec>();
 		this.sectionFieldValidValues = new ArrayList<FormSectionFieldSpecValidValue>();
-		
+		this.formFieldGroupSpecs = new ArrayList<FormFieldGroupSpec>();		
 		this.listFilteringCriterias=new ArrayList<ListFilteringCritiria>();
 		this.visibilityDependencyCriterias=new ArrayList<VisibilityDependencyCriteria>();
-		this.jobFormMapBeans=new ArrayList<JobFormMapBean>();
+		this.formFieldsColorDependencyCriterias=new ArrayList<FormFieldsColorDependencyCriterias>();
+		this.jobFormMapBeans=new ArrayList<JobFormMapBean>();  
 		this.workSpecFormSpecFollowUp=new ArrayList<WorkSpecFormSpecFollowUp>();
 		this.workFormFieldMap=new ArrayList<WorkFormFieldMap>();
 		this.paymentMappings=new ArrayList<PaymentMapping>();
@@ -123,11 +124,16 @@ public class FormSpecContainer {
 		this.fieldsExtra = new ArrayList<FormFieldSpecsExtra>();
 		this.sectionFieldsExtra = new ArrayList<FormSectionFieldSpecsExtra>();
 		this.remainderFieldsMap = new ArrayList<RemainderFieldsMap>();
+		this.customerFilteringCriterias = new ArrayList<CustomerFilteringCritiria>();
+		this.customerAutoFilteringCritirias = new ArrayList<CustomerAutoFilteringCritiria>();
+		this.employeeFilteringCriterias = new ArrayList<EmployeeFilteringCritiria>();
 		this.customEntitySpecs = new ArrayList<CustomEntitySpec>();
 		this.entities= new ArrayList<Entity>();
 		this.entityFieldsData = new ArrayList<EntityField>();
 		this.entitySectionFieldsData = new ArrayList<EntitySectionField>();
 		this.fieldValidations = new ArrayList<FieldValidation>();
+		this.customEntityFilteringCritirias = new ArrayList<CustomEntityFilteringCritiria>();
+		this.offlineCustomEntityUpdateConfigurations = new ArrayList<OfflineCustomEntityUpdateConfiguration>();
 //		this.fieldTypes = new ArrayList<FormFieldType>();
 	}
 

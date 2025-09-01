@@ -155,7 +155,8 @@ public class SqliteManager {
 
 		Media media = new Media();
 		String sqliteName = "exportSqlite_"+System.currentTimeMillis();
-		FormSpec formSpecObj = formSpecContainer.getFormSpecs().get(0);
+	    FormSpec  formSpecObj = formSpecContainer.getFormSpecs().get(0);// here i am getting null value
+
 		Long currentTime = System.currentTimeMillis();
 
 		String sqliteFileName = sqliteName+ ".sqlite"; /// syncSqlitePath.substring(syncSqlitePath.lastIndexOf("/")+1);
