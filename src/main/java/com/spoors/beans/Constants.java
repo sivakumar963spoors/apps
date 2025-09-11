@@ -51,6 +51,9 @@ public class Constants implements Serializable{
 	
 	public static final int FORM_FIELD_TYPE_RICH_TEXT = 35;
 	
+	public static final int FORM_FIELD_TYPE_MULTIPICK_CUSTOM_ENTITY = 49;
+	public static final int FORM_FIELD_TYPE_BUTTON_GROUPING = 50;
+	
 	@Value("${mediaStoragePath}")
 	private String mediaStoragePath;
 

@@ -999,6 +999,8 @@ public class EffortDao {
 				ps.setBoolean(49, formSpec.isRemoveBlankLines());
 				ps.setString(50, formSpec.getDynamicSaveButton());
 				ps.setString(51, formSpec.getDynamicSuccessMessage());
+				formSpec.setEnableCustomerActivity(true); 
+				ps.setBoolean(53, true);
 				//ps.setBoolean(47, formSpec.isEnableDraftFormForMobile());
 
 				return ps;

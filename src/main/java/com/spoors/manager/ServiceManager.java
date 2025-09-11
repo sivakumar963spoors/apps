@@ -586,7 +586,6 @@ public class ServiceManager
 		List<EntitySpec> entitySpecs = new ArrayList<EntitySpec>();
 		
 		List<CustomEntitySpec> customEntitySpecs = new ArrayList<CustomEntitySpec>();
-
 		if (formFieldSpecs != null) {
 			for (FormFieldSpec formFieldSpec : formFieldSpecs) {
 				if ((formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST
@@ -620,7 +619,14 @@ public class ServiceManager
 							}
 						}
 					}
-				}else if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY && !Api.isEmptyString(formFieldSpec.getFieldTypeExtraCustomEntity())) {
+				}
+				else if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_FORM
+			            && !Api.isEmptyString(formFieldSpec.getFieldTypeExtraForm())) {
+			        Set<String> innerFormSpecUniqueIds = new HashSet<>();
+			        innerFormSpecUniqueIds.add(formFieldSpec.getFieldTypeExtraForm());
+			        getExportFormSpecData(innerFormSpecUniqueIds, formSpecContainer);
+			    }
+				else if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY && !Api.isEmptyString(formFieldSpec.getFieldTypeExtraCustomEntity())) {
 					if(!customEntitySpecIdsMap.containsKey(formFieldSpec.getFieldTypeExtraCustomEntity()))
 					{
 						CustomEntitySpec customEntitySpecTemp = customEntitySpecsMap.get(Long
@@ -714,7 +720,6 @@ public class ServiceManager
 				}
 			}
 		}
-		
 		List<EntityFieldSpec> entityFieldSpecs = getEntityFieldSpecsIn(entitySpecs);
 		// Map<Long, Long> entityFieldSpecsIdMap = new HashMap<Long, Long>();
 
@@ -856,6 +861,7 @@ public class ServiceManager
 		}
 		formSpec.setIsPublic(true);
 		formSpec.setAllAccess(true);
+		formSpec.setEnableCustomerActivity(true);
 		effortDao.insertFormSpec(formSpec, webUser.getCompanyId(),
 				webUser.getEmpId());
 		FormSpec formSpecForUniqueId = getFormSpec(formSpec.getFormSpecId()
@@ -1012,7 +1018,8 @@ public class ServiceManager
 					}
 					
 				}
-				if (formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY) {
+				if (formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY||
+				formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_CUSTOM_ENTITY){
 					if (!Api.isEmptyString(formSectionFieldSpec.getFieldTypeExtraCustomEntity())) {
 						CustomEntitySpec customEntitySpec = companyCustomEntitySpecsMap
 								.get(Long.parseLong(formSectionFieldSpec.getFieldTypeExtraCustomEntity()));
@@ -2543,7 +2550,8 @@ public class ServiceManager
 		
 		List<FormFieldGroupSpec> formFieldGroupSpecs = formSpecContainer.getFormFieldGroupSpecs();
 		List<FormSectionFieldSpec> formSectionFieldSpecs = formSpecContainer.getSectionFields();
-		
+		LOGGER.info("formFieldSpecs size: " + (formFieldSpecs != null ? formFieldSpecs.size() : "null"));
+		LOGGER.info("formSectionFieldSpecs size: " + (formSectionFieldSpecs != null ? formSectionFieldSpecs.size() : "null"));
 		List<FormFieldSpecValidValue> formFieldSpecValidValues = formSpecContainer.getFieldValidValues();
 
 		List<FormSectionFieldSpecValidValue> formSectionFieldSpecValidValues = formSpecContainer
@@ -2610,7 +2618,8 @@ public class ServiceManager
 				boolean visible = formFieldSpec.getIsVisible();
 				String oldFieldSpecUniqueId = formFieldSpec.getUniqueId();
 				if ((formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST
-						|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST)
+						|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST 
+						|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_BUTTON_GROUPING)
 						&& !Api.isEmptyString(formFieldSpec.getFieldTypeExtra())) {
 					if (entitySpecsIdMap.size() > 0) {
 						Long entitySpecId = entitySpecsIdMap.get(Long
@@ -2618,9 +2627,9 @@ public class ServiceManager
 						formFieldSpec.setFieldTypeExtra(entitySpecId + "");
 					}
 				}
-				
-				if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY
-						&& !Api.isEmptyString(formFieldSpec.getFieldTypeExtraCustomEntity())) {
+				if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY || 
+					     formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_CUSTOM_ENTITY 
+					    && !Api.isEmptyString(formFieldSpec.getFieldTypeExtraCustomEntity())) {
 					if (formFieldSpec.getFieldTypeExtraCustomEntity() != null) {
 						String fieldTypeExtraCustomEntity =  customEntitySpecIdsMap.get(formFieldSpec.getFieldTypeExtraCustomEntity());
 						if (fieldTypeExtraCustomEntity != null) {
@@ -2628,8 +2637,8 @@ public class ServiceManager
 						}
 					}
 
-				}
-				 
+				}//Grk -1
+				
 				if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_DATE_TIME) {
 					if(!Api.isEmptyString(formFieldSpec.getRemainderRemarksFields())) {
 						List<String> remainderFields = Api.csvToList(formFieldSpec.getRemainderRemarksFields());
@@ -2730,7 +2739,8 @@ public class ServiceManager
 				long sectionSpecId = formSectionSpecsIdMap
 						.get(formSectionFieldSpec.getSectionSpecId());
 				if (formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST
-						|| formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST) {
+						|| formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST
+						|| formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_BUTTON_GROUPING) {
 					if(!Api.isEmptyString(formSectionFieldSpec.getFieldTypeExtra()))
 					{
 						Long entitySpecId = entitySpecsIdMap
@@ -2740,7 +2750,8 @@ public class ServiceManager
 					}
 					
 				}
-				if (formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY
+				if (formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY || 
+						formSectionFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_CUSTOM_ENTITY
 						&& !Api.isEmptyString(formSectionFieldSpec.getFieldTypeExtraCustomEntity())) {
 					if (formSectionFieldSpec.getFieldTypeExtraCustomEntity() != null) {
 						String fieldTypeExtraCustomEntity =  customEntitySpecIdsMap.get(formSectionFieldSpec.getFieldTypeExtraCustomEntity());
@@ -2907,17 +2918,21 @@ public class ServiceManager
 			List<FormSectionFieldSpec> formSectionFieldSpecs = formSpecContainer.getSectionFields();
 			Set<String> entitySpecIds = new HashSet<String>();
 			Set<String> customEntitySpecIds = new HashSet<String>();
-			
+			Set<String> innerFormSpecUniqueIds = new HashSet<String>();
 			if (formFieldSpecs != null && formFieldSpecs.size() > 0) {
 				for (FormFieldSpec formFieldSpec : formFieldSpecs) {
 					if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST
-							|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST) {
+									|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_BUTTON_GROUPING
+							|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST	){
 						if (!Api.isEmptyString(formFieldSpec.getFieldTypeExtra())) {
 							entitySpecIds.add(formFieldSpec.getFieldTypeExtra());
 						}
 
 					}
-					if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY) {
+					//grk 2
+					
+					if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY ||formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_CUSTOM_ENTITY)
+					{
 						if (!Api.isEmptyString(formFieldSpec.getFieldTypeExtraCustomEntity())) {
 
 							customEntitySpecIds.add(formFieldSpec.getFieldTypeExtraCustomEntity());
@@ -2925,12 +2940,14 @@ public class ServiceManager
 
 					}
 				}
+				
 			}
 			
 			if (formSectionFieldSpecs != null && formSectionFieldSpecs.size() > 0) {
 				for (FormSectionFieldSpec formFieldSpec : formSectionFieldSpecs) {
 					if (formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST
-							|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST) {
+							|| formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_LIST
+							||formFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_BUTTON_GROUPING) {
 						if (!Api.isEmptyString(formFieldSpec.getFieldTypeExtra())) {
 							entitySpecIds.add(formFieldSpec.getFieldTypeExtra());
 						}
@@ -2948,6 +2965,8 @@ public class ServiceManager
 			
 			Set<String> subEntitySpecIds = new HashSet<String>();
 			Set<String> subCustomEntitySpecIds = new HashSet<String>();
+			// NEW: Collect subInnerFormSpecUniqueIds for nested forms in entity fields
+	        Set<String> subInnerFormSpecUniqueIds = new HashSet<String>();
 			if (entitySpecIds != null && entitySpecIds.size() > 0) {
 				List<EntitySpec> entitySpecs = effortDao.getEntitySpecsIn(Api.toCSV(entitySpecIds));
 				if (entitySpecs != null && entitySpecs.size() > 0) {
@@ -2958,12 +2977,14 @@ public class ServiceManager
 					List<EntityFieldSpec> entityFieldSpecs = effortDao.getEntityFieldSpecs(Api.toCSV(specIds));
 					formSpecContainer.setEntityFields(entityFieldSpecs);
 					for (EntityFieldSpec entityFieldSpec : entityFieldSpecs) {
-						if(entityFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST) {
+						if(entityFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_LIST || entityFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_BUTTON_GROUPING)
+						 {
 							if(!entitySpecIds.contains(entityFieldSpec.getFieldTypeExtra())){
 							subEntitySpecIds.add(entityFieldSpec.getFieldTypeExtra());
 							}
 						}
-						if(entityFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY) {
+						if(entityFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_CUSTOM_ENTITY ||
+								entityFieldSpec.getFieldType() == Constants.FORM_FIELD_TYPE_MULTIPICK_CUSTOM_ENTITY) {
 							if(!customEntitySpecIds.contains(entityFieldSpec.getFieldTypeExtraCustomEntity())){
 								subCustomEntitySpecIds.add(entityFieldSpec.getFieldTypeExtraCustomEntity());
 							}
@@ -3089,8 +3110,6 @@ public class ServiceManager
 							webUser.getEmpId());
 					entitySpecsIdMap.put(oldEntitySpecId,
 							entitySpec.getEntitySpecId());
-					
-					LOGGER.info(" insertEntitySpec done ... "+entitySpec.getEntitySpecId());
 				}
 		}
 
@@ -3106,8 +3125,7 @@ public class ServiceManager
 					effortDao.insertEntityFieldSpec(entityFieldSpec, entitySpecId);
 					entityFieldSpecsIdMap.put(oldEntityFieldSpecId,
 							entityFieldSpec.getEntityFieldSpecId());
-					LOGGER.info(" insertEntityFieldSpec done ... "+entityFieldSpec.getEntityFieldSpecId());
-				}
+					}
 			}
 
 		}
@@ -3132,23 +3150,24 @@ public class ServiceManager
 		
 		if (entitySectionFieldSpecs != null) {
 			for (EntitySectionFieldSpec entitySectionFieldSpec : entitySectionFieldSpecs) {
-				long oldEntitySectionFieldSpecId = entitySectionFieldSpec
-						.getSectionSpecId();
-				if(entitySpecsMap.get(entitySectionFieldSpec.getEntitySpecId()) == null){
-				long entitySpecId = entitySpecsIdMap.get(entitySectionFieldSpec
-						.getEntitySpecId());
-				long sectionSpecId = entitySpecsIdMap.get(entitySectionFieldSpec.getSectionSpecId());
-				entitySectionFieldSpec.setSectionSpecId(sectionSpecId);
-				entitySectionFieldSpec.setInitialEntitySectionFieldSpecId(null);
-				entitySectionFieldSpec
-							.setSkeletonEntitySectionFieldSpecId(oldEntitySectionFieldSpecId);
-				effortDao.insertEntitySectionFieldSpec(entitySectionFieldSpec, entitySpecId,webUser.getCompanyId());
-				entitySectionSpecsIdMap.put(oldEntitySectionFieldSpecId,
-						entitySectionFieldSpec.getSectionFieldSpecId());
-				}
-			}
+                long oldEntitySectionFieldSpecId = entitySectionFieldSpec
+                                .getSectionSpecId();
+                if(entitySpecsMap.get(entitySectionFieldSpec.getEntitySpecId()) == null){
+                long entitySpecId = entitySpecsIdMap.get(entitySectionFieldSpec
+                                .getEntitySpecId());
+                long sectionSpecId = entitySpecsIdMap.get(entitySectionFieldSpec.getSectionSpecId());
+                entitySectionFieldSpec.setSectionSpecId(sectionSpecId);
+                entitySectionFieldSpec.setInitialEntitySectionFieldSpecId(null);
+                entitySectionFieldSpec
+                                        .setSkeletonEntitySectionFieldSpecId(oldEntitySectionFieldSpecId);
+                effortDao.insertEntitySectionFieldSpec(entitySectionFieldSpec, entitySpecId,webUser.getCompanyId());
+                entitySectionSpecsIdMap.put(oldEntitySectionFieldSpecId,
+                                entitySectionFieldSpec.getSectionFieldSpecId());
+                }
+        }
 
 		}
+
 		
 		// 
 		Map<Long,Long> entityIdsMap = new HashMap<Long,Long>();
@@ -3943,8 +3962,5 @@ public class ServiceManager
 	public Media getMedia(String mediaId){
         return  effortDao.getMedia(mediaId);
     }
-
-	
-	
 
 }
