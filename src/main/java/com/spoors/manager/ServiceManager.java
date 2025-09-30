@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Date;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ import com.spoors.beans.EntityFieldSpecValidValue;
 import com.spoors.beans.EntitySectionField;
 import com.spoors.beans.EntitySectionFieldSpec;
 import com.spoors.beans.EntitySectionSpec;
+import com.spoors.beans.Activity;
 import com.spoors.beans.AutoGenereteSequenceSpecConfiguaration;
 import com.spoors.beans.AutoGenereteSequenceSpecConfiguarationField;
 import com.spoors.beans.FieldSpecRestrictionGroup;
@@ -134,8 +136,21 @@ public class ServiceManager
 	{
 		try {
 			
-			List<FormSpec> formSpecs = effortDao.getLatestFormSpecsForUnquids(Api.toCSV(formSpecUniqueIds));
+			List<FormSpec> latestFormSpecs = effortDao.getLatestFormSpecsForUnquids(Api.toCSV(formSpecUniqueIds));
+			
+			if(latestFormSpecs == null || latestFormSpecs.size() == 0) {
+				return;
+			}
+			List<FormSpec> formSpecs = effortDao.getFormSpecsIn(Api.toCSVFromList(latestFormSpecs, "formSpecId"));
+			
+			
 			if(formSpecs!=null) {
+				for(FormSpec formSpec : formSpecs) {
+					Activity activity = effortDao.getActivitiesByUniqueId(formSpec.getUniqueId());
+					if(activity !=null) {
+						formSpec.setEnableCustomerActivity(true);
+					}
+				}
 				List<String> uniqueIdsList = new ArrayList<>();
 				uniqueIdsList.addAll(formSpecUniqueIds);
 				
@@ -861,9 +876,19 @@ public class ServiceManager
 		}
 		formSpec.setIsPublic(true);
 		formSpec.setAllAccess(true);
-		formSpec.setEnableCustomerActivity(true);
+		//formSpec.setEnableCustomerActivity(true);
 		effortDao.insertFormSpec(formSpec, webUser.getCompanyId(),
 				webUser.getEmpId());
+		
+		if(formSpec.isEnableCustomerActivity()) {
+			Activity activity = new Activity();
+			activity.setFormSpecId(formSpec.getFormSpecId());
+			activity.setActivityName(formSpec.getFormTitle());
+			activity.setActivityVisibility("false");
+			createActivity(webUser, activity);
+		}
+		
+		
 		FormSpec formSpecForUniqueId = getFormSpec(formSpec.getFormSpecId()
 				+ "");
 		formSpecIdsMap.put(oldFormSpecId, formSpec.getFormSpecId());
@@ -2602,6 +2627,13 @@ public class ServiceManager
 			formSpecIdsMap.put(oldFormSpecId, formSpec.getFormSpecId());
 			formSpecUniqueIdsMap.put(oldFormSpecUniqueId,
 					formSpecForUniqueId.getUniqueId());
+			if(formSpec.isEnableCustomerActivity()) {
+				Activity activity = new Activity();
+				activity.setFormSpecId(formSpec.getFormSpecId());
+				activity.setActivityName(formSpec.getFormTitle());
+				activity.setActivityVisibility("false");
+				createActivity(webUser, activity);
+			}
 			effortDao.updateFormSpecForInitialFormSpecId(formSpec);
 			LOGGER.info(" insertFormSpec done ... "+formSpec.getFormSpecId());
 		}
@@ -3962,5 +3994,18 @@ public class ServiceManager
 	public Media getMedia(String mediaId){
         return  effortDao.getMedia(mediaId);
     }
+	public void createActivity(WebUser webUser, Activity activity){
+
+		activity.setCompanyId((long) webUser.getCompanyId());
+		activity.setCreatedBy(webUser.getEmpId());
+		activity.setModifiedBy(webUser.getEmpId());
+		activity.setIsDeleted((short) 0);
+		activity.setCreationTime(Api.getDateTimeInUTC(new Date(System
+				.currentTimeMillis())));
+		activity.setModifiedTime(Api.getDateTimeInUTC(new Date(System
+				.currentTimeMillis())));
+		effortDao.insertActivity(activity);
+
+	}
 
 }

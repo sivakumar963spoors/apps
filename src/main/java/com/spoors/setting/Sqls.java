@@ -315,5 +315,9 @@ public class Sqls {
 	public static final String INSERT_MEDIA = "INSERT INTO Medias(companyId, empId, mimeType, localPath, fileName, createdTime, modifiedTime,config, externalMediaId) VALUES (?,?,?,?,?,?,?,?,?)";
 	
 	public static final String SELECT_MEDIA = "SELECT id, companyId, empId, mimeType, localPath, fileName, createdTime, modifiedTime, externalMediaId FROM Medias WHERE id = ?";
+	
+	public static final String SELECT_FORM_SPECS_IN = "SELECT *  FROM `FormSpecs` WHERE `formSpecId` IN(:ids)";
+	public static final String INSERT_ACTIVITY ="INSERT INTO Activities (companyId,activityName,createdBy,modifiedBy,isDeleted,creationTime,modifiedTime,formSpecId, formSpecUniqueId,customerTypeIds,visibility,mappedToEmpGrp,mandatoryCustomerTypeIds) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	public static final String SELECT_ACTIVITYBY_UNIQUEID = "SELECT * FROM `Activities`  WHERE `formSpecUniqueId`= ? and `isDeleted`=0";
 
 }

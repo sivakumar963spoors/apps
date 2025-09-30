@@ -24,6 +24,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import com.spoors.beans.Activity;
 import com.spoors.beans.AutoGenereteSequenceSpecConfiguaration;
 import com.spoors.beans.AutoGenereteSequenceSpecConfiguarationField;
 import com.spoors.beans.CompanyFont;
@@ -999,9 +1000,6 @@ public class EffortDao {
 				ps.setBoolean(49, formSpec.isRemoveBlankLines());
 				ps.setString(50, formSpec.getDynamicSaveButton());
 				ps.setString(51, formSpec.getDynamicSuccessMessage());
-				formSpec.setEnableCustomerActivity(true); 
-				ps.setBoolean(53, true);
-				//ps.setBoolean(47, formSpec.isEnableDraftFormForMobile());
 
 				return ps;
 			}
@@ -4490,6 +4488,99 @@ public class EffortDao {
 	        Media media = jdbcTemplate.queryForObject(Sqls.SELECT_MEDIA, new Object[]{id}, new BeanPropertyRowMapper<Media>(Media.class));
 	        return media;
 	    }
+		public List<FormSpec> getFormSpecsIn(String ids) {
+			if (!Api.isEmptyString(ids)) {
+				List<FormSpec> formSpecs = jdbcTemplate.query(
+						Sqls.SELECT_FORM_SPECS_IN.replace(":ids", ids),
+						new Object[] {}, new BeanPropertyRowMapper<FormSpec>(
+								FormSpec.class));
+
+				return formSpecs;
+			}
+
+			return new ArrayList<FormSpec>();
+		}
+		public long insertActivity(final Activity activity) {
+			long startTime=System.currentTimeMillis();
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+
+			String formSpecUniqeId = null;
+			try
+			{
+				FormSpec formSpec = getFormSpec(activity.getFormSpecId()+"");
+				formSpecUniqeId = formSpec.getUniqueId();
+			}
+			catch(Exception e)
+			{
+				
+			}
+			final String uniqueId = formSpecUniqeId;
+			
+			jdbcTemplate.update(new PreparedStatementCreator() {
+
+				@Override
+				public PreparedStatement createPreparedStatement(
+						Connection connection) throws SQLException {
+					PreparedStatement ps = connection.prepareStatement(
+							Sqls.INSERT_ACTIVITY, Statement.RETURN_GENERATED_KEYS);
+					ps.setLong(1, activity.getCompanyId());
+					ps.setString(2, activity.getActivityName());
+					ps.setLong(3, activity.getCreatedBy());
+					ps.setLong(4, activity.getModifiedBy());
+					ps.setShort(5, activity.getIsDeleted());
+					ps.setString(6, activity.getCreationTime());
+					ps.setString(7, activity.getModifiedTime());
+					ps.setLong(8, activity.getFormSpecId());
+					
+					
+					if(uniqueId != null)
+						ps.setString(9, uniqueId);
+					else
+						ps.setNull(9, Types.VARCHAR);
+					if(Api.isEmptyString(activity.getCustomerTypeIds()))
+					{
+						ps.setNull(10, Types.VARCHAR);
+					}
+					else
+					{
+						ps.setString(10, activity.getCustomerTypeIds());
+					}
+					ps.setString(11,activity.getActivityVisibility());
+					if(activity.getMappedToEmpGrp()!=null)
+					ps.setString(12, activity.getMappedToEmpGrp());
+					else
+						ps.setString(12, "false");
+					
+					if(Api.isEmptyString(activity.getMandatoryCustomerTypeIds()))
+					{
+						ps.setNull(13, Types.VARCHAR);
+					}
+					else
+					{
+						ps.setString(13, activity.getMandatoryCustomerTypeIds());
+					}
+					
+					return ps;
+				}
+			}, keyHolder);
+
+			long id = keyHolder.getKey().longValue();
+			activity.setActivityId(id);
+			
+			return id;
+
+		}
+		public Activity getActivitiesByUniqueId(String activityUniqueId) {
+			Activity activity =null ;
+			try {
+				activity = jdbcTemplate.queryForObject(Sqls.SELECT_ACTIVITYBY_UNIQUEID,
+					new Object[] { activityUniqueId },new int[] {Types.VARCHAR}, new BeanPropertyRowMapper<Activity>(
+							Activity.class));
+			} catch (Exception e){
+				e.printStackTrace();
+			}
+			return activity;
+		}
 
 
 }
