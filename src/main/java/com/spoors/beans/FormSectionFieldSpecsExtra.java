@@ -20,7 +20,6 @@ public class FormSectionFieldSpecsExtra {
 	private Integer sendActionAssignmentsOfEmpIdsOfGroupRestrictions = 0;
 	private Integer restrictLocationPickCondition = 0;
 	private boolean isVisible = true;
-	private int visible = 1;
 	private boolean visibleForCreation = true;
 	private boolean searchableField = true;
 	private Integer enableFrontCameraInMobile=0;
@@ -123,12 +122,15 @@ public class FormSectionFieldSpecsExtra {
 			Integer restrictLocationPickCondition) {
 		this.restrictLocationPickCondition = restrictLocationPickCondition;
 	}
+	// Option B: Keep your getter as getIsVisible()
 	public boolean getIsVisible() {
-		return isVisible;
+	    return isVisible;
 	}
-	public void setVisible(boolean isVisible) {
-		this.isVisible = isVisible;
+
+	public void setIsVisible(boolean visible) {
+	    this.isVisible = visible;
 	}
+
 	public boolean isVisibleForCreation() {
 		return visibleForCreation;
 	}
@@ -268,13 +270,6 @@ public class FormSectionFieldSpecsExtra {
 	}
 	public void setEndPositionReference(Integer endPositionReference) {
 		this.endPositionReference = endPositionReference;
-	}
-	public int getVisible() {
-		return visible;
-	}
-
-	public void setVisible(int visible) {
-		this.visible = visible;
 	}
 }
 

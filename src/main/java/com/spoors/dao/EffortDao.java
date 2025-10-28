@@ -4783,58 +4783,54 @@ public class EffortDao {
 	        return keyHolder.getKey().longValue();
 	    }
 	
+
 		public void insertFormSectionFieldSpecsExtra(List<FormSectionFieldSpecsExtra> extras) {
-		    jdbcTemplate.batchUpdate(Sqls.INSERT_FORM_SECTION_FIELD_SPECS_EXTRA, new BatchPreparedStatementSetter() {
-		        @Override
-		        public void setValues(PreparedStatement ps, int i) throws SQLException {
-		            FormSectionFieldSpecsExtra formSectionFieldSpec = extras.get(i);
-
-		            ps.setLong(1, formSectionFieldSpec.getSectionFieldSpecId());
-		            ps.setString(2, formSectionFieldSpec.getShowHelpText());
-		            ps.setLong(3, formSectionFieldSpec.getFormSpecId());
-		            ps.setInt(4, formSectionFieldSpec.getEnablePickerAndDropdown() != null 
-		                          ? formSectionFieldSpec.getEnablePickerAndDropdown() : 1);
-		            ps.setString(5, formSectionFieldSpec.getNumberToWordCurrencyType());
-		            ps.setInt(6, formSectionFieldSpec.getEnableCommaSeperator());
-		            ps.setString(7, formSectionFieldSpec.getCurrencyFormat());
-		            ps.setInt(8, formSectionFieldSpec.getSendActionAssignmentsOfEmpIdsOfGroupRestrictions());
-		            ps.setInt(9, formSectionFieldSpec.getEnableUserInputsForTextFieldFormula());
-		            ps.setInt(10, formSectionFieldSpec.getRestrictLocationPickCondition());
-		            ps.setInt(11, formSectionFieldSpec.getVisible());
-		            ps.setBoolean(12, formSectionFieldSpec.isVisibleForCreation());
-		            ps.setBoolean(13, formSectionFieldSpec.isSearchableField());
-		            ps.setInt(14, formSectionFieldSpec.getMaxNumberOfFilesAllowed() != null
-		                          ? formSectionFieldSpec.getMaxNumberOfFilesAllowed() : 0);
-		            ps.setInt(15, formSectionFieldSpec.getEnableFrontCameraInMobile());
-		            ps.setBoolean(16, formSectionFieldSpec.isFindDistanceByGoogleApi());
-		            ps.setObject(17, formSectionFieldSpec.getMetricUnitsOfDistance(), Types.INTEGER);
-		            ps.setBoolean(18, formSectionFieldSpec.isEnableAgeRestriction());
-		            ps.setObject(19, formSectionFieldSpec.getMinAge(), Types.INTEGER);
-		            ps.setObject(20, formSectionFieldSpec.getMaxAge(), Types.INTEGER);
-		            ps.setString(21, formSectionFieldSpec.getAgeRestrictionErrorMessage());
-		            ps.setInt(22, formSectionFieldSpec.getEnableMediaFormatRestriction());
-		            ps.setString(23, formSectionFieldSpec.getAllowRequiredFormat());
-		            ps.setInt(24, formSectionFieldSpec.getEnableMappedTerritoriesRestriction());
-		            ps.setInt(25, formSectionFieldSpec.getShowOnlyMappedItemsWhileSelection());
-		            ps.setInt(26, formSectionFieldSpec.getRadioButtonOrientation() != null
-		                          ? formSectionFieldSpec.getRadioButtonOrientation() : 1);
-		            ps.setInt(27, formSectionFieldSpec.getIncludeEndDate() != null
-		                          ? formSectionFieldSpec.getIncludeEndDate() : 0);
-		            ps.setObject(28, formSectionFieldSpec.getShowRemainderBefore(), Types.INTEGER);
-		            ps.setInt(29, formSectionFieldSpec.getCanEditInView() != null
-		                          ? formSectionFieldSpec.getCanEditInView() : 0);
-		            ps.setObject(30, formSectionFieldSpec.getMaskingPositionType(), Types.INTEGER);
-		            ps.setObject(31, formSectionFieldSpec.getStartPositionReference(), Types.INTEGER);
-		            ps.setObject(32, formSectionFieldSpec.getEndPositionReference(), Types.INTEGER);
-		        }
-
-		        @Override
-		        public int getBatchSize() {
-		            return extras.size();
-		        }
-		    });
+		    jdbcTemplate.batchUpdate(Sqls.INSERT_FORM_SECTION_FIELD_SPECS_EXTRA,
+		        extras,
+		        extras.size(),
+		        (ps, fieldSpecExtra) -> {
+		            ps.setLong(1, fieldSpecExtra.getSectionFieldSpecId());
+		            ps.setString(2, fieldSpecExtra.getShowHelpText());
+		            ps.setLong(3, fieldSpecExtra.getFormSpecId());
+		            ps.setInt(4, fieldSpecExtra.getEnablePickerAndDropdown() != null ? fieldSpecExtra.getEnablePickerAndDropdown() : 1);
+		            ps.setString(5, fieldSpecExtra.getNumberToWordCurrencyType());
+		            ps.setInt(6, fieldSpecExtra.getEnableCommaSeperator() != null ? fieldSpecExtra.getEnableCommaSeperator() : 0);
+		            ps.setString(7, fieldSpecExtra.getCurrencyFormat());
+		            ps.setInt(8, fieldSpecExtra.getSendActionAssignmentsOfEmpIdsOfGroupRestrictions() != null ? fieldSpecExtra.getSendActionAssignmentsOfEmpIdsOfGroupRestrictions() : 0);
+		            ps.setInt(9, fieldSpecExtra.getEnableUserInputsForTextFieldFormula() != null ? fieldSpecExtra.getEnableUserInputsForTextFieldFormula() : 0);
+		            ps.setInt(10, fieldSpecExtra.getRestrictLocationPickCondition() != null ? fieldSpecExtra.getRestrictLocationPickCondition() : 0);
+		            ps.setBoolean(11, fieldSpecExtra.getIsVisible());
+		            ps.setBoolean(12, fieldSpecExtra.isVisibleForCreation());
+		            ps.setBoolean(13, fieldSpecExtra.isSearchableField());
+		            ps.setInt(14, fieldSpecExtra.getMaxNumberOfFilesAllowed() != null ? fieldSpecExtra.getMaxNumberOfFilesAllowed() : 0);
+		            ps.setInt(15, fieldSpecExtra.getEnableFrontCameraInMobile() != null ? fieldSpecExtra.getEnableFrontCameraInMobile() : 0);
+		            ps.setBoolean(16, fieldSpecExtra.isFindDistanceByGoogleApi());
+		            if (fieldSpecExtra.getMetricUnitsOfDistance() != null) ps.setInt(17, fieldSpecExtra.getMetricUnitsOfDistance());
+		            else ps.setNull(17, Types.INTEGER);
+		            ps.setBoolean(18, fieldSpecExtra.isEnableAgeRestriction());
+		            if (fieldSpecExtra.getMinAge() != null) ps.setInt(19, fieldSpecExtra.getMinAge());
+		            else ps.setNull(19, Types.INTEGER);
+		            if (fieldSpecExtra.getMaxAge() != null) ps.setInt(20, fieldSpecExtra.getMaxAge());
+		            else ps.setNull(20, Types.INTEGER);
+		            ps.setString(21, fieldSpecExtra.getAgeRestrictionErrorMessage());
+		            ps.setInt(22, fieldSpecExtra.getEnableMediaFormatRestriction() != null ? fieldSpecExtra.getEnableMediaFormatRestriction() : 0);
+		            ps.setString(23, fieldSpecExtra.getAllowRequiredFormat());
+		            ps.setInt(24, fieldSpecExtra.getEnableMappedTerritoriesRestriction() != null ? fieldSpecExtra.getEnableMappedTerritoriesRestriction() : 0);
+		            ps.setInt(25, fieldSpecExtra.getShowOnlyMappedItemsWhileSelection());
+		            ps.setInt(26, fieldSpecExtra.getRadioButtonOrientation() != null ? fieldSpecExtra.getRadioButtonOrientation() : 1);
+		            ps.setInt(27, fieldSpecExtra.getIncludeEndDate() != null ? fieldSpecExtra.getIncludeEndDate() : 0);
+		            if (fieldSpecExtra.getShowRemainderBefore() != null) ps.setInt(28, fieldSpecExtra.getShowRemainderBefore());
+		            else ps.setNull(28, Types.INTEGER);
+		            ps.setInt(29, fieldSpecExtra.getCanEditInView() != null ? fieldSpecExtra.getCanEditInView() : 0);
+		            if (fieldSpecExtra.getMaskingPositionType() != null) ps.setInt(30, fieldSpecExtra.getMaskingPositionType());
+		            else ps.setNull(30, Types.INTEGER);
+		            if (fieldSpecExtra.getStartPositionReference() != null) ps.setInt(31, fieldSpecExtra.getStartPositionReference());
+		            else ps.setNull(31, Types.INTEGER);
+		            if (fieldSpecExtra.getEndPositionReference() != null) ps.setInt(32, fieldSpecExtra.getEndPositionReference());
+		            else ps.setNull(32, Types.INTEGER);
+		        });
 		}
-
+		
 		
 		 public void insertFieldRestrictionCritria(
 					final List<FieldRestrictionCritiria> fieldRestrictionCritrias) {
