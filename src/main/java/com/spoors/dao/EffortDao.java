@@ -4906,5 +4906,71 @@ public class EffortDao {
 						});
 
 			}
+		 public void insertEmployeeFilterCritria(
+					final List<EmployeeFilteringCritiria> employeeFilteringCritirias) {
+
+				jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_EMPLOYEE_FILTERING_CRITIRIA,
+						new BatchPreparedStatementSetter() {
+
+							@Override
+							public void setValues(PreparedStatement ps, int i)
+									throws SQLException {
+								EmployeeFilteringCritiria employeeFilteringCritiria = employeeFilteringCritirias
+										.get(i);
+								ps.setLong(1, employeeFilteringCritiria.getFormSpecId());
+								ps.setLong(2, employeeFilteringCritiria.getFieldSpecId());
+								ps.setLong(3,
+										employeeFilteringCritiria.getFieldOptionId());
+								ps.setString(4, employeeFilteringCritiria
+										.getReferenceFieldExpressionId());
+								ps.setString(5, employeeFilteringCritiria.getValue());
+								ps.setInt(6, employeeFilteringCritiria.getType());
+								ps.setInt(7, employeeFilteringCritiria.getCondition());
+								
+								if(employeeFilteringCritiria.getFilterType() == null) {
+									employeeFilteringCritiria.setFilterType(1);
+								}
+		                        ps.setInt(8, employeeFilteringCritiria.getFilterType());
+		                        ps.setString(9, employeeFilteringCritiria.getEmployeeFieldSpecUniqueId());
+							}
+
+							@Override
+							public int getBatchSize() {
+								return employeeFilteringCritirias.size();
+							}
+						});
+
+			}
+		 public void insertFormFilterCritria(
+					final List<FormFilteringCritiria> formFilteringCritirias) {
+
+				jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_FORM_FILTERING_CRITIRIA,
+						new BatchPreparedStatementSetter() {
+
+							@Override
+							public void setValues(PreparedStatement ps, int i)
+									throws SQLException {
+								FormFilteringCritiria formFilteringCritiria = formFilteringCritirias
+										.get(i);
+								ps.setLong(1, formFilteringCritiria.getFormSpecId());
+								ps.setLong(2, formFilteringCritiria.getFieldSpecId());
+								ps.setString(3,
+										formFilteringCritiria.getFormFieldSpecUniqueId());
+								ps.setString(4, formFilteringCritiria
+										.getReferenceFieldExpressionId());
+								ps.setString(5, formFilteringCritiria.getValue());
+								ps.setInt(6, formFilteringCritiria.getType());
+								ps.setInt(7, formFilteringCritiria.getCondition());
+								ps.setInt(8, formFilteringCritiria.getFieldType());
+								ps.setInt(9, formFilteringCritiria.getFormFieldType());
+							}
+
+							@Override
+							public int getBatchSize() {
+								return formFilteringCritirias.size();
+							}
+						});
+
+			}
 
 }

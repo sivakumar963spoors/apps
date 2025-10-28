@@ -2080,7 +2080,63 @@ public class ServiceManager
 		}
 		
 	}
+	private void resolveEmployeeFilteringCritiria(List<EmployeeFilteringCritiria> remainderFieldsMaps,
+			Map<Long, Long> formFieldSpecsIdMap,Map<Long, Long> formSpecIdsMap) {
+		
+		Iterator<EmployeeFilteringCritiria> remainderFieldsIerator = remainderFieldsMaps
+				.iterator();
+		while (remainderFieldsIerator.hasNext()) {
+			EmployeeFilteringCritiria remainderFieldsMap = (EmployeeFilteringCritiria) remainderFieldsIerator
+					.next();
+			Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+			
+			if(newFormSpecId != null) {
+				remainderFieldsMap.setFormSpecId(newFormSpecId);
+			}else {
+				remainderFieldsIerator.remove();
+				continue;
+			}
+			
+			if(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+				remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+			}else {
+				remainderFieldsIerator.remove();
+				continue;
+			}
 
+		}
+		
+	}
+
+	private void resolveFormFilteringCritiria(List<FormFilteringCritiria> remainderFieldsMaps,
+			Map<Long, Long> formFieldSpecsIdMap,Map<Long, Long> formSpecIdsMap) {
+		
+		Iterator<FormFilteringCritiria> remainderFieldsIerator = remainderFieldsMaps
+				.iterator();
+		while (remainderFieldsIerator.hasNext()) {
+			FormFilteringCritiria remainderFieldsMap = (FormFilteringCritiria) remainderFieldsIerator
+					.next();
+			Long newFormSpecId = formSpecIdsMap.get(remainderFieldsMap.getFormSpecId());
+			
+			if(newFormSpecId != null) {
+				remainderFieldsMap.setFormSpecId(newFormSpecId);
+			}else {
+				remainderFieldsIerator.remove();
+				continue;
+			}
+			
+			if(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()) != null) {
+				remainderFieldsMap.setFieldSpecId(formFieldSpecsIdMap.get(remainderFieldsMap.getFieldSpecId()));
+			}else {
+				remainderFieldsIerator.remove();
+				continue;
+			}
+
+		}
+		
+	}
+
+	
 	public FormSpec getFormSpec(String formSpecId) {
 		FormSpec formSpec = null;
 
@@ -2967,7 +3023,9 @@ public class ServiceManager
 		List<FormFieldsColorDependencyCriterias> formFieldColorDependencyCriterias = formSpecContainer.getFormFieldsColorDependencyCriterias();
 		List<FieldSpecFilter> fieldSpecFilters = formSpecContainer.getFormFieldSpecFilters();
 		List<FieldSpecFilter> sectionFieldSpecFilters = formSpecContainer.getFormSectionFieldSpecFilters();
-		
+		List<EmployeeFilteringCritiria> employeeFilteringCritiria = formSpecContainer.getEmployeeFilteringCriterias();
+		List<FormFilteringCritiria> formFilteringCriterias = formSpecContainer.getFormFilteringCriterias();
+
 		List<AutoGenereteSequenceSpecConfiguarationField> autoGenereteSequenceSpecConfiguarationFields = new ArrayList<AutoGenereteSequenceSpecConfiguarationField>();
 		List<RemainderFieldsMap> remainderFieldsMaps = formSpecContainer.getRemainderFieldsMap();
 		
@@ -2999,6 +3057,12 @@ public class ServiceManager
 		resolveFieldRestrictionCritiria(fieldRestrictionCritirias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
 		effortDao.insertFieldRestrictionCritria(fieldRestrictionCritirias);
 		
+		resolveEmployeeFilteringCritiria(employeeFilteringCritiria,formFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertEmployeeFilterCritria(employeeFilteringCritiria);
+		
+		resolveFormFilteringCritiria(formFilteringCriterias,formFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertFormFilterCritria(formFilteringCriterias);
+
 		resolveFormFieldsColorDependencyCriterias(formFieldColorDependencyCriterias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
 		effortDao.insertFormFieldsColorDependencyCriterias(formFieldColorDependencyCriterias);
 		if(autoGenereteSequenceSpecConfiguarations!=null && !autoGenereteSequenceSpecConfiguarations.isEmpty())
