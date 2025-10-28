@@ -26,6 +26,7 @@ public class MobileSqls {
 	public static final String FORMS_SPECS_EMPLOYEE_FILTERING_CRITERIAS = "CREATE TABLE forms_specs_employee_filtering_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORMS_SPECS_FORM_FILTERING_CRITIRIAS = "CREATE TABLE forms_specs_form_filtering_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORMS_SPECS_FIELD_VALIDATION_CRITIRIAS = "CREATE TABLE forms_specs_field_validation_critirias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_FIELD_RESTRICTION_CRITIRIAS = "CREATE TABLE forms_specs_field_restriction_critirias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORMS_SPECS_STOCK_FORM_CONFIGURATIONS = "CREATE TABLE forms_specs_stock_form_configurations (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORMS_SPECS_OFFLINE_LIST_UPDATE_CONFIGURATIONS = "CREATE TABLE forms_specs_offline_list_update_configurations (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORMS_SPECS_OFFLINE_CUSTOMENTITY_UPDATE_CONFIGURATIONS ="CREATE TABLE forms_specs_offline_customEntity_update_configurations (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
@@ -37,6 +38,7 @@ public class MobileSqls {
 	public static final String FORM_FIELD_SPECS_EXTRA = "CREATE TABLE form_field_specs_extra (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORM_SECTION_FIELD_SPECS_EXTRA = "CREATE TABLE form_section_field_specs_extra (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String FORMS_SPECS_CUSTOM_ENTITY_FILTERING_CRITIRIAS ="CREATE TABLE forms_specs_custom_entity_filtering_criterias (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
+	public static final String FORMS_SPECS_FORMVALIDATIONS ="CREATE TABLE forms_specs_formvalidations (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 
 	public static final String FORM_SPEC_PERMISSIONS = "CREATE TABLE form_spec_permissions (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";
 	public static final String SAVE_FORM_ON_OTP_VERIFY = "CREATE TABLE save_form_on_otp_verify (json_data TEXT DEFAULT (null),processed INTEGER,autoId INTEGER)";

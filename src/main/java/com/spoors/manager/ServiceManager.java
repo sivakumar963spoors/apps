@@ -42,6 +42,7 @@ import com.spoors.beans.Entity;
 import com.spoors.beans.EntityField;
 import com.spoors.beans.EntityFieldSpec;
 import com.spoors.beans.EntitySpec;
+import com.spoors.beans.FieldRestrictionCritiria;
 import com.spoors.beans.FieldSpecFilter;
 import com.spoors.beans.FieldValidationCritiria;
 import com.spoors.beans.FormCleanUpRule;
@@ -162,7 +163,7 @@ public class ServiceManager
 				
 				List<FormFieldSpec> fieldSpecs = getFormFieldSpecForIn(formSpecs);
 				
-				List<FormFieldSpecsExtra> fieldSpecsExtra =	getFormFieldSpecsExtraForIn(formSpecs);
+				List<FormFieldSpecsExtra> fieldSpecsExtra =	getFormFieldSpecsExtraForIn(formSpecs);//here we are getting enableMappedTerritoriesRestriction
 				
 				List<FormFieldSpecValidValue> fieldSpecValidValues = getFormFieldSpecValidValues(fieldSpecs);
 				
@@ -193,6 +194,7 @@ public class ServiceManager
 				List<EmployeeFilteringCritiria> employeeFilteringCritirias = getListOfEmployeeFilterCriterias(formSpecIds);
 				
 				List<FieldValidationCritiria> fieldValidationCritirias = getFieldValidationCritirias(formSpecIds);
+				List<FieldRestrictionCritiria> fieldRestrictionCritirias = getFieldRestrictionCritiria(formSpecIds);
 				
 				List<FormFilteringCritiria> formFilteringCritirias = getFormFilteringCritiriasForFormSpecs(formSpecIds);
 				
@@ -238,6 +240,7 @@ public class ServiceManager
 				formSpecContainer.getCustomerFilteringCriterias().addAll(customerFilteringCritirias);
 				formSpecContainer.getEmployeeFilteringCriterias().addAll(employeeFilteringCritirias);
 				formSpecContainer.getFieldValidationCritirias().addAll(fieldValidationCritirias);
+				formSpecContainer.getFieldRestrictionCritirias().addAll(fieldRestrictionCritirias);
 				formSpecContainer.getFormFilteringCriterias().addAll(formFilteringCritirias);
 				formSpecContainer.getCustomEntityFilteringCritirias().addAll(customEntityFilteringCritirias);
 				formSpecContainer.getStockFormConfigurations().addAll(stockFormConfigurations);
@@ -275,7 +278,15 @@ public class ServiceManager
 				
 				formSpecContainer.setWorkSpecFormSpecFollowUp(workSpecFormSpecFollowUpList);
 				formSpecContainer.setWorkFormFieldMap(workFormFieldMaps);
-				
+
+				List<FieldValidation> fieldValidations = effortDao.getFieldValidationsForFormSpecIds(formSpecIds);
+
+				if (fieldValidations != null && !fieldValidations.isEmpty()) {
+				    formSpecContainer.getFieldValidations().addAll(fieldValidations);
+				}
+
+
+
 				
 			}
 			
@@ -395,7 +406,9 @@ public class ServiceManager
 	private List<FieldValidationCritiria> getFieldValidationCritirias(String formSpecIds) {
 		return effortDao.getFieldValidationCritirias(formSpecIds);
 	}
-
+	private List<FieldRestrictionCritiria> getFieldRestrictionCritiria(String formSpecIds) {
+		return effortDao.getFieldRestrictionCritirias(formSpecIds);
+	}
 	private List<EmployeeFilteringCritiria> getListOfEmployeeFilterCriterias(String formSpecIds) {
 		return effortDao.getListOfEmployeeFilterCriterias(formSpecIds);
 	}
@@ -578,7 +591,6 @@ public class ServiceManager
 		List<FormSectionFieldSpecValidValue> formSectionFieldSpecValidValues = formSpecContainer
 				.getSectionFieldValidValues();
 		
-		
 		List<EntitySpec> companyEntitySpecs = getEntitySpecsForCompany(webUser
 				.getCompanyId());
 		Map<Long, EntitySpec> companyEntitySpecMap = new HashMap<Long, EntitySpec>();
@@ -733,6 +745,42 @@ public class ServiceManager
 					innerformSpecUniqueIdsMap.put(formSectionFieldSpec.getFieldTypeExtraForm(),
 							formSectionFieldSpec.getFieldTypeExtraForm());
 				}
+		
+			}
+		}
+		for (FormSectionSpec formSectionSpec : formSectionSpecs) {
+			if(!Api.isEmptyString(formSectionSpec.getAutoCreateFieldTypeExtra())) {
+
+				if (!entitySpecsIdMap
+						.containsKey(Long.parseLong(formSectionSpec.getAutoCreateFieldTypeExtra()))) {
+					EntitySpec entitySpecTemp = entitySpecMap.get(Long
+							.parseLong(formSectionSpec.getAutoCreateFieldTypeExtra()));
+					if (entitySpecTemp != null) {
+						EntitySpec entitySpecCompany = companyEntitySpecMap
+								.get(entitySpecTemp.getEntitySpecId());
+						if (entitySpecCompany == null) {
+							entitySpecs.add(entitySpecTemp);
+							companyEntitySpecMap.put(
+									entitySpecTemp.getEntitySpecId(),
+									entitySpecTemp);
+						}else {
+							List<EntityFieldSpec> entityFieldSpecs = companyEntityFieldSpecMap
+									.get(entitySpecCompany.getEntitySpecId());
+							if (entityFieldSpecs != null && entityFieldSpecs.size() > 0) {
+								for (EntityFieldSpec entityFieldSpec : entityFieldSpecs) {
+									if (entityFieldSpec.getSkeletonEntityFieldSpecId() != null) {
+										entityFieldSpecsIdMap.put(entityFieldSpec.getSkeletonEntityFieldSpecId(),
+												entityFieldSpec.getEntityFieldSpecId());
+									}
+
+								}
+							}
+							formSectionSpec.setAutoCreateFieldTypeExtra(entitySpecCompany.getEntitySpecId() + "");
+						}
+					}
+				}
+			
+				
 			}
 		}
 		List<EntityFieldSpec> entityFieldSpecs = getEntityFieldSpecsIn(entitySpecs);
@@ -864,7 +912,10 @@ public class ServiceManager
 		if(formSpec.getPurpose()==100 || formSpec.getPurpose() == FormSpec.PURPOUSE_SIGN_IN_SIGN_OUT_UPDATE_FORM) {
 		     formSpec.setIsSystemDefined(0);
 		     formSpec.setPurpose(-1);
-		}if(formSpec.getPurpose() == 12) {
+		}else if(formSpec.getPurpose() == 12) {
+			formSpec.setIsSystemDefined(1);
+		}
+		else if(formSpec.getPurpose() == 7) {
 			formSpec.setIsSystemDefined(1);
 		}else{
 			if (isWorkSpec) {
@@ -1104,10 +1155,6 @@ public class ServiceManager
 			long fieldSpecId = formFieldSpecsIdMap.get(fieldSpecValidValue
 					.getFieldSpecId());
 			FormFieldSpec formFieldSpec = effortDao.getFormFieldSpec(fieldSpecId+"");
-			/* long validId = extraSupportDao.insertIntoFormFieldSpecUniqueIdWiseValidValues(formFieldSpec,
-						webUser.getCompanyId(),fieldSpecValidValue.getValue());
-				extraSupportDao.insertFormFieldSpecValidValueUnique(validId, formFieldSpec.getFieldSpecId(), fieldSpecValidValue.getValue());*/
-				
 			effortDao.insertFormFieldSpecValidValue(fieldSpecId,
 					fieldSpecValidValue.getValue());
 		}
@@ -1139,6 +1186,7 @@ public class ServiceManager
 		List<ListFilteringCritiria> listFilteringCritirias = formSpecContainer.getListFilteringCriterias();
 		List<CustomerFilteringCritiria> customerFilteringCritirias = formSpecContainer.getCustomerFilteringCriterias();
 		List<FieldValidationCritiria> fieldValidationCritirias = formSpecContainer.getFieldValidationCritirias();
+		List<FieldRestrictionCritiria> fieldRestrictionCritirias = formSpecContainer.getFieldRestrictionCritirias();
 		List<AutoGenereteSequenceSpecConfiguaration> autoGenereteSequenceSpecConfiguarations = formSpecContainer.getAutoGenereteSequenceSpecConfiguarations();
 		List<FormFieldsColorDependencyCriterias> formFieldColorDependencyCriterias = formSpecContainer.getFormFieldsColorDependencyCriterias();
 		List<FieldSpecFilter> fieldSpecFilters = formSpecContainer.getFormFieldSpecFilters();
@@ -1165,6 +1213,10 @@ public class ServiceManager
 		
 		resolveFieldValidationCritria(fieldValidationCritirias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpec);
 		effortDao.insertFieldValidationCritria(fieldValidationCritirias);
+		
+		resolveFieldRestrictionCritiria(fieldRestrictionCritirias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertFieldRestrictionCritria(fieldRestrictionCritirias);
+		
 		
 		resolveFormFieldsColorDependencyCriterias(formFieldColorDependencyCriterias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpec);
 		effortDao.insertFormFieldsColorDependencyCriterias(formFieldColorDependencyCriterias);
@@ -1590,6 +1642,48 @@ public class ServiceManager
 	
 	}
 
+	private void resolveFieldRestrictionCritiria(List<FieldRestrictionCritiria> fieldRestrictionCritirias,
+	        Map<Long, Long> formFieldSpecsIdMap, 
+	        Map<Long, Long> formSectionFieldSpecsIdMap, 
+	        Map<Long, Long> formSpecIdsMap) {
+
+	    try {
+	        Iterator<FieldRestrictionCritiria> fieldRestrictionIterator = fieldRestrictionCritirias.iterator();
+	        while (fieldRestrictionIterator.hasNext()) {
+	            FieldRestrictionCritiria restriction = fieldRestrictionIterator.next();
+
+	            // Resolve Form Spec ID
+	            Long newFormSpecId = formSpecIdsMap.get(restriction.getFormSpecId());
+	            if (newFormSpecId != null) {
+	                restriction.setFormSpecId(newFormSpecId);
+	            } else {
+	                fieldRestrictionIterator.remove();
+	                continue;
+	            }
+
+	            if (!restriction.isSectionField()) {
+	                Long newFieldSpecId = formFieldSpecsIdMap.get(restriction.getFieldSpecId());
+	                if (newFieldSpecId != null) {
+	                    restriction.setFieldSpecId(newFieldSpecId);
+	                } else {
+	                    fieldRestrictionIterator.remove();
+	                    continue;
+	                }
+	            } else {
+	                Long newSectionFieldSpecId = formSectionFieldSpecsIdMap.get(restriction.getFieldSpecId());
+	                if (newSectionFieldSpecId != null) {
+	                    restriction.setFieldSpecId(newSectionFieldSpecId);
+	                } else {
+	                    fieldRestrictionIterator.remove();
+	                    continue;
+	                }
+	            }
+	        }
+	    } catch (Exception e) {
+	        fieldRestrictionCritirias = new ArrayList<>();
+	    }
+	}
+
 	private void resolveCustomerFilterCritria(List<CustomerFilteringCritiria> customerFilteringCritirias,
 			Map<Long, Long> formFieldSpecsIdMap, Map<Long, Long> formSectionFieldSpecsIdMap, FormSpec formSpec) {
 
@@ -1917,6 +2011,7 @@ public class ServiceManager
 						continue;
 					}
 				}
+				
 
 			}
 		} catch (Exception e) {
@@ -2608,9 +2703,13 @@ public class ServiceManager
 			if(formSpec.getPurpose()==100 || formSpec.getPurpose() == FormSpec.PURPOUSE_SIGN_IN_SIGN_OUT_UPDATE_FORM) {
 			     formSpec.setIsSystemDefined(0);
 			     formSpec.setPurpose(-1);
-			}if(formSpec.getPurpose() == 12) {
+			}else if(formSpec.getPurpose() == 12) {
 				formSpec.setIsSystemDefined(1);
-			}else{
+			}
+			else if(formSpec.getPurpose() == 7) {
+				formSpec.setIsSystemDefined(1);
+			}
+			else{
 				if (isWorkSpec) {
 					formSpec.setIsSystemDefined(0);
 				} else {
@@ -2857,10 +2956,13 @@ public class ServiceManager
 
 
 		List<FieldValidation> fieldValidations = formSpecContainer.getFieldValidations();
+		List<FormFieldSpecsExtra> fieldsExtra = formSpecContainer.getFieldsExtra();
+		List<FormSectionFieldSpecsExtra> formSectionFieldSpecExtra = formSpecContainer.getSectionFieldsExtra();
 		List<VisibilityDependencyCriteria> visibilityDependencyCriterias = formSpecContainer.getVisibilityDependencyCriterias();
 		List<ListFilteringCritiria> listFilteringCritirias = formSpecContainer.getListFilteringCriterias();
 		List<CustomerFilteringCritiria> customerFilteringCritirias = formSpecContainer.getCustomerFilteringCriterias();
 		List<FieldValidationCritiria> fieldValidationCritirias = formSpecContainer.getFieldValidationCritirias();
+		List<FieldRestrictionCritiria> fieldRestrictionCritirias = formSpecContainer.getFieldRestrictionCritirias();
 		List<AutoGenereteSequenceSpecConfiguaration> autoGenereteSequenceSpecConfiguarations = formSpecContainer.getAutoGenereteSequenceSpecConfiguarations();
 		List<FormFieldsColorDependencyCriterias> formFieldColorDependencyCriterias = formSpecContainer.getFormFieldsColorDependencyCriterias();
 		List<FieldSpecFilter> fieldSpecFilters = formSpecContainer.getFormFieldSpecFilters();
@@ -2876,6 +2978,12 @@ public class ServiceManager
 	    resolveFieldValidations(fieldValidations,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
 		effortDao.insertFieldValidations(fieldValidations); //  have to set values in bean
 		
+		resolveFormFieldsExtra(fieldsExtra, formFieldSpecsIdMap, formSectionFieldSpecsIdMap, formSpecIdsMap);
+		effortDao.insertFormFieldSpecsExtra(fieldsExtra);
+		
+		resolveFormSectionFieldsExtra(formSectionFieldSpecExtra, formFieldSpecsIdMap, formSectionFieldSpecsIdMap, formSpecIdsMap);
+		effortDao.insertFormSectionFieldSpecsExtra(formSectionFieldSpecExtra);
+		
 		resolveListFilterCritrias(listFilteringCritirias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap,entityFieldSpecsIdMap);
 		effortDao.insertListFilterCritria(listFilteringCritirias);
 		
@@ -2887,6 +2995,9 @@ public class ServiceManager
 		
 		resolveFieldValidationCritria(fieldValidationCritirias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
 		effortDao.insertFieldValidationCritria(fieldValidationCritirias);
+		
+		resolveFieldRestrictionCritiria(fieldRestrictionCritirias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
+		effortDao.insertFieldRestrictionCritria(fieldRestrictionCritirias);
 		
 		resolveFormFieldsColorDependencyCriterias(formFieldColorDependencyCriterias,formFieldSpecsIdMap,formSectionFieldSpecsIdMap,formSpecIdsMap);
 		effortDao.insertFormFieldsColorDependencyCriterias(formFieldColorDependencyCriterias);
@@ -4007,5 +4118,85 @@ public class ServiceManager
 		effortDao.insertActivity(activity);
 
 	}
+
+	private void resolveFormFieldsExtra(
+	        List<FormFieldSpecsExtra> fieldsExtra,
+	        Map<Long, Long> formFieldSpecsIdMap,
+	        Map<Long, Long> formSectionFieldSpecsIdMap,
+	        Map<Long, Long> formSpecIdsMap) {
+	    try {
+	        Iterator<FormFieldSpecsExtra> iterator = fieldsExtra.iterator();
+	        while (iterator.hasNext()) {
+	            FormFieldSpecsExtra extra = iterator.next();
+
+	            Long newFormSpecId = formSpecIdsMap.get(extra.getFormSpecId());
+	            if (newFormSpecId != null) {
+	                extra.setFormSpecId(newFormSpecId);
+	            } else {
+	                iterator.remove();
+	                continue;
+	            }
+
+	            Long fieldSpecId = extra.getFieldSpecId();
+	            Long newFieldSpecId = null;
+
+	            if (formFieldSpecsIdMap.containsKey(fieldSpecId)) {
+	                newFieldSpecId = formFieldSpecsIdMap.get(fieldSpecId);
+	            } else if (formSectionFieldSpecsIdMap.containsKey(fieldSpecId)) {
+	                newFieldSpecId = formSectionFieldSpecsIdMap.get(fieldSpecId);
+	            }
+
+	            if (newFieldSpecId != null) {
+	                extra.setFieldSpecId(newFieldSpecId);
+	            } else {
+	                iterator.remove();
+	            }
+	        }
+	    } catch (Exception e) {
+	        fieldsExtra = new ArrayList<>();
+	    }
+	}
+	private void resolveFormSectionFieldsExtra(
+	        List<FormSectionFieldSpecsExtra> sectionFieldsExtra,
+	        Map<Long, Long> formFieldSpecsIdMap,
+	        Map<Long, Long> formSectionFieldSpecsIdMap,
+	        Map<Long, Long> formSpecIdsMap) {
+	    try {
+	        Iterator<FormSectionFieldSpecsExtra> iterator = sectionFieldsExtra.iterator();
+
+	        while (iterator.hasNext()) {
+	            FormSectionFieldSpecsExtra extra = iterator.next();
+
+	            // 1️⃣ Resolve new formSpecId
+	            Long newFormSpecId = formSpecIdsMap.get(extra.getFormSpecId());
+	            if (newFormSpecId != null) {
+	                extra.setFormSpecId(newFormSpecId);
+	            } else {
+	                iterator.remove();
+	                continue;
+	            }
+
+	            // 2️⃣ Resolve new sectionFieldSpecId (instead of fieldSpecId)
+	            Long sectionFieldSpecId = extra.getSectionFieldSpecId();
+	            Long newSectionFieldSpecId = null;
+
+	            // First, check both ID maps
+	            if (formSectionFieldSpecsIdMap.containsKey(sectionFieldSpecId)) {
+	                newSectionFieldSpecId = formSectionFieldSpecsIdMap.get(sectionFieldSpecId);
+	            } else if (formFieldSpecsIdMap.containsKey(sectionFieldSpecId)) {
+	                newSectionFieldSpecId = formFieldSpecsIdMap.get(sectionFieldSpecId);
+	            }
+
+	            if (newSectionFieldSpecId != null) {
+	                extra.setSectionFieldSpecId(newSectionFieldSpecId);
+	            } else {
+	                iterator.remove();
+	            }
+	        }
+	    } catch (Exception e) {
+	        sectionFieldsExtra = new ArrayList<>();
+	    }
+	}
+
 
 }

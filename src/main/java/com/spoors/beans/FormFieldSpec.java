@@ -323,7 +323,11 @@ public class FormFieldSpec extends FormFieldSpecMaster {
 	private String prefixFormFieldExpression;
 	private String sufixFormFieldExpression;
 
-	
+	private Integer maskingPositionType;
+	private Integer startPositionReference;
+	private Integer endPositionReference;
+	private Integer canEditInView;
+
 	public boolean isRestrictDataFromMobile() {
 		return restrictDataFromMobile;
 	}
@@ -2102,6 +2106,35 @@ public class FormFieldSpec extends FormFieldSpecMaster {
 		this.sufixFormFieldExpression = sufixFormFieldExpression;
 	}
 	
-	
+	public Integer getMaskingPositionType() {
+		return maskingPositionType;
+	}
+
+	public void setMaskingPositionType(Integer maskingPositionType) {
+		this.maskingPositionType = maskingPositionType;
+	}
+
+	public Integer getStartPositionReference() {
+		return startPositionReference;
+	}
+
+	public void setStartPositionReference(Integer startPositionReference) {
+		this.startPositionReference = startPositionReference;
+	}
+
+	public Integer getEndPositionReference() {
+		return endPositionReference;
+	}
+
+	public void setEndPositionReference(Integer endPositionReference) {
+		this.endPositionReference = endPositionReference;
+	}
+	public Integer getCanEditInView() {
+		return canEditInView;
+	}
+
+	public void setCanEditInView(Integer canEditInView) {
+		this.canEditInView = canEditInView;
+	}
 	
 }

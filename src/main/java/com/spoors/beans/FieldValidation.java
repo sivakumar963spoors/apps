@@ -125,4 +125,7 @@ public class FieldValidation {
 			return false;
 		return imageSizeEnabled;
 	}
+	public void setMinValue(String min) { this.min = min; }
+	public void setMaxValue(String max) { this.max = max; }
+
 }

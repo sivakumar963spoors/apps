@@ -213,7 +213,12 @@ public class FormSectionFieldSpec {
 	
 	private Integer reminderConfigEnabled;
 	private String remainderRemarksFields;
-
+	private Integer showRemainderBefore;
+	
+	private Integer canEditInView;
+	private Integer maskingPositionType;
+	private Integer startPositionReference;
+	private Integer endPositionReference;
 	public boolean isRestrictDataFromMobile() {
 		return restrictDataFromMobile;
 	}
@@ -306,6 +311,9 @@ public class FormSectionFieldSpec {
 		this.formula = formula;
 	}
 	public boolean isRequired() {
+		return isRequired;
+	}
+	public boolean getIsRequired() {
 		return isRequired;
 	}
 	public void setIsRequired(boolean isRequired) {
@@ -1222,6 +1230,34 @@ public class FormSectionFieldSpec {
 	public void setRemainderRemarksFields(String remainderRemarksFields) {
 		this.remainderRemarksFields = remainderRemarksFields;
 	}
-	
-	
+	public Integer getShowRemainderBefore() {
+		return showRemainderBefore;
+	}
+	public void setShowRemainderBefore(Integer showRemainderBefore) {
+		this.showRemainderBefore = showRemainderBefore;
+	}
+	public Integer getCanEditInView() {
+		return canEditInView;
+	}
+	public void setCanEditInView(Integer canEditInView) {
+		this.canEditInView = canEditInView;
+	}
+	public Integer getMaskingPositionType() {
+		return maskingPositionType;
+	}
+	public void setMaskingPositionType(Integer maskingPositionType) {
+		this.maskingPositionType = maskingPositionType;
+	}
+	public Integer getStartPositionReference() {
+		return startPositionReference;
+	}
+	public void setStartPositionReference(Integer startPositionReference) {
+		this.startPositionReference = startPositionReference;
+	}
+	public Integer getEndPositionReference() {
+		return endPositionReference;
+	}
+	public void setEndPositionReference(Integer endPositionReference) {
+		this.endPositionReference = endPositionReference;
+	}
 }

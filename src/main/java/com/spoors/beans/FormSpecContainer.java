@@ -38,6 +38,8 @@ public class FormSpecContainer {
 	private List<PaymentMapping> paymentMappings;
 	
 	private List<FieldValidationCritiria> fieldValidationCritirias;
+	private List<FieldRestrictionCritiria> fieldRestrictionCritirias;
+
 	
 	private List<StockFormConfiguration> stockFormConfigurations;
 	
@@ -77,7 +79,8 @@ public class FormSpecContainer {
 	
 	private List<RemainderFieldsMap> remainderFieldsMap;
 	
-	List<FieldValidation> fieldValidations;
+	private List<FieldValidation> fieldValidations = new ArrayList<>();
+
 	
 	
 	private List<EntitySpec> entitySpecs;
@@ -114,6 +117,7 @@ public class FormSpecContainer {
 		this.workFormFieldMap=new ArrayList<WorkFormFieldMap>();
 		this.paymentMappings=new ArrayList<PaymentMapping>();
 		this.fieldValidationCritirias = new ArrayList<FieldValidationCritiria>();
+		this.fieldRestrictionCritirias = new ArrayList<FieldRestrictionCritiria>();
 		this.setStockFormConfigurations(new ArrayList<StockFormConfiguration>());
 		this.formFieldSpecFilters = new ArrayList<FieldSpecFilter>();
 		this.formSectionFieldSpecFilters = new ArrayList<FieldSpecFilter>();
@@ -593,6 +597,14 @@ public class FormSpecContainer {
 
 	public void setEntitySectionFieldsData(List<EntitySectionField> entitySectionFieldsData) {
 		this.entitySectionFieldsData = entitySectionFieldsData;
+	}
+
+	public List<FieldRestrictionCritiria> getFieldRestrictionCritirias() {
+		return fieldRestrictionCritirias;
+	}
+
+	public void setFieldRestrictionCritirias(List<FieldRestrictionCritiria> fieldRestrictionCritirias) {
+		this.fieldRestrictionCritirias = fieldRestrictionCritirias;
 	}
 	
 	

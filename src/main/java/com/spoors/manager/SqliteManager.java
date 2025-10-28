@@ -48,6 +48,8 @@ import com.spoors.beans.EntitySectionField;
 import com.spoors.beans.EntitySectionFieldSpec;
 import com.spoors.beans.EntitySectionSpec;
 import com.spoors.beans.EntitySpec;
+import com.spoors.beans.FieldRestrictionCritiria;
+import com.spoors.beans.FieldValidation;
 import com.spoors.beans.FieldValidationCritiria;
 import com.spoors.beans.FormCleanUpRule;
 import com.spoors.beans.FormFieldGroupSpec;
@@ -314,6 +316,18 @@ public class SqliteManager {
 			}
 			/* field validation critiria end */
 
+			
+			currentTime = System.currentTimeMillis();
+			List<FieldRestrictionCritiria> fieldRestrictionCritirias = formSpecContainer.getFieldRestrictionCritirias();
+			if (fieldRestrictionCritirias != null) {
+				jsonTable = db.getTable("forms_specs_field_restriction_critirias");
+				int formSpecFieldRestrictionCriteriaAutoIncrementId = 1;
+				for (FieldRestrictionCritiria fieldRestrictionCritiria : fieldRestrictionCritirias) {
+					jsonTable.insert(Api.toJson(fieldRestrictionCritiria), 0,
+							formSpecFieldRestrictionCriteriaAutoIncrementId);
+					formSpecFieldRestrictionCriteriaAutoIncrementId++;
+				}
+			}
 			currentTime = System.currentTimeMillis();
 			/* Added for Stock Form Configuration by ameer on 7/6/2016 3:25pm */
 			List<StockFormConfiguration> stockFormConfigurationList = formSpecContainer.getStockFormConfigurations();
@@ -595,6 +609,18 @@ public class SqliteManager {
  				}
  			}
  			
+ 			currentTime = System.currentTimeMillis();
+			List<FieldValidation> formValidations = formSpecContainer.getFieldValidations();
+			if (formValidations != null) {
+				jsonTable = db.getTable("forms_specs_formvalidations");
+				int formValidationsAutoIncrementId = 1;
+				for (FieldValidation formValidation : formValidations) {
+					jsonTable.insert(Api.toJson(formValidation), 0,
+							formValidationsAutoIncrementId);
+					formValidationsAutoIncrementId++;
+				}
+			}
+			
  		 	currentTime = System.currentTimeMillis();
  		 	List<EntitySpec> entitySpecList =  formSpecContainer.getEntitySpecs();
  		 	if(entitySpecList != null){
@@ -1225,6 +1251,7 @@ public class SqliteManager {
 		db.createTable(MobileSqls.FORMS_SPECS_EMPLOYEE_FILTERING_CRITERIAS);
 		db.createTable(MobileSqls.FORMS_SPECS_FORM_FILTERING_CRITIRIAS);
 		db.createTable(MobileSqls.FORMS_SPECS_FIELD_VALIDATION_CRITIRIAS);
+		db.createTable(MobileSqls.FORMS_SPECS_FIELD_RESTRICTION_CRITIRIAS);
 		db.createTable(MobileSqls.FORMS_SPECS_STOCK_FORM_CONFIGURATIONS);
 		db.createTable(MobileSqls.FORMS_SPECS_OFFLINE_LIST_UPDATE_CONFIGURATIONS);
 		db.createTable(MobileSqls.FORMS_SPECS_OFFLINE_CUSTOMENTITY_UPDATE_CONFIGURATIONS);
@@ -1235,7 +1262,7 @@ public class SqliteManager {
 		db.createTable(MobileSqls.FORM_FIELD_SPECS_EXTRA);
 		db.createTable(MobileSqls.FORM_SECTION_FIELD_SPECS_EXTRA);
 		db.createTable(MobileSqls.FORMS_SPECS_CUSTOM_ENTITY_FILTERING_CRITIRIAS);
-		
+		db.createTable(MobileSqls.FORMS_SPECS_FORMVALIDATIONS);
 		db.createTable(MobileSqls.WORKS_SPECS_WORK_SPECS);
 		db.createTable(MobileSqls.WORKS_SPECS_NEXT_WORK_SPECS);
 		db.createTable(MobileSqls.WORKS_SPECS_NEXT_ACTION_SPECS);
@@ -1348,6 +1375,9 @@ public class SqliteManager {
 
              List<FieldValidationCritiria> fieldValidationCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_validation_critirias",FieldValidationCritiria.class, stmt);
              formSpecContainer.setFieldValidationCritirias(fieldValidationCritiriaList);
+             
+             List<FieldRestrictionCritiria> fieldValidationCritirias = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_restriction_critirias",FieldRestrictionCritiria.class, stmt);
+             formSpecContainer.setFieldRestrictionCritirias(fieldValidationCritirias);
              
              List<StockFormConfiguration> stockFormConfigurationList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_stock_form_configurations",StockFormConfiguration.class, stmt);
              formSpecContainer.setStockFormConfigurations(stockFormConfigurationList);
@@ -1534,6 +1564,9 @@ public class SqliteManager {
 			 List<FieldValidationCritiria> fieldValidationCritiriaList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_validation_critirias",FieldValidationCritiria.class, stmt);
 			 formSpecContainer.setFieldValidationCritirias(fieldValidationCritiriaList);
 			 
+			  List<FieldRestrictionCritiria> fieldValidationCritirias = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_field_restriction_critirias",FieldRestrictionCritiria.class, stmt);
+	             formSpecContainer.setFieldRestrictionCritirias(fieldValidationCritirias);
+	             
 			 List<StockFormConfiguration> stockFormConfigurationList = fetchDataFromSqliteAndMapToBean("SELECT * FROM forms_specs_stock_form_configurations",StockFormConfiguration.class, stmt);
 			 formSpecContainer.setStockFormConfigurations(stockFormConfigurationList);
 			
@@ -1643,7 +1676,13 @@ public class SqliteManager {
 			 List<EntitySectionField> entitySectionFieldList = fetchDataFromSqliteAndMapToBean("SELECT * FROM entities_data_section_fields",EntitySectionField.class, stmt);
 			 formSpecContainer.setEntitySectionFieldsData(entitySectionFieldList);
 			 
-			
+			 List<FieldValidation> fieldValidations = fetchDataFromSqliteAndMapToBean(
+					    "SELECT * FROM forms_specs_formvalidations", 
+					    FieldValidation.class, 
+					    stmt
+					);
+					formSpecContainer.setFieldValidations(fieldValidations);//added to insert min & max validation values
+
 			 // workspecs 
 
 			List<WorkSpec> workSpecs = fetchDataFromSqliteAndMapToBean("SELECT * FROM works_specs_work_specs",WorkSpec.class, stmt);
@@ -1779,6 +1818,7 @@ public class SqliteManager {
 			
 			List<WorkSpecCustomDashboardConfiguration> workSpecCustomDashboardConfigurations = fetchDataFromSqliteAndMapToBean("SELECT * FROM work_spec_custom_dashboard_configurations",WorkSpecCustomDashboardConfiguration.class, stmt);
 			workSpecContainer.setWorkSpecCustomDashboardConfigurations(workSpecCustomDashboardConfigurations);
+			
 		}
 
 		

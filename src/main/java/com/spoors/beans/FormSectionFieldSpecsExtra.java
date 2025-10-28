@@ -20,6 +20,7 @@ public class FormSectionFieldSpecsExtra {
 	private Integer sendActionAssignmentsOfEmpIdsOfGroupRestrictions = 0;
 	private Integer restrictLocationPickCondition = 0;
 	private boolean isVisible = true;
+	private int visible = 1;
 	private boolean visibleForCreation = true;
 	private boolean searchableField = true;
 	private Integer enableFrontCameraInMobile=0;
@@ -41,7 +42,11 @@ public class FormSectionFieldSpecsExtra {
 	private Integer enableMappedTerritoriesRestriction = 0;
 	private Integer radioButtonOrientation;
 	private Integer includeEndDate;
-
+	private Integer showRemainderBefore;
+	private Integer canEditInView;
+	private Integer maskingPositionType;
+	private Integer startPositionReference;
+	private Integer endPositionReference;
 	public Long getFormSectionFieldSpecsExtraId() {
 		return formSectionFieldSpecsExtraId;
 	}
@@ -234,8 +239,42 @@ public class FormSectionFieldSpecsExtra {
 	public void setIncludeEndDate(Integer includeEndDate) {
 		this.includeEndDate = includeEndDate;
 	}
-	
-	
-	
+	public Integer getShowRemainderBefore() {
+		return showRemainderBefore;
+	}
+	public void setShowRemainderBefore(Integer showRemainderBefore) {
+		this.showRemainderBefore = showRemainderBefore;
+	}
+	public Integer getCanEditInView() {
+		return canEditInView;
+	}
+	public void setCanEditInView(Integer canEditInView) {
+		this.canEditInView = canEditInView;
+	}
+	public Integer getMaskingPositionType() {
+		return maskingPositionType;
+	}
+	public void setMaskingPositionType(Integer maskingPositionType) {
+		this.maskingPositionType = maskingPositionType;
+	}
+	public Integer getStartPositionReference() {
+		return startPositionReference;
+	}
+	public void setStartPositionReference(Integer startPositionReference) {
+		this.startPositionReference = startPositionReference;
+	}
+	public Integer getEndPositionReference() {
+		return endPositionReference;
+	}
+	public void setEndPositionReference(Integer endPositionReference) {
+		this.endPositionReference = endPositionReference;
+	}
+	public int getVisible() {
+		return visible;
+	}
+
+	public void setVisible(int visible) {
+		this.visible = visible;
+	}
 }
 

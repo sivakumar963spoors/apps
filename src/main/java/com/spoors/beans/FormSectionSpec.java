@@ -54,7 +54,7 @@ public class FormSectionSpec extends FormFieldSpecMaster{
 	private String externalLabel;
 	private Integer selectionTypeInDevice = 1;
 	private String sectionSpecUniqueId;
-	
+	@JsonProperty("display_type")
 	private int displayType = 3;
 	private int autoCreateFieldCategoryType = 1;
 	private boolean defaultInstanceCollapse;

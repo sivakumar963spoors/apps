@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.objectweb.asm.Type;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,7 @@ import com.spoors.beans.EntitySectionField;
 import com.spoors.beans.EntitySectionFieldSpec;
 import com.spoors.beans.EntitySectionSpec;
 import com.spoors.beans.EntitySpec;
+import com.spoors.beans.FieldRestrictionCritiria;
 import com.spoors.beans.FieldSpecFilter;
 import com.spoors.beans.FieldValidation;
 import com.spoors.beans.FieldValidationCritiria;
@@ -165,7 +167,20 @@ public class EffortDao {
 		}
 		return fieldValidationCritirias;
 	}
-
+	public List<FieldRestrictionCritiria> getFieldRestrictionCritirias(
+			String formSpecIds) {
+		List<FieldRestrictionCritiria> fieldRestrictionCritirias = new ArrayList<FieldRestrictionCritiria>();
+		if(!Api.isEmptyString(formSpecIds))
+		{
+			String sql = Sqls.SELECT_FIELD_RESTRICTION_CRITIRIA.replace(":formSpecIds", formSpecIds);
+			fieldRestrictionCritirias = jdbcTemplate.query(
+					sql, new Object[] {},
+					new BeanPropertyRowMapper<FieldRestrictionCritiria>(
+							FieldRestrictionCritiria.class));
+		}
+		return fieldRestrictionCritirias;
+		
+	}
 	public List<EmployeeFilteringCritiria> getListOfEmployeeFilterCriterias(String formSpecIds) {
 		List<EmployeeFilteringCritiria> employeeFilteringCritiria = new ArrayList<EmployeeFilteringCritiria>();
 		if(!Api.isEmptyString(formSpecIds))
@@ -1359,7 +1374,6 @@ public class EffortDao {
 				} else {
 					ps.setNull(64, Types.VARCHAR);
 				}
-				
 				return ps;
 			}
 		}, keyHolder);
@@ -4581,6 +4595,316 @@ public class EffortDao {
 			}
 			return activity;
 		}
+		public List<FieldValidation> getFieldValidationsByType(List<Long> fieldSpecIds, int fieldType) {
+		    if (fieldSpecIds == null || fieldSpecIds.isEmpty()) {
+		        return new ArrayList<>();
+		    }
 
+		    String ids = fieldSpecIds.stream()
+		            .map(String::valueOf)
+		            .collect(Collectors.joining(","));
+
+		    String sql = Sqls.SELECT_FIELD_VALIDATIONS_BY_FIELD_IDS_AND_TYPE
+		                     .replace(":ids", ids)
+		                     .replace(":fieldType", String.valueOf(fieldType));
+
+		    return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(FieldValidation.class));
+		}
+		// For form fields (fieldType = 1)
+		public List<FieldValidation> getFieldValidationsForFields(List<FormFieldSpec> fieldSpecs) {
+		    if (fieldSpecs == null || fieldSpecs.isEmpty()) return new ArrayList<>();
+		    
+		    String ids = fieldSpecs.stream()
+		            .map(f -> String.valueOf(f.getFieldSpecId()))
+		            .collect(Collectors.joining(","));
+		    
+		    String sql = Sqls.SELECT_FIELD_VALIDATIONS_BY_FIELD_IDS_AND_TYPE
+		            .replace(":ids", ids)
+		            .replace(":fieldType", "1");  // 1 = form fields
+		    
+		    return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(FieldValidation.class));
+		}
+
+		// For section fields (fieldType = 2)
+		public List<FieldValidation> getFieldValidationsForSectionFields(List<FormSectionFieldSpec> sectionFieldSpecs) {
+		    if (sectionFieldSpecs == null || sectionFieldSpecs.isEmpty()) return new ArrayList<>();
+		    
+		    String ids = sectionFieldSpecs.stream()
+		            .map(f -> String.valueOf(f.getSectionFieldSpecId()))
+		            .collect(Collectors.joining(","));
+		    
+		    String sql = Sqls.SELECT_FIELD_VALIDATIONS_BY_FIELD_IDS_AND_TYPE
+		            .replace(":ids", ids)
+		            .replace(":fieldType", "2");  // 2 = section fields
+		    
+		    return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(FieldValidation.class));
+		}
+		
+		public List<FieldValidation> getFieldValidationsForFormSpecIds(String formSpecIds) {
+		    if (formSpecIds == null || formSpecIds.isEmpty()) return new ArrayList<>();
+		    String sql = "SELECT * FROM formValidations WHERE formSpecId IN (" + formSpecIds + ")";
+
+
+		 return jdbcTemplate.query(sql, (rs, rowNum) -> {
+		     FieldValidation fv = new FieldValidation();
+		     fv.setFieldSpecId(rs.getLong("fieldSpecId"));
+		     fv.setFormSpecId(rs.getLong("formSpecId"));
+		     fv.setMin(rs.getString("min")); // read raw name
+		     fv.setMax(rs.getString("max")); // read raw name
+		     fv.setFieldDataType(rs.getInt("fieldDataType"));
+		     fv.setFieldType(rs.getInt("fieldType"));
+		     fv.setImageSizeEnabled(rs.getBoolean("imageSizeEnabled"));
+		     fv.setImageSize(rs.getObject("imageSize") != null ? rs.getInt("imageSize") : 0);
+		     return fv;
+		 });
+
+		}
+
+		public void insertFormFieldSpecsExtra(List<FormFieldSpecsExtra> fieldsExtra) {
+	        if (fieldsExtra == null || fieldsExtra.isEmpty()) {
+	            return;
+	        }
+
+	        for (FormFieldSpecsExtra extra : fieldsExtra) {
+	            insertFormFieldSpecsExtra(extra); // insert each record
+	        }
+	    }
+
+		public long insertFormFieldSpecsExtra(final FormFieldSpecsExtra extra) {
+	        KeyHolder keyHolder = new GeneratedKeyHolder();
+
+	        jdbcTemplate.update(new PreparedStatementCreator() {
+	            @Override
+	            public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+	                PreparedStatement ps = connection.prepareStatement(
+	                        Sqls.INSERT_FORM_FIELD_SPECS_EXTRA, // same SQL you already have
+	                        Statement.RETURN_GENERATED_KEYS);
+
+	                // --- Parameters Mapping ---
+	                ps.setLong(1, extra.getFieldSpecId());
+	                ps.setString(2, extra.getShowHelpText());
+	                ps.setLong(3, extra.getFormSpecId());
+
+	                ps.setInt(4, extra.getEnablePickerAndDropdown() != null ? extra.getEnablePickerAndDropdown() : 1);
+	                ps.setString(5, extra.getNumberToWordCurrencyType());
+	                ps.setInt(6, extra.getEnableCommaSeperator() != null ? extra.getEnableCommaSeperator() : 0);
+	                ps.setString(7, extra.getCurrencyFormat());
+	                ps.setBoolean(8, extra.isStaticField());
+
+	                // Handle staticFieldMediaId
+	                if (Api.isEmptyString(extra.getStaticFieldMediaId())) {
+	                    ps.setNull(9, Types.BIGINT);
+	                } else {
+	                    ps.setLong(9, Long.parseLong(extra.getStaticFieldMediaId()));
+	                }
+
+	                // Handle staticFieldThumbnailMediaId
+	                if (Api.isEmptyString(extra.getStaticFieldThumbnailMediaId())) {
+	                    ps.setNull(10, Types.BIGINT);
+	                } else {
+	                    ps.setLong(10, Long.parseLong(extra.getStaticFieldThumbnailMediaId()));
+	                }
+
+	                ps.setInt(11, extra.getSendActionAssignmentsOfEmpIdsOfGroupRestrictions());
+	                ps.setInt(12, extra.getEnableUserInputsForTextFieldFormula());
+	                ps.setInt(13, extra.getRestrictLocationPickCondition());
+	                ps.setInt(14, 0);
+
+	                if (extra.getMaxNumberOfFilesAllowed() != null) {
+	                    ps.setInt(15, extra.getMaxNumberOfFilesAllowed());
+	                } else {
+	                    ps.setInt(15, 0);
+	                }
+
+	                ps.setInt(16, extra.getEnableFrontCameraInMobile() != null ? extra.getEnableFrontCameraInMobile() : 0);
+	                ps.setNull(17, Types.VARCHAR); 
+	                if (extra.getFormFieldEntityId() != null) {
+	                    ps.setLong(18, extra.getFormFieldEntityId());
+	                } else {
+	                    ps.setNull(18, Types.BIGINT);
+	                }
+
+	                ps.setString(19, extra.getStaticFieldValue());
+	                ps.setBoolean(20, extra.isFindDistanceByGoogleApi());
+
+	                if (extra.getMetricUnitsOfDistance() == null) {
+	                    ps.setNull(21, Types.INTEGER);
+	                } else {
+	                    ps.setInt(21, extra.getMetricUnitsOfDistance());
+	                }
+
+	                ps.setBoolean(22, extra.isEnableAgeRestriction());
+	                if (extra.getMinAge() == null) {
+	                    ps.setNull(23, Types.INTEGER);
+	                } else {
+	                    ps.setInt(23, extra.getMinAge());
+	                }
+	                if (extra.getMaxAge() == null) {
+	                    ps.setNull(24, Types.INTEGER);
+	                } else {
+	                    ps.setInt(24, extra.getMaxAge());
+	                }
+
+	                ps.setString(25, extra.getAgeRestrictionErrorMessage());
+	                ps.setInt(26, extra.getEnableMediaFormatRestriction() != null ? extra.getEnableMediaFormatRestriction() : 0);
+	                ps.setString(27, extra.getAllowRequiredFormat());
+	                ps.setInt(28, extra.getEnableMappedTerritoriesRestriction() != null ? extra.getEnableMappedTerritoriesRestriction() : 0);
+	                ps.setInt(29, extra.getShowOnlyMappedItemsWhileSelection());
+	                ps.setInt(30, extra.getRadioButtonOrientation() != null ? extra.getRadioButtonOrientation() : 1);
+	                ps.setObject(31, extra.getShowRemainderBefore(), Types.INTEGER);
+	                ps.setInt(32, extra.getIncludeEndDate() != null ? extra.getIncludeEndDate() : 0);
+	                if (extra.getCanEditInView() == null) {
+	                    ps.setInt(33, 0);
+	                } else {
+	                    ps.setInt(33, extra.getCanEditInView());
+	                }
+
+	                if (extra.getMaskingPositionType() == null) {
+	                    ps.setNull(34, Types.INTEGER);
+	                } else {
+	                    ps.setInt(34, extra.getMaskingPositionType());
+	                }
+
+	                if (extra.getStartPositionReference() == null) {
+	                    ps.setNull(35, Types.INTEGER);
+	                } else {
+	                    ps.setInt(35, extra.getStartPositionReference());
+	                }
+
+	                if (extra.getEndPositionReference() == null) {
+	                    ps.setNull(36, Types.INTEGER);
+	                } else {
+	                    ps.setInt(36, extra.getEndPositionReference());
+	                }
+	                return ps;
+	            }
+	        }, keyHolder);
+
+	        return keyHolder.getKey().longValue();
+	    }
+	
+		public void insertFormSectionFieldSpecsExtra(List<FormSectionFieldSpecsExtra> extras) {
+		    jdbcTemplate.batchUpdate(Sqls.INSERT_FORM_SECTION_FIELD_SPECS_EXTRA, new BatchPreparedStatementSetter() {
+		        @Override
+		        public void setValues(PreparedStatement ps, int i) throws SQLException {
+		            FormSectionFieldSpecsExtra formSectionFieldSpec = extras.get(i);
+
+		            ps.setLong(1, formSectionFieldSpec.getSectionFieldSpecId());
+		            ps.setString(2, formSectionFieldSpec.getShowHelpText());
+		            ps.setLong(3, formSectionFieldSpec.getFormSpecId());
+		            ps.setInt(4, formSectionFieldSpec.getEnablePickerAndDropdown() != null 
+		                          ? formSectionFieldSpec.getEnablePickerAndDropdown() : 1);
+		            ps.setString(5, formSectionFieldSpec.getNumberToWordCurrencyType());
+		            ps.setInt(6, formSectionFieldSpec.getEnableCommaSeperator());
+		            ps.setString(7, formSectionFieldSpec.getCurrencyFormat());
+		            ps.setInt(8, formSectionFieldSpec.getSendActionAssignmentsOfEmpIdsOfGroupRestrictions());
+		            ps.setInt(9, formSectionFieldSpec.getEnableUserInputsForTextFieldFormula());
+		            ps.setInt(10, formSectionFieldSpec.getRestrictLocationPickCondition());
+		            ps.setInt(11, formSectionFieldSpec.getVisible());
+		            ps.setBoolean(12, formSectionFieldSpec.isVisibleForCreation());
+		            ps.setBoolean(13, formSectionFieldSpec.isSearchableField());
+		            ps.setInt(14, formSectionFieldSpec.getMaxNumberOfFilesAllowed() != null
+		                          ? formSectionFieldSpec.getMaxNumberOfFilesAllowed() : 0);
+		            ps.setInt(15, formSectionFieldSpec.getEnableFrontCameraInMobile());
+		            ps.setBoolean(16, formSectionFieldSpec.isFindDistanceByGoogleApi());
+		            ps.setObject(17, formSectionFieldSpec.getMetricUnitsOfDistance(), Types.INTEGER);
+		            ps.setBoolean(18, formSectionFieldSpec.isEnableAgeRestriction());
+		            ps.setObject(19, formSectionFieldSpec.getMinAge(), Types.INTEGER);
+		            ps.setObject(20, formSectionFieldSpec.getMaxAge(), Types.INTEGER);
+		            ps.setString(21, formSectionFieldSpec.getAgeRestrictionErrorMessage());
+		            ps.setInt(22, formSectionFieldSpec.getEnableMediaFormatRestriction());
+		            ps.setString(23, formSectionFieldSpec.getAllowRequiredFormat());
+		            ps.setInt(24, formSectionFieldSpec.getEnableMappedTerritoriesRestriction());
+		            ps.setInt(25, formSectionFieldSpec.getShowOnlyMappedItemsWhileSelection());
+		            ps.setInt(26, formSectionFieldSpec.getRadioButtonOrientation() != null
+		                          ? formSectionFieldSpec.getRadioButtonOrientation() : 1);
+		            ps.setInt(27, formSectionFieldSpec.getIncludeEndDate() != null
+		                          ? formSectionFieldSpec.getIncludeEndDate() : 0);
+		            ps.setObject(28, formSectionFieldSpec.getShowRemainderBefore(), Types.INTEGER);
+		            ps.setInt(29, formSectionFieldSpec.getCanEditInView() != null
+		                          ? formSectionFieldSpec.getCanEditInView() : 0);
+		            ps.setObject(30, formSectionFieldSpec.getMaskingPositionType(), Types.INTEGER);
+		            ps.setObject(31, formSectionFieldSpec.getStartPositionReference(), Types.INTEGER);
+		            ps.setObject(32, formSectionFieldSpec.getEndPositionReference(), Types.INTEGER);
+		        }
+
+		        @Override
+		        public int getBatchSize() {
+		            return extras.size();
+		        }
+		    });
+		}
+
+		
+		 public void insertFieldRestrictionCritria(
+					final List<FieldRestrictionCritiria> fieldRestrictionCritrias) {
+
+				jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_FIELD_RESTRICTION_CRITIRIA,
+						new BatchPreparedStatementSetter() {
+
+							@Override
+							public void setValues(PreparedStatement ps, int i)
+									throws SQLException {
+								FieldRestrictionCritiria fieldRestrictionCritria = fieldRestrictionCritrias
+										.get(i);
+								ps.setLong(1, fieldRestrictionCritria.getFormSpecId());
+								ps.setLong(2, fieldRestrictionCritria.getFieldSpecId());
+								if(Api.isEmptyString(fieldRestrictionCritria
+										.getReferenceFieldExpressionId()))
+								{
+									ps.setNull(3, Types.VARCHAR);
+								}
+								else
+								{
+									ps.setString(3, fieldRestrictionCritria
+											.getReferenceFieldExpressionId());
+								}
+								
+								if(Api.isEmptyString(fieldRestrictionCritria
+										.getValue()))
+								{
+									ps.setNull(4, Types.VARCHAR);
+								}
+								else
+								{
+									ps.setString(4, fieldRestrictionCritria
+											.getValue());
+								}
+								
+								ps.setInt(5, fieldRestrictionCritria.getCondition());
+								ps.setInt(6, fieldRestrictionCritria.getValidationType());
+								ps.setInt(7, fieldRestrictionCritria.isSectionField() ? 1 : 0);
+								ps.setInt(8, fieldRestrictionCritria.getConjunction());
+								
+								if(Api.isEmptyString(fieldRestrictionCritria
+										.getReferenceFieldExpressionId2()))
+								{
+									ps.setNull(9, Types.VARCHAR);
+								}
+								else
+								{
+									ps.setString(9, fieldRestrictionCritria
+											.getReferenceFieldExpressionId2());
+								}
+								
+								if(Api.isEmptyString(fieldRestrictionCritria
+										.getValue2()))
+								{
+									ps.setNull(10, Types.VARCHAR);
+								}
+								else
+								{
+									ps.setString(10, fieldRestrictionCritria
+											.getValue2());
+								}
+							}
+
+							@Override
+							public int getBatchSize() {
+								return fieldRestrictionCritrias.size();
+							}
+						});
+
+			}
 
 }

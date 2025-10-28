@@ -41,6 +41,10 @@ public class FormFieldSpecsExtra
 	private Integer showRemainderBefore;
 	private Integer includeEndDate;
 
+	private Integer canEditInView;
+	private Integer maskingPositionType;
+	private Integer startPositionReference;
+	private Integer endPositionReference;
 	
 	public Long getFormFieldSpecExtraId() {
 		return formFieldSpecExtraId;
@@ -253,6 +257,36 @@ public class FormFieldSpecsExtra
 	}
 	public void setIncludeEndDate(Integer includeEndDate) {
 		this.includeEndDate = includeEndDate;
+	}
+	public Integer getCanEditInView() {
+		return canEditInView;
+	}
+	public void setCanEditInView(Integer canEditInView) {
+		this.canEditInView = canEditInView;
+	}
+	public Integer getMaskingPositionType() {
+		return maskingPositionType;
+	}
+	public void setMaskingPositionType(Integer maskingPositionType) {
+		this.maskingPositionType = maskingPositionType;
+	}
+	public Integer getStartPositionReference() {
+		return startPositionReference;
+	}
+	public void setStartPositionReference(Integer startPositionReference) {
+		this.startPositionReference = startPositionReference;
+	}
+	public Integer getEndPositionReference() {
+		return endPositionReference;
+	}
+	public void setEndPositionReference(Integer endPositionReference) {
+		this.endPositionReference = endPositionReference;
+	}
+	public void setStaticField(boolean staticField) {
+		this.staticField = staticField;
+	}
+	public void setFindDistanceByGoogleApi(boolean findDistanceByGoogleApi) {
+		this.findDistanceByGoogleApi = findDistanceByGoogleApi;
 	}
 	
 	
