@@ -163,7 +163,7 @@ public class ServiceManager
 				
 				List<FormFieldSpec> fieldSpecs = getFormFieldSpecForIn(formSpecs);
 				
-				List<FormFieldSpecsExtra> fieldSpecsExtra =	getFormFieldSpecsExtraForIn(formSpecs);//here we are getting enableMappedTerritoriesRestriction
+				List<FormFieldSpecsExtra> fieldSpecsExtra =	getFormFieldSpecsExtraForIn(formSpecs);//phone masking
 				
 				List<FormFieldSpecValidValue> fieldSpecValidValues = getFormFieldSpecValidValues(fieldSpecs);
 				
@@ -171,7 +171,7 @@ public class ServiceManager
 				
 				List<FormSectionFieldSpec> sectionFieldSpecs = getFormSectionFieldSpecForIn(sectionSpecs);
 				
-				List<FormSectionFieldSpecsExtra> sectionFieldSpecsExtra = getFormSectionFieldSpecsForIn(formSpecs);
+				List<FormSectionFieldSpecsExtra> sectionFieldSpecsExtra = getFormSectionFieldSpecsForIn(formSpecs);//repeatbel section
 				
 				List<FormSectionFieldSpecValidValue> sectionFieldSpecValidValues = getFormSectionFieldSpecValidValuesIn(sectionFieldSpecs);
 				
@@ -1033,7 +1033,7 @@ public class ServiceManager
 			}
 		}
 
-		if (formSectionSpecs != null) {
+		/*if (formSectionSpecs != null) {
 			for (FormSectionSpec formSectionSpec : formSectionSpecs) {
 				long oldSectionSpecId = formSectionSpec.getSectionSpecId();
 				String oldSectionSpecUniqueId = formSectionSpec.getSectionSpecUniqueId();
@@ -1071,6 +1071,63 @@ public class ServiceManager
 							formSectionSpec.getSectionSpecUniqueId());
 				}
 			}
+		}*/
+		if (formSectionSpecs != null) {
+		    for (FormSectionSpec formSectionSpec : formSectionSpecs) {
+		        long oldSectionSpecId = formSectionSpec.getSectionSpecId();
+		        String oldSectionSpecUniqueId = formSectionSpec.getSectionSpecUniqueId();
+
+		        // --- Skeleton linkage ---
+		        if (isSkeleton)
+		            formSectionSpec.setSkeletonFormSectionSpecId(oldSectionSpecId);
+		        else
+		            formSectionSpec.setSkeletonFormSectionSpecId(formSectionSpec.getSkeletonFormSectionSpecId());
+
+		        // --- Resolve autoCreateFieldTypeExtra ---
+		     // --- Resolve autoCreateFieldTypeExtra ---
+		        if (!Api.isEmptyString(formSectionSpec.getAutoCreateFieldTypeExtra())) {
+		            long oldEntitySpecId = Long.parseLong(formSectionSpec.getAutoCreateFieldTypeExtra());
+
+		            // ✅ Try to resolve to new EntitySpec ID if cloned
+		            Long newEntitySpecId = entitySpecsIdMap.get(oldEntitySpecId);
+
+		            if (newEntitySpecId != null) {
+		                // Found cloned entity, map to new child
+		                formSectionSpec.setAutoCreateFieldTypeExtra(String.valueOf(newEntitySpecId));
+		            } else {
+		                // No mapping — preserve the existing reference (like fieldTypeExtra does)
+		                formSectionSpec.setAutoCreateFieldTypeExtra(String.valueOf(oldEntitySpecId));
+		            }
+		        }
+
+		        // --- Insert cloned FormSectionSpec ---
+		        formSectionSpec.setSectionSpecUniqueId(null);
+		        effortDao.insertFormSectionSpec(formSectionSpec, formSpec.getFormSpecId(), webUser.getCompanyId());
+		        effortDao.updateInitialFormSectionSpecId(formSectionSpec);
+
+		        // --- Update templates ---
+		        printTemplate = printTemplate.replace(
+		            "id=\"S" + oldSectionSpecId + "\"",
+		            "id=\"S" + formSectionSpec.getSectionSpecId() + "\""
+		        );
+
+		        emailTemplate = emailTemplate.replaceAll(
+		            "S" + oldSectionSpecId,
+		            "S" + formSectionSpec.getSectionSpecId()
+		        );
+
+		        mobilePrintTemplate = mobilePrintTemplate.replace(
+		            "<S" + oldSectionSpecId + ">",
+		            "<S" + formSectionSpec.getSectionSpecId() + ">"
+		        );
+
+		        // --- Track mappings ---
+		        formSectionSpecsIdMap.put(oldSectionSpecId, formSectionSpec.getSectionSpecId());
+
+		        if (formSectionSpecUniqueIdsMap != null) {
+		            formSectionSpecUniqueIdsMap.put(oldSectionSpecUniqueId, formSectionSpec.getSectionSpecUniqueId());
+		        }
+		    }
 		}
 
 		if (formSectionFieldSpecs != null) {
@@ -2773,6 +2830,7 @@ public class ServiceManager
 				}
 				
 			}
+			
 			formSpec.setIsPublic(true);
 			formSpec.setAllAccess(true);
 			effortDao.insertFormSpec(formSpec, webUser.getCompanyId(),
@@ -2889,6 +2947,17 @@ public class ServiceManager
 				if(newFormSpecId == null) {
 					continue;
 				}
+				if (!Api.isEmptyString(formSectionSpec.getAutoCreateFieldTypeExtra())) {
+		            long oldEntitySpecId = Long.parseLong(formSectionSpec.getAutoCreateFieldTypeExtra());
+
+		            Long newEntitySpecId = entitySpecsIdMap.get(oldEntitySpecId);
+
+		            if (newEntitySpecId != null) {
+		                formSectionSpec.setAutoCreateFieldTypeExtra(String.valueOf(newEntitySpecId));
+		            } else {
+		                formSectionSpec.setAutoCreateFieldTypeExtra(String.valueOf(oldEntitySpecId));
+		            }
+		        }
 				effortDao.insertFormSectionSpec(formSectionSpec,
 						newFormSpecId, webUser.getCompanyId());
 				effortDao.updateInitialFormSectionSpecId(formSectionSpec);
@@ -2914,7 +2983,7 @@ public class ServiceManager
 				}
 			}
 		}
-
+//commnted for refernece of auto create create instance
 		if (formSectionFieldSpecs != null) {
 			for (FormSectionFieldSpec formSectionFieldSpec : formSectionFieldSpecs) {
 				long oldSectionSpecId = formSectionFieldSpec.getSectionSpecId();
@@ -2963,6 +3032,7 @@ public class ServiceManager
 				if(newFormSpecId == null) {
 					continue;
 				}
+				
 				effortDao.insertFormSectionFieldSpec(formSectionFieldSpec,
 						newFormSpecId, sectionSpecId);
 				effortDao.updateFormSectionFieldSpecId(formSectionFieldSpec);
