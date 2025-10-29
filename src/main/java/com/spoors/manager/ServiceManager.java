@@ -78,6 +78,7 @@ import com.spoors.beans.workSpecs.ActionableEmployeeGroupSpecs;
 import com.spoors.beans.workSpecs.AddingSubTaskEmployeeConfiguration;
 import com.spoors.beans.workSpecs.AttachmnetFormAutoFillSectionConfiguration;
 import com.spoors.beans.workSpecs.ExternalActionConfiguration;
+import com.spoors.beans.workSpecs.ExternalActionUrlSharingDetails;
 import com.spoors.beans.workSpecs.FormAutoFillSectionConfiguration;
 import com.spoors.beans.workSpecs.FormAutoFillSectionFieldsConfiguration;
 import com.spoors.beans.workSpecs.FormToWorkAutoFill;
@@ -2553,6 +2554,18 @@ public class ServiceManager
 				} else {
 					workSpecContainer.setExternalActionConfigurations(workActionSpecExternalActionConfig);
 				}
+				
+				for (ExternalActionConfiguration externalActionConfiguration : workSpecContainer.getExternalActionConfigurations()) {
+					
+					List<ExternalActionUrlSharingDetails> externalActionUrlSharingDetails = new ArrayList<>();
+					
+					if(!Api.isEmptyObj(externalActionConfiguration))
+					{
+						externalActionUrlSharingDetails = getExternalActionSharingDetailsBasedOnConfigurationId(externalActionConfiguration.getExternalActionConfigurationId());
+					}
+					
+					externalActionConfiguration.setExternalActionUrlSharingDetails(externalActionUrlSharingDetails);
+				}
 		        
 		        if (workSpecContainer.getWorkSpecListLevelVisibilityConfigurations() != null && workSpecContainer.getWorkSpecListLevelVisibilityConfigurations().size() > 0) {
 		                workSpecContainer.getWorkSpecListLevelVisibilityConfigurations().addAll(workSpecListLevelVisibilityConfigurations);
@@ -4044,7 +4057,22 @@ public class ServiceManager
 				
 				Long workActionSpecId = workActionSpecsCopied.get(externalActionConfiguration.getWorkActionSpecId());
 				externalActionConfiguration.setWorkActionSpecId(workActionSpecId);
-				effortDao.insertIntoExternalActionConfiguration(externalActionConfiguration,webUser);
+				Long id = effortDao.insertIntoExternalActionConfiguration(externalActionConfiguration,webUser);
+				List<ExternalActionUrlSharingDetails> externalActionUrlSharingDetails = externalActionConfiguration.getExternalActionUrlSharingDetails();
+				for (ExternalActionUrlSharingDetails externalActionUrlSharingDetail : externalActionUrlSharingDetails) {
+					externalActionUrlSharingDetail.setWorkSpecId(newWorkSpecId);
+					externalActionUrlSharingDetail.setWorkActionSpecId(workActionSpecId);
+					externalActionUrlSharingDetail.setExternalActionConfigurationId(id);
+					if(!Api.isEmptyString(externalActionUrlSharingDetail.getFieldSpecUniqueId())){
+					String uniqueId = formFieldSpecUniqueIdsMap.get(externalActionUrlSharingDetail.getFieldSpecUniqueId());
+					if(uniqueId != null) {
+					externalActionUrlSharingDetail.setFieldSpecUniqueId(formFieldSpecUniqueIdsMap.get(externalActionUrlSharingDetail.getFieldSpecUniqueId()));
+					}else {
+						externalActionUrlSharingDetail.setFieldSpecUniqueId(externalActionUrlSharingDetail.getFieldSpecUniqueId());						
+					}
+					}
+				}
+				effortDao.insertIntoExternalActionConfigurationInputs(externalActionUrlSharingDetails,id);
 				externalActionConfigurationsIdsMap.put(oldExternalActionConfigurationId, externalActionConfiguration.getExternalActionConfigurationId());
 			}
 			
@@ -4331,6 +4359,9 @@ public class ServiceManager
 	        sectionFieldsExtra = new ArrayList<>();
 	    }
 	}
-
+	public List<ExternalActionUrlSharingDetails> getExternalActionSharingDetailsBasedOnConfigurationId(
+			Long exterrnalActionConfigurationId) {
+		return effortDao.getExternalActionSharingDetailsBasedOnConfigurationId(exterrnalActionConfigurationId);
+	}
 
 }

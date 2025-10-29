@@ -23,7 +23,10 @@ public class ExternalActionConfiguration {
 	private int reminderCount;
 	private int reminderFrequency;
 	private String remainderNotificationMessageBody;
-	
+	private String messageSubject;
+	private String remainderNotificationMessageSubject;
+	private String customMessageAfterExternalActionCompletion;
+
 	
 	public Long getExternalActionConfigurationId() {
 		return externalActionConfigurationId;
@@ -139,5 +142,22 @@ public class ExternalActionConfiguration {
 	public void setRemainderNotificationMessageBody(String remainderNotificationMessageBody) {
 		this.remainderNotificationMessageBody = remainderNotificationMessageBody;
 	}
-	
+	public String getMessageSubject() {
+		return messageSubject;
+	}
+	public void setMessageSubject(String messageSubject) {
+		this.messageSubject = messageSubject;
+	}
+	public String getRemainderNotificationMessageSubject() {
+		return remainderNotificationMessageSubject;
+	}
+	public void setRemainderNotificationMessageSubject(String remainderNotificationMessageSubject) {
+		this.remainderNotificationMessageSubject = remainderNotificationMessageSubject;
+	}
+	public String getCustomMessageAfterExternalActionCompletion() {
+		return customMessageAfterExternalActionCompletion;
+	}
+	public void setCustomMessageAfterExternalActionCompletion(String customMessageAfterExternalActionCompletion) {
+		this.customMessageAfterExternalActionCompletion = customMessageAfterExternalActionCompletion;
+	}
 }

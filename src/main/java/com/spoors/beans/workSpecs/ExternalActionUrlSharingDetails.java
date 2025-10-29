@@ -9,6 +9,7 @@ public class ExternalActionUrlSharingDetails {
 	private int selectionFieldType;
 	private Long workActionSpecId;
 	private Long workSpecId;
+	
 	public Long getExternalActionUrlSharingDetailId() {
 		return externalActionUrlSharingDetailId;
 	}

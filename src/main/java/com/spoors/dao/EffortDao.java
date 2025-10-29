@@ -83,6 +83,7 @@ import com.spoors.beans.workSpecs.ActionableEmployeeGroupSpecs;
 import com.spoors.beans.workSpecs.AddingSubTaskEmployeeConfiguration;
 import com.spoors.beans.workSpecs.AttachmnetFormAutoFillSectionConfiguration;
 import com.spoors.beans.workSpecs.ExternalActionConfiguration;
+import com.spoors.beans.workSpecs.ExternalActionUrlSharingDetails;
 import com.spoors.beans.workSpecs.FormAutoFillSectionConfiguration;
 import com.spoors.beans.workSpecs.FormAutoFillSectionFieldsConfiguration;
 import com.spoors.beans.workSpecs.FormToWorkAutoFill;
@@ -4117,11 +4118,15 @@ public class EffortDao {
 					ps.setLong(10, webUser.getCompanyId());
 					ps.setBoolean(11, externalActionConfiguration.getEnableAutomaticEmailTrigger());
 					ps.setString(12, externalActionConfiguration.getMessageBody());
-					ps.setBoolean(13, externalActionConfiguration.isCanOnlyPerformByExternalUser());
-					ps.setBoolean(14, externalActionConfiguration.isSendRemainderNotification());
-					ps.setInt(15, externalActionConfiguration.getReminderCount());
-					ps.setInt(16, externalActionConfiguration.getReminderFrequency());
-					ps.setString(17, externalActionConfiguration.getRemainderNotificationMessageBody());
+					ps.setString(13, externalActionConfiguration.getMessageSubject());
+					ps.setBoolean(14, externalActionConfiguration.isCanOnlyPerformByExternalUser());
+					ps.setBoolean(15, externalActionConfiguration.isSendRemainderNotification());
+					ps.setInt(16, externalActionConfiguration.getReminderCount());
+					ps.setInt(17, externalActionConfiguration.getReminderFrequency());
+					ps.setString(18, externalActionConfiguration.getRemainderNotificationMessageBody());
+					ps.setString(19, externalActionConfiguration.getRemainderNotificationMessageSubject());
+					ps.setString(20, externalActionConfiguration.getCustomMessageAfterExternalActionCompletion());
+
 					return ps;
 				}
 			}, keyHolder);
@@ -4967,6 +4972,45 @@ public class EffortDao {
 							}
 						});
 
+			}
+		 public List<ExternalActionUrlSharingDetails> getExternalActionSharingDetailsBasedOnConfigurationId(Long exterrnalActionConfigurationId) {
+
+				List<ExternalActionUrlSharingDetails> externalActionUrlSharingDetailsList = new ArrayList<ExternalActionUrlSharingDetails>();
+				try {
+					externalActionUrlSharingDetailsList = jdbcTemplate.query(Sqls.SELECT_EXTERNAL_INPUT_PARAMETERS,
+							new Object[] { exterrnalActionConfigurationId },
+							new BeanPropertyRowMapper<ExternalActionUrlSharingDetails>(ExternalActionUrlSharingDetails.class));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return externalActionUrlSharingDetailsList;
+			}
+		 public void insertIntoExternalActionConfigurationInputs(final List<ExternalActionUrlSharingDetails> externalActionUrlSharingDetails,
+					Long externalActionConfigurationId) {
+
+				jdbcTemplate.batchUpdate(Sqls.INSERT_INTO_EXTERNAL_ACTION_CONFIGURATION_INPUTS,
+						new BatchPreparedStatementSetter() {
+							@Override
+							public void setValues(PreparedStatement ps, int i) throws SQLException {
+								ExternalActionUrlSharingDetails externalActionUrlSharingDetail = externalActionUrlSharingDetails.get(i);
+								ps.setLong(1, externalActionConfigurationId);
+								if (externalActionUrlSharingDetail.getFieldDataType() == null) {
+									ps.setNull(2, Types.VARCHAR);
+								} else {
+									ps.setInt(2, externalActionUrlSharingDetail.getFieldDataType());
+								}
+								ps.setInt(3, externalActionUrlSharingDetail.getSelectionFieldType());
+								ps.setString(4, externalActionUrlSharingDetail.getFieldSpecUniqueId());
+								
+								ps.setLong(5, externalActionUrlSharingDetail.getWorkActionSpecId());
+								ps.setLong(6, externalActionUrlSharingDetail.getWorkSpecId());
+							}
+
+							@Override
+							public int getBatchSize() {
+								return externalActionUrlSharingDetails.size();
+							}
+						});
 			}
 
 }
